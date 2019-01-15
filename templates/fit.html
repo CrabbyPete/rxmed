@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="description" content="">
+<title>RxMedAccess, LLC</title>
+<link rel="shortcut icon" type="image/png" href="favicon (32x32).png"/>
+<!-- Bootstrap core CSS -->
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+<!-- Custom styles -->
+<link href="stylesheet.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
+</head>
+<body>
+<!-- Navigation bar -->
+<nav class="navbar navbar-expand-md navbar-light bg-light"> <a class="navbar-brand" href="/"><img src="logo transparent(1000x682).png" width="90vw" alt="RxMedAccess, LLC"></a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="navbar-toggler-icon"></span> </button>
+  <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+    <ul class="navbar-nav">
+      <li class="nav-item"> <a class="nav-link" href="/patients">Patients</a> </li>
+      <li class="nav-item"> <a class="nav-link" href="/providers">Providers</a> </li>
+      <li class="nav-item"> <a class="nav-link" href="/about">About Us</a> </li>
+    </ul>
+  </div>
+</nav>
+<!-- Main -->
+<div class="container text-center m-5">
+  <h1 id="fit">Formulary Insight Tool</h1>
+  <p>Simply select your patient's plan, and then choose from a range of medications to instantly gain insight on them and save more time.</p>
+</div>
+<!-- Form -->
+<main class="container m-5">
+  <h5 class="text-center">Select a health coverage:</h5>
+  <div class="row justify-content-center">
+    <button type="button" class="btn btn-primary med-button mx-3" id="button-medicare">Medicare</button>
+    <button type="button" class="btn btn-primary med-button mx-3" id="button-medicaid">Medicaid</button>
+  </div>
+  <div class="row m-5">
+    <form class="input-group justify-content-center" id="form">
+      <div class="form-row">
+        <div class="col-md-2">
+          <label for="form-zipcode" class="input-group-prepend">Zipcode</label>
+          <input type="text" class="form-control mb-3" placeholder="ex. 12345" id="form-zipcode">
+        </div>
+        <div class="col-md-5">
+          <label for="form-plan" class="input-group-prepend">Plan Name</label>
+          <input class="form-control advancedAutoComplete mb-3" type="text" placeholder="Type to search..." autocomplete="off" id="form-plan">
+        </div>
+        <div class="col-md-5">
+          <label for="form-med" class="input-group-prepend">Medication</label>
+          <input class="form-control advancedAutoComplete mb-3" type="text" placeholder="Type to search..." autocomplete="off" id="form-med">
+        </div>
+      </div>
+    </form>
+  </div>
+  <!-- Form final buttons -->
+  <div class="row justify-content-center">
+    <button type="submit" class="btn btn-primary font-weight-bold m-2" id="button-generate">View Formulary Coverage</button>
+    <button type="reset" class="btn btn-primary m-2" id="button-clear-med">Clear Medication</button>
+    <button type="reset" class="btn btn-primary m-2" id="button-clear-all">Clear All</button>
+  </div>
+  <div class="row justify-content-center mt-5">
+    <h1 id="table-header">Placeholder</h1>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-striped table-bordered" id="table-medicare">
+      <thead>
+        <tr>
+          <th scope="col">Brand (proprietary name)</th>
+          <th scope="col">Generic (non-proprietary name)</th>
+          <th scope="col">Tier</th>
+          <th scope="col">ST</th>
+          <th scope="col">QL</th>
+          <th scope="col">PA</th>
+          <th scope="col">Copay (pre-deductible)</th>
+          <th scope="col">Copay (deductible met)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <th scope="row">Placeholder</th>
+          <th scope="row">Placeholder</th>
+          <td>Placeholder</td>
+          <td>Placeholder</td>
+          <td>Placeholder</td>
+          <td>Placeholder</td>
+          <td>Placeholder</td>
+          <td>Placeholder</td>
+        </tr>
+        <tr>
+          <th scope="row">Placeholder</th>
+          <th scope="row">Placeholder</th>
+          <td>Placeholder</td>
+          <td>Placeholder</td>
+          <td>Placeholder</td>
+          <td>Placeholder</td>
+          <td>Placeholder</td>
+          <td>Placeholder</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-responsive">
+    <table class="table table-bordered" id="table-medicaid">
+      <thead>
+        <tr>
+          <th scope="col">Drug Name</th>
+          <th scope="col">Drug Tier</th>
+          <th scope="col">Formulary Restriction</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="table-success">Placeholder</td>
+          <td class="table-success">Placeholder</td>
+          <td class="table-success">Placeholder</td>
+        </tr>
+        <tr>
+          <td class="table-danger">Placeholder</td>
+          <td class="table-danger">Placeholder</td>
+          <td class="table-danger">Placeholder</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+<div class="card-footer mt-5">© 2017 - 2019 RxMedAccess, LLC</div>
+<!-- /.container -->
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+<script src="https://cdn.rawgit.com/xcash/bootstrap-autocomplete/v2.0.0/dist/latest/bootstrap-autocomplete.min.js"></script>
+<script>
+  $(function () {
+	  $('.advancedAutoComplete').autoComplete({
+		  resolver: 'custom',
+		  events: {
+			  search: function (qry, callback) {
+				  $.ajax({
+					  url: '{{url_for("plans")}}',
+					  type: 'GET',
+					  data: {qry:qry}
+				  }).done(function (res) {
+					  callback(res.results)
+				  });
+			  }
+		  }
+	  });
+	  /***** Medicare/medicaid button toggles *****/
+	  /* Does not yet handle the situation
+	  	 where the user toggles the other button
+	  	 after data has been generated
+	  */
+	  var medicareSelected;
+	  var medicaidSelected;
+	  $.fn.toggleButtonOn = function() {
+		  $(this).css("background-color", "#8cc63e"),
+	      $(this).css("border-color", "#8cc63e")
+	  };
+	  $.fn.toggleButtonOff = function() {
+		  $(this).css("background-color", "#0069a3"),
+	      $(this).css("border-color", "#0069a3")
+	  };
+	  $('#button-medicare').click(function () {
+		  medicareSelected = true,
+		  medicaidSelected = false,
+		  $('#button-medicare').toggleButtonOn(),
+		  $('#button-medicaid').toggleButtonOff()
+	  });
+	  $('#button-medicaid').click(function () {
+		  medicaidSelected = true,
+		  medicareSelected = false,
+		  $('#button-medicaid').toggleButtonOn(),
+		  $('#button-medicare').toggleButtonOff()
+	  });
+	  /***** Generate formulary insight *****/
+	  /* I wanted to put the table hiding into
+	  	 a method to keep things clean but I
+		 don't know how to do static methods
+		 on the actual HTML document
+	  */
+	  $('#table-header').hide();
+	  $('#table-medicare').hide();
+	  $('#table-medicaid').hide();
+	  $('#button-generate').click(function () { //
+		  if (!medicareSelected && !medicaidSelected) {
+			  alert("Error: You must select a health coverage.")
+		  } else {
+			  $('#table-header').show(),
+			  document.getElementById('table-header').scrollIntoView()
+			  if (medicareSelected) { // Generate #table-medicare
+				  $('#table-medicare').show()
+			  } else { // Generate #table-medicaid
+				  $('#table-medicaid').show()
+			  }
+		  }
+	  })
+	  /***** Clear buttons *****/
+	  $('#button-clear-med').click(function () {
+		  $('#table-header').hide();
+		  $('#table-medicare').hide();
+		  $('#table-medicaid').hide();
+		  // Clear medication
+	  })
+	  $('#button-clear-all').click(function () {
+		  medicareSelected = false, medicaidSelected = false,
+		  $('#button-medicare').toggleButtonOff(),
+		  $('#button-medicaid').toggleButtonOff()
+		  $('#table-header').hide();
+		  $('#table-medicare').hide();
+		  $('#table-medicaid').hide();
+		  // Clear remaining user input
+	  })
+  });
+</script>
+</body>
+</html>
