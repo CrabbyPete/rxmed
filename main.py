@@ -105,6 +105,24 @@ def formulary_id():
     return jsonify( results )
 
 
+@application.route('/alternatives', methods=['GET'])
+def alternatives():
+    """
+
+    :return:
+    """
+    results = []
+    if 'drug_name' in request.args and 'plan_name' in request.args:
+         alternatives,exclude = tools.get_from_medicaid(request.args['drug_name'],
+                                                        request.args['plan_name']
+                                                       )
+
+    for alternative in alternatives:
+        results.append(alternative)
+
+    return jsonify( results )
+
+
 @application.route('/drug_names', methods=['GET'])
 def drug_names():
     """
@@ -121,6 +139,8 @@ def drug_names():
 
 
     return jsonify(results)
+
+
 
 
 

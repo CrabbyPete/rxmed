@@ -163,7 +163,8 @@ def get_related_drugs(name):
     return drugs, excluded_front
 
 
-def get_medicaid(drug_name, plan_name ):
+
+def get_from_medicaid(drug_name, plan_name ):
     """
 
     :param drug_name: Name of the drug to find
