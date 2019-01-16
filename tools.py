@@ -99,7 +99,7 @@ def get_related_drugs(name):
     # There should only be one
     for fta in FTA.find_by_name(name):
         if fta.EXCLUDED_DRUGS_FRONT:
-            excluded_front = [s.strip() for s in fta.EXCLUDED_DRUGS_FRONT.lower().split("|")]
+            excluded_front = [s.strip() for s in fta.EXCLUDED_DRUGS_FRONT.lower().split("|") if len(s) > 1]
         else:
             excluded_front = []
 
@@ -161,7 +161,6 @@ def get_related_drugs(name):
                             drugs.update([fta_member.PROPRIETARY_NAME])
 
     return drugs, excluded_front
-
 
 
 def get_from_medicaid(drug_name, plan_name ):

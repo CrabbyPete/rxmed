@@ -105,23 +105,6 @@ def formulary_id():
     return jsonify( results )
 
 
-@application.route('/alternatives', methods=['GET'])
-def alternatives():
-    """
-
-    :return:
-    """
-    results = []
-    if 'drug_name' in request.args and 'plan_name' in request.args:
-         alternatives,exclude = tools.get_from_medicaid(request.args['drug_name'],
-                                                        request.args['plan_name']
-                                                       )
-
-    for alternative in alternatives:
-        results.append(alternative)
-
-    return jsonify( results )
-
 
 @application.route('/drug_names', methods=['GET'])
 def drug_names():
@@ -141,8 +124,46 @@ def drug_names():
     return jsonify(results)
 
 
+@application.route('/alternatives', methods=['GET'])
+def alternatives():
+    """
+
+    :return:
+    """
+    results = []
+    if 'drug_name' in request.args and 'plan_name' in request.args:
+         alternatives,exclude = tools.get_from_medicaid(request.args['drug_name'],
+                                                        request.args['plan_name']
+                                                       )
+
+    for alternative in alternatives:
+        fr = alternative['Formulary_Restrictions'].lower()
+
+        # Make sure no excluded words formulary restrictions
+        for ex in exclude:
+            if ex in fr:
+                break
+        else:
+            results.append(alternative)
+
+
+    return jsonify( results )
+
+
+
+
+@application.route('/medicare_options', methods=['GET'])
+def medicare_options():
+    """
+    drug_name, dose_strength, dose_unit, plan_name
+    :return:
+    """
+    if 'drug_name' in request.args and 'plan_name' in request.args:
+        pass
+
+    return jsonify( results )
 
 
 
 if __name__ == "__main__":
-    application.run(host='0.0.0.0', port=5000, debug=True)
+    application.run(host='0.0.0.0', port=5000, debug=False)
