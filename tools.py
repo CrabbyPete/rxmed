@@ -76,9 +76,12 @@ def get_formulary_id( plan_name, zipcode ):
 
     # There should only be one
     if len( formulary_ids ) == 1:
-        return formulary_ids[0]
+        return {"plan_name":formulary_ids[0].PLAN_NAME,
+                "zipcode":zipcode,
+                "formulary_id":formulary_ids[0].FORMULARY_ID
+               }
     else:
-        return formulary_ids
+        return "More than one found"
 
 
 REGEX = '\[(.*?)\]'
