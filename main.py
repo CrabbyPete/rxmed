@@ -51,22 +51,24 @@ def plans():
     :return: json list of plan names
     """
     results = []
-    if 'qry' in request.args:
+    if 'qry' in request.args and 'zipcode' in request.args:
         look_for = "{}%".format( request.args['qry'].lower() )
+        zipcode = request.args['zipcode']
 
-    if 'zipcode' in request.args:
-        look_in = get_location(request.args['zipcode'] )[0]
+
+        look_in = get_location( zipcode )[0]
         county_code = f"%{str(look_in.COUNTY_CODE)}%"
 
-    plans_list = Plans.session.query(Plans.PLAN_NAME)\
+    
+        plans_list = Plans.session.query(Plans.PLAN_NAME)\
                                   .filter(Plans.PLAN_NAME.ilike(look_for), Plans.COUNTY_CODE.ilike(county_code))\
                                   .distinct(Plans.PLAN_NAME)\
                                   .all()
 
 
-    # If you use a selector in the json, return a json with numbered values, otherwise just a list
-    for val, txt in enumerate(plans_list):
-            results.append(txt[0])
+        # If you use a selector in the json, return a json with numbered values, otherwise just a list
+        for val, txt in enumerate(plans_list):
+                results.append(txt[0])
 
     return jsonify(results)
 
@@ -158,6 +160,7 @@ def medicare_options():
     drug_name, dose_strength, dose_unit, plan_name
     :return:
     """
+    results = []
     if 'drug_name' in request.args and 'plan_name' in request.args:
         pass
 

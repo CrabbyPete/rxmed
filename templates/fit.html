@@ -5,16 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <meta name="description" content="">
 <title>RxMedAccess, LLC</title>
-<link rel="shortcut icon" type="image/png" href="favicon (32x32).png"/>
+<link rel="shortcut icon" type="image/png" href="{{url_for('static',filename='img/favicon (32x32).png')}}"/>
+
 <!-- Bootstrap core CSS -->
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
 <!-- Custom styles -->
-<link href="stylesheet.css" rel="stylesheet">
+
+<link href="{{url_for('static',filename='css/stylesheet.css')}}" rel="stylesheet">
 <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.6-rc.0/css/select2.min.css" rel="stylesheet" />
 </head>
+
 <body>
 <!-- Navigation bar -->
-<nav class="navbar navbar-expand-md navbar-light bg-light"> <a class="navbar-brand" href="/"><img src="logo transparent(1000x682).png" width="90vw" alt="RxMedAccess, LLC"></a>
+<nav class="navbar navbar-expand-md navbar-light bg-light"> <a class="navbar-brand" href="/"><img src="{{url_for('static',filename='img/logo transparent(1000x682).png')}}" width="90vw" alt="RxMedAccess, LLC"></a>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="navbar-toggler-icon"></span> </button>
   <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
     <ul class="navbar-nav">
@@ -29,6 +32,7 @@
   <h1 id="fit">Formulary Insight Tool</h1>
   <p>Simply select your patient's plan, and then choose from a range of medications to instantly gain insight on them and save more time.</p>
 </div>
+
 <!-- Form -->
 <main class="container m-5">
   <h5 class="text-center">Select a health coverage:</h5>
@@ -45,7 +49,7 @@
         </div>
         <div class="col-md-5">
           <label for="form-plan" class="input-group-prepend">Plan Name</label>
-          <input class="form-control advancedAutoComplete mb-3" type="text" placeholder="Type to search..." autocomplete="off" id="form-plan">
+          <input class="form-control mb-3" type="text" placeholder="Type to search..." autocomplete="off" id="form-plan">
         </div>
         <div class="col-md-5">
           <label for="form-med" class="input-group-prepend">Medication</label>
@@ -54,6 +58,7 @@
       </div>
     </form>
   </div>
+
   <!-- Form final buttons -->
   <div class="row justify-content-center">
     <button type="submit" class="btn btn-primary font-weight-bold m-2" id="button-generate">View Formulary Coverage</button>
@@ -128,26 +133,32 @@
 <div class="card-footer mt-5">© 2017 - 2019 RxMedAccess, LLC</div>
 <!-- /.container -->
 <!-- Scripts -->
-<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+
+
 <script src="https://cdn.rawgit.com/xcash/bootstrap-autocomplete/v2.0.0/dist/latest/bootstrap-autocomplete.min.js"></script>
 <script>
-  $(function () {
-	  $('.advancedAutoComplete').autoComplete({
-		  resolver: 'custom',
-		  events: {
-			  search: function (qry, callback) {
-				  $.ajax({
-					  url: '{{url_for("plans")}}',
-					  type: 'GET',
-					  data: {qry:qry}
-				  }).done(function (res) {
-					  callback(res.results)
-				  });
-			  }
-		  }
-	  });
+  $(function (){
+      $( "#form-plan" ).autocomplete({
+          source: function( request, response )
+                  {
+                      var zipcode = $("#form-zipcode").val();
+                      $.ajax(
+                      {
+                              url: "/plans",
+                              dataType: "json",
+                              data: {qry: request.term, zipcode: zipcode},
+                              success: function( data )
+                              {
+                                response( data )
+                              }
+                      });
+                  }
+      });
+
 	  /***** Medicare/medicaid button toggles *****/
 	  /* Does not yet handle the situation
 	  	 where the user toggles the other button
