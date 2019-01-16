@@ -1,23 +1,17 @@
-import sys
-import logging
-from flask import Flask, request, render_template, jsonify
+
+import tools
+
+from flask      import Flask, request, render_template, jsonify
 
 from forms      import MedicaidForm
 from models.fta import FTA
 from models.ndc import Plans
 from medicare   import get_location
 
+
+
 application = Flask(__name__,static_url_path='/static')
 
-# Initialize logging
-handler = logging.StreamHandler(sys.stderr)
-
-application.logger.setLevel(logging.INFO)
-application.logger.addHandler(handler)
-
-log = logging.getLogger("rxmed")
-log.setLevel(logging.INFO)
-log.addHandler(handler)
 
 
 @application.route('/')
@@ -42,7 +36,7 @@ def medicaid():
 @application.route('/medicare')
 def medicare():
     """
-    Get medicare results
+    get
     :return:
     """
 
@@ -70,28 +64,65 @@ def plans():
                                   .all()
 
 
+    # If you use a selector in the json, return a json with numbered values, otherwise just a list
     for val, txt in enumerate(plans_list):
             results.append(txt[0])
 
     return jsonify(results)
 
 
-@application.route('/drugs', methods=['GET'])
-def drugs():
+@application.route('/related_drugs')
+def related_drugs():
+    """
+    http://localhost:5000/related_drugs?drug_name=Admelog
+    Get related drugs by name
+    :return: drugs
+    """
+    results = []
+
+    if 'drug_name' in request.args:
+        drugs, excluded = tools.get_related_drugs(request.args['drug_name'])
+
+    for drug in drugs:
+        results.append(drug)
+
+    return jsonify(results)
+
+
+@application.route('/formulary_id')
+def formulary_id():
+    """
+    localhost:5000/formulary_id?zipcode=43081&plan_name=CareSource Advantage (HMO)
+    Get the formulary_id for a plan in a zipcode
+    :return:
+    """
+    results = []
+    if 'plan_name' in request.args and 'zipcode' in request.args:
+        results = tools.get_formulary_id(request.args['plan_name'],
+                                         request.args['zipcode' ]
+                                        )
+
+    return jsonify( results )
+
+
+@application.route('/drug_names', methods=['GET'])
+def drug_names():
     """
     Retrieve a list of drugs on spelling
-    :param spelling:
     :return:
     """
     results=[]
     if 'qry' in request.args:
-        look_for = request.args['qry'].lower()
-        drug_list = FTA.query( FTA.PROPRIETARY_NAME ).filter( FTA.PROPRIETARY_NAME.ilike(look_for) )
+        look_for = f"{request.args['qry'].lower()}%"
+        drug_list = FTA.session.query(FTA.PROPRIETARY_NAME).filter( FTA.PROPRIETARY_NAME.ilike(look_for) )
+
         for drug in drug_list:
             results.append( drug.PROPRIETARY_NAME)
 
 
     return jsonify(results)
 
+
+
 if __name__ == "__main__":
-    application.run(host='0.0.0.0', port=5000, debug=False)
+    application.run(host='0.0.0.0', port=5000, debug=True)

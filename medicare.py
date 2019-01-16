@@ -17,54 +17,60 @@ def get_location( zipcode ):
     return geo_info
 
 
-def get_plans( plan_name, geo_info):
+def get_formulary_id( plan_name, geo_info ):
     """
-
+    Get the formulary_id for a plan
     :param plan_name: Full or partial name of a plan
     :param geo_info: record from the geolocate DB
-    :return: list: plan names
+    :return: a formulary_id for that plan for that zipcode
     """
+    plans = Plans.get_all(**dict(PLAN_NAME=plan_name))
+
+    formulary_ids = []
+    for plan in plans:
+        if plan.CONTRACT_ID.startswith('S'):
+            if plan.PDP_REGION_CODE == geo_info.PDP_REGION_CODE:
+                formulary_ids.append(plan)
+
+        elif plan.CONTRACT_ID.startswith('H'):
+            if int(plan.COUNTY_CODE) == int(geo_info.COUNTY_CODE):
+                formulary_ids.append(plan)
+
+        elif plan.CONTRACT_ID.startswith('R'):
+            if int(plan.MA_REGION_CODE) == geo_info.COUNTY_CODE:
+                formulary_ids.append(plan)
+
+    # There should only be one
+    if len( formulary_ids ) == 1:
+        return formulary_ids[0]
+    else:
+        return formulary_ids
+
+
+def get_medicare(zipcode, plan_name, medication):
+    """
+
+    :param zipcode:
+    :param plan:
+    :param medication:
+    :return:
+    """
+    geo_info = get_location(zipcode)
+    plans = Plans.get_one(**dict(PLAN_NAME=plan_name))
+
+    drugs = NDC.get_all(**dict(PROPRIETARY_NAME=proprietary_name,
+                               DOSE_STRENGTH=str(dose_strength),
+                               DOSE_UNIT=dose_unit)
+                        )
+    return [drug.PRODUCT_NDC for drug in drugs]
 
 
 class Medicare:
     """
     Medicare funtions
     """
-    def get_location(self, zipcode ):
-        # Step 1
-        zip_info = Zipcode.get_one(**dict(ZIPCODE=zipcode))
-
-        # Step 2
-        geo_info = Geolocate.get_all(**dict(COUNTY=zip_info.COUNTY.strip(), STATENAME=zip_info.STATENAME.strip()))
-
-        return geo_info
 
 
-    def get_plan_info(self, plan_name, geo):
-        """
-
-        :param plan_name:
-        :return:
-        """
-        # Step 3
-        found = []
-        plans = Plans.get_all(**dict(PLAN_NAME=plan_name))
-
-        formulary_ids = []
-        for plan in plans:
-            if plan.CONTRACT_ID.startswith('S'):
-                if plan.PDP_REGION_CODE == geo.PDP_REGION_CODE:
-                    formulary_ids.append(plan)
-
-            elif plan.CONTRACT_ID.startswith('H'):
-                if int(plan.COUNTY_CODE) == int(geo.COUNTY_CODE):
-                    formulary_ids.append(plan)
-
-            elif plan.CONTRACT_ID.startswith('R'):
-                if int(plan.MA_REGION_CODE) == geo.COUNTY_CODE:
-                    formulary_ids.append(plan)
-
-        return formulary_ids[0]
 
     def get_ndc(self, proprietary_name, dose_strength, dose_unit):
         drugs = NDC.get_all(**dict(PROPRIETARY_NAME=proprietary_name,
@@ -123,7 +129,6 @@ def step5_6( drugs ):
     :param drugs:
     :return:
     """
-    # Step 5
     for drug in drugs:
         int_drug = int(drug.replace("-",""))
         meds = Basic_Drugs.get_close_to(int_drug)

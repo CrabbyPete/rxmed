@@ -28,14 +28,16 @@ class FTA(Base):
     EXCLUDED_DRUGS_FRONT = Column( String(255), nullable=False )
 
     @classmethod
-    def find_by_name(cls, name ):
+    def find_by_name(cls, name, nonproprietary=True ):
         """ Return an atoms by property
         """
         name = f"%{name.lower()}%"
-        qry = cls.session.query(cls).filter( or_( cls.PROPRIETARY_NAME.ilike(name),
-                                                  cls.NONPROPRIETARY_NAME.ilike(name)
-                                                )
-                                           )
+        if nonproprietary:
+            filter = or_( cls.PROPRIETARY_NAME.ilike(name), cls.NONPROPRIETARY_NAME.ilike(name) )
+        else:
+            filter = cls.PROPRIETARY_NAME.ilike(name)
+
+        qry = cls.session.query(cls).filter( filter )
         result = qry.all()
         return result
 

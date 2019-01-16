@@ -96,16 +96,20 @@ class BaseMixin(object):
 Base = declarative_base(cls=BaseMixin)
 
 
-class Database():
+class Database(object):
     """ Singleton Class to initalize the database
         Can be used as a context manager or simple open and close
     """
-    """
-    def __new__(cls):
+    def __new__(cls,val):
+        """
+        Create a singleton
+        :param val: the parameters passed in for __init__, ignore it
+        :return:
+        """
         if not hasattr(cls, 'instance'):
             cls.instance = super(Database, cls).__new__(cls)
         return cls.instance
-    """
+
     def __init__(self, url, schema='public'):
         if not 'sqlite' in url:
             self.engine = create_engine(url, echo=False, isolation_level="AUTOCOMMIT")
@@ -144,6 +148,3 @@ class Database():
             df.to_sql(con=self.engine, index_label='id', name=table, if_exists='replace', dtype=dtype)
         else:
             df.to_sql(con=self.engine, index_label='id', name=table, if_exists='replace')
-
-
-
