@@ -86,7 +86,8 @@
           <th scope="col">Copay (deductible met)</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody id="medicare_body">
+      <!--
         <tr>
           <th scope="row">Placeholder</th>
           <th scope="row">Placeholder</th>
@@ -107,6 +108,7 @@
           <td>Placeholder</td>
           <td>Placeholder</td>
         </tr>
+       -->
       </tbody>
     </table>
   </div>
@@ -149,7 +151,6 @@
 <script>
   $(function ()
   {
-
       $("#form-plan").autocomplete({
           source: function( request, response )
                   {
@@ -198,24 +199,22 @@
 		  $(this).css("background-color", "#0069a3"),
 	      $(this).css("border-color", "#0069a3")
 	  };
+
 	  $('#button-medicare').click(function () {
 		  medicareSelected = true,
 		  medicaidSelected = false,
 		  $('#button-medicare').toggleButtonOn(),
 		  $('#button-medicaid').toggleButtonOff()
 	  });
+
+
 	  $('#button-medicaid').click(function () {
 		  medicaidSelected = true,
 		  medicareSelected = false,
 		  $('#button-medicaid').toggleButtonOn(),
 		  $('#button-medicare').toggleButtonOff()
 	  });
-	  /***** Generate formulary insight *****/
-	  /* I wanted to put the table hiding into
-	  	 a method to keep things clean but I
-		 don't know how to do static methods
-		 on the actual HTML document
-	  */
+
 	  $('#table-header').hide();
 	  $('#table-medicare').hide();
 	  $('#table-medicaid').hide();

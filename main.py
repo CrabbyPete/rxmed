@@ -19,8 +19,8 @@ def home():
     return render_template( 'home.html')
 
 
-@application.route('/medicaid')
-def medicaid():
+@application.route('/fit')
+def fit():
     """
     Get medicaid results
     :return:
@@ -32,7 +32,7 @@ def medicaid():
                                                         )
 
     context = {}
-    return render_template( 'fit.html', **context )
+    return render_template( 'fit2.html', **context )
 
 
 @application.route('/medicare')
@@ -53,23 +53,32 @@ def plans():
     :return: json list of plan names
     """
     results = []
-    if 'qry' in request.args and 'zipcode' in request.args:
-        look_for = "{}%".format( request.args['qry'].lower() )
-        zipcode = request.args['zipcode']
+    if not 'zipcode' in request.args or request.args['zipcode'] == "":
+        results = ['Caresource',
+                   'Paramount Advantage',
+                   'Molina Healthcare',
+                   'UHC Community Plan',
+                   'OH State Medicaid',
+                   'Buckeye Health Plan'
+                  ]
+    else:
+        if 'qry' in request.args:
+            look_for = "{}%".format( request.args['qry'].lower() )
+            zipcode = request.args['zipcode']
 
 
-        look_in = get_location( zipcode )[0]
-        county_code = f"%{str(look_in.COUNTY_CODE)}%"
+            look_in = get_location( zipcode )[0]
+            county_code = f"%{str(look_in.COUNTY_CODE)}%"
 
     
-        plans_list = Plans.session.query(Plans.PLAN_NAME)\
+            plans_list = Plans.session.query(Plans.PLAN_NAME)\
                                   .filter(Plans.PLAN_NAME.ilike(look_for), Plans.COUNTY_CODE.ilike(county_code))\
                                   .distinct(Plans.PLAN_NAME)\
                                   .all()
 
 
-        # If you use a selector in the json, return a json with numbered values, otherwise just a list
-        for val, txt in enumerate(plans_list):
+            # If you use a selector in the json, return a json with numbered values, otherwise just a list
+            for val, txt in enumerate(plans_list):
                 results.append(txt[0])
 
     return jsonify(results)
