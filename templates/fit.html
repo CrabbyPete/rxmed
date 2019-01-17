@@ -17,7 +17,10 @@
 
 <body>
 <!-- Navigation bar -->
-<nav class="navbar navbar-expand-md navbar-light bg-light"> <a class="navbar-brand" href="/"><img src="{{url_for('static',filename='img/logo transparent(1000x682).png')}}" width="90vw" alt="RxMedAccess, LLC"></a>
+<nav class="navbar navbar-expand-md navbar-light bg-light">
+  <a class="navbar-brand" href="/">
+    <img src="{{url_for('static',filename='img/logo transparent(1000x682).png')}}" width="90vw" alt="RxMedAccess, LLC">
+  </a>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="navbar-toggler-icon"></span> </button>
   <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
     <ul class="navbar-nav">
@@ -49,11 +52,11 @@
         </div>
         <div class="col-md-5">
           <label for="form-plan" class="input-group-prepend">Plan Name</label>
-          <input class="form-control mb-3" type="text" placeholder="Type to search..." autocomplete="off" id="form-plan">
+          <input class="form-control mb-3" type="text" placeholder="Type to search..." id="form-plan">
         </div>
         <div class="col-md-5">
           <label for="form-med" class="input-group-prepend">Medication</label>
-          <input class="form-control advancedAutoComplete mb-3" type="text" placeholder="Type to search..." autocomplete="off" id="form-med">
+          <input class="form-control mb-3" type="text" placeholder="Type to search..." id="form-med">
         </div>
       </div>
     </form>
@@ -65,6 +68,7 @@
     <button type="reset" class="btn btn-primary m-2" id="button-clear-med">Clear Medication</button>
     <button type="reset" class="btn btn-primary m-2" id="button-clear-all">Clear All</button>
   </div>
+
   <div class="row justify-content-center mt-5">
     <h1 id="table-header">Placeholder</h1>
   </div>
@@ -106,6 +110,7 @@
       </tbody>
     </table>
   </div>
+
   <div class="table-responsive">
     <table class="table table-bordered" id="table-medicaid">
       <thead>
@@ -115,17 +120,19 @@
           <th scope="col">Formulary Restriction</th>
         </tr>
       </thead>
-      <tbody>
-        <tr>
+      <tbody id="medicaid_body">
+      <!--
+        <tr id="medicaid_success">
           <td class="table-success">Placeholder</td>
           <td class="table-success">Placeholder</td>
           <td class="table-success">Placeholder</td>
         </tr>
-        <tr>
+        <tr id="medicaid_danger">
           <td class="table-danger">Placeholder</td>
           <td class="table-danger">Placeholder</td>
           <td class="table-danger">Placeholder</td>
         </tr>
+        -->
       </tbody>
     </table>
   </div>
@@ -134,15 +141,16 @@
 <!-- /.container -->
 <!-- Scripts -->
 <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
 
-<script src="https://cdn.rawgit.com/xcash/bootstrap-autocomplete/v2.0.0/dist/latest/bootstrap-autocomplete.min.js"></script>
 <script>
-  $(function (){
-      $( "#form-plan" ).autocomplete({
+  $(function ()
+  {
+
+      $("#form-plan").autocomplete({
           source: function( request, response )
                   {
                       var zipcode = $("#form-zipcode").val();
@@ -151,6 +159,22 @@
                               url: "/plans",
                               dataType: "json",
                               data: {qry: request.term, zipcode: zipcode},
+                              success: function( data )
+                              {
+                                response( data )
+                              }
+                      });
+                  }
+      });
+
+      $( "#form-med" ).autocomplete({
+          source: function( request, response )
+                  {
+                      $.ajax(
+                      {
+                              url: "/drug_names",
+                              dataType: "json",
+                              data: {qry: request.term },
                               success: function( data )
                               {
                                 response( data )
@@ -195,16 +219,50 @@
 	  $('#table-header').hide();
 	  $('#table-medicare').hide();
 	  $('#table-medicaid').hide();
-	  $('#button-generate').click(function () { //
+	  $('#button-generate').click(function () {
+
+	  	  var drug_name = $("#form-med").val();
+          var plan_name = $("#form-plan").val();
+		  var drug_name = $("#form-med").val();
+
 		  if (!medicareSelected && !medicaidSelected) {
 			  alert("Error: You must select a health coverage.")
 		  } else {
+			  $('#table-header').text( drug_name );
 			  $('#table-header').show(),
 			  document.getElementById('table-header').scrollIntoView()
-			  if (medicareSelected) { // Generate #table-medicare
-				  $('#table-medicare').show()
-			  } else { // Generate #table-medicaid
-				  $('#table-medicaid').show()
+			  if (medicareSelected) {
+
+				  $('#table-medicare').show();
+
+			  } else {
+
+                  $.ajax({
+                          url: "/medicaid_options",
+                          async: false,
+                          dataType: "json",
+                          data: {drug_name: drug_name, plan_name: plan_name},
+                          success: function( resp )
+                          {
+                              for( d=0; d < resp.length; d++)
+                              {
+                                var tr = (
+                                          '<tr id="medicaid_success">' +
+                                          '<td class="table-success">' +resp[d].Drug_Name+ '</td>' +
+                                          '<td class="table-success">' +resp[d].Drug_Tier+ '</td>' +
+                                          '<td class="table-success">' +resp[d].Formulary_Restrictions+ '</td>' +
+                                          '</tr>'
+                                          );
+                                $("#medicaid_body").append(tr);
+
+                              }
+
+                              $('#table-header').show();
+                              document.getElementById('table-header').scrollIntoView();
+                          }
+                  });
+
+				  $('#table-medicaid').show();
 			  }
 		  }
 	  })

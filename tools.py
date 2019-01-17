@@ -178,13 +178,13 @@ def get_from_medicaid(drug_name, plan_name ):
         for clean_name in drug_name.split(' / '):
             clean_name = clean_name.strip()
 
-            if plan_name.startswith("Caresource"):
+            if plan_name.lower().startswith("caresource"):
                 records = Caresource.find_by_name(clean_name)
 
-            elif plan_name.startswith("Paramount"):
+            elif plan_name.lower().startswith("paramount"):
                 records = Paramount.find_by_name(clean_name)
 
-            elif plan_name.startswith("Molina"):
+            elif plan_name.lower().startswith("molina"):
                 records = Molina.find_by_name(clean_name)
                 for record in records:
                     name = record['Generic_name']
@@ -192,17 +192,18 @@ def get_from_medicaid(drug_name, plan_name ):
                     if name.endswith("PA"):
                         more = Molina_Healthcare.find_brand(record['Brand_name'])
 
-            elif plan_name.startswith("UHC"):
+            elif plan_name.lower().startswith("uhc"):
                 records = UHC.find_by_name(clean_name)
 
-            elif plan_name.startswith("Buckeye"):
+            elif plan_name.lower().startswith("buckeye"):
                 records = Buckeye.find_by_name(clean_name)
 
             else:
                 log.error( f'Unknown plan name( {plan_name} )' )
-                record = []
+                records = []
 
             if records:
                 collection.extend(records)
 
     return collection, exclude
+

@@ -27,7 +27,9 @@ def medicaid():
     """
     form = MedicaidForm(request.form)
     if request.method == 'POST' and form.validate():
-        pass
+        alternatives, exclude = tools.get_from_medicaid(request.args['drug_name'],
+                                                        request.args['plan_name']
+                                                        )
 
     context = {}
     return render_template( 'fit.html', **context )
@@ -126,27 +128,23 @@ def drug_names():
     return jsonify(results)
 
 
-@application.route('/alternatives', methods=['GET'])
-def alternatives():
+@application.route('/medicaid_options', methods=['GET'])
+def medicaid_options():
     """
-
-    :return:
+    Get all the options for a drug for a plan
+    :return: json:
     """
     results = []
     if 'drug_name' in request.args and 'plan_name' in request.args:
-         alternatives,exclude = tools.get_from_medicaid(request.args['drug_name'],
-                                                        request.args['plan_name']
-                                                       )
+        alternatives, exclude = tools.get_from_medicaid(request.args['drug_name'], request.args['plan_name'])
 
-    for alternative in alternatives:
-        fr = alternative['Formulary_Restrictions'].lower()
-
-        # Make sure no excluded words formulary restrictions
-        for ex in exclude:
-            if ex in fr:
-                break
-        else:
-            results.append(alternative)
+        for alternative in alternatives:
+            fr = alternative['Formulary_Restrictions'].lower()
+            for ex in exclude:
+                if ex in fr:
+                    break
+            else:
+                results.append(alternative)
 
 
     return jsonify( results )
