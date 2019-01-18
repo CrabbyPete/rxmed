@@ -8,7 +8,8 @@
 <link rel="shortcut icon" type="image/png" href="{{url_for('static',filename='img/favicon (32x32).png')}}"/>
 <!-- Bootstrap core CSS -->
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
-<!-- Custom styles -->
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <!-- Custom styles -->
 <!--<link href="stylesheet.css" rel="stylesheet">-->
 <link href="{{url_for('static',filename='css/stylesheet.css')}}" rel="stylesheet">
 </head>
@@ -322,7 +323,7 @@
 					    cls = '<td class="table-success">';
 					  else
 					    cls = '<td class="table-danger">';
-					    
+
 					  var tr =
 						  (
 						  '<tr id="medicaid-success">' +

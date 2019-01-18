@@ -58,13 +58,17 @@ class Plans(Base):
     PLAN_SUPPRESSED_YN  = Column( String(255) )
 
     @classmethod
-    def find_by_plan_name(cls, name):
+    def find_by_plan_name(cls, name, exact = False ):
         """
         Find similar drugs in the database
         :param name: drug name
         :return: matches
         """
-        name = f"%{name.lower()}%"
+        if not exact:
+            name = f"%{name.lower()}%"
+        else:
+            name = name.lower()
+
         qry = cls.session.query(cls).filter(cls.PLAN_NAME.ilike(name))
         results = [row2dict(r) for r in qry]
         return results
@@ -90,15 +94,20 @@ class Basic_Drugs(Base):
     STEP_THERAPY_YN         = Column( String(1) )
 
     @classmethod
-    def get_close_to(cls, name, fid):
+    def get_close_to(cls, name, fid=None):
         """
         Find similar drugs in the database
         :param name: drug name
         :return: matches
         """
         name = f"{name}%"
-        qry = cls.session.query(cls).filter(cls.NDC.ilike(name), cls.FORMULARY_ID == fid )
-        results = [row2dict(r) for r in qry]
+        if fid:
+            qry = cls.session.query(cls).filter(cls.NDC.ilike(name), cls.FORMULARY_ID == fid )
+        else:
+            qry = cls.session.query(cls).filter(cls.NDC.ilike(name) )
+
+        data = qry.all()
+        results = [row2dict(r) for r in data]
         return results
 
     def __repr__(self):

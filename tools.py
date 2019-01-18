@@ -10,7 +10,6 @@ from models.plans import Caresource, Paramount, Molina, Molina_Healthcare, UHC, 
 from api          import RxClass
 
 
-
 def walk(seq, look_for):
     """
     Find a part of a json
@@ -57,28 +56,28 @@ def get_formulary_id( plan_name, zipcode ):
     :param zipcode: zipcode for the plan
     :return: a formulary_id for that plan for that zipcode
     """
-    plans = Plans.get_all(**dict(PLAN_NAME=plan_name))
+    plans = Plans.find_by_plan_name(plan_name)
     geo_info = get_location( zipcode )
 
     formulary_ids = []
     for plan in plans:
-        if plan.CONTRACT_ID.startswith('S'):
-            if plan.PDP_REGION_CODE == geo_info.PDP_REGION_CODE:
+        if plan['CONTRACT_ID'].startswith('S'):
+            if int(plan['PDP_REGION_CODE']) == geo_info.PDP_REGION_CODE:
                 formulary_ids.append(plan)
 
-        elif plan.CONTRACT_ID.startswith('H'):
-            if int(plan.COUNTY_CODE) == int(geo_info.COUNTY_CODE):
+        elif plan['CONTRACT_ID'].startswith('H'):
+            if int(plan['COUNTY_CODE']) == int(geo_info.COUNTY_CODE):
                 formulary_ids.append(plan)
 
-        elif plan.CONTRACT_ID.startswith('R'):
-            if int(plan.MA_REGION_CODE) == geo_info.COUNTY_CODE:
+        elif plan['CONTRACT_ID'].startswith('R'):
+            if int(plan['MA_REGION_CODE']) == geo_info.COUNTY_CODE:
                 formulary_ids.append(plan)
 
     # There should only be one
     if len( formulary_ids ) == 1:
-        return {"plan_name":formulary_ids[0].PLAN_NAME,
+        return {"plan_name":formulary_ids[0]['PLAN_NAME'],
                 "zipcode":zipcode,
-                "formulary_id":formulary_ids[0].FORMULARY_ID
+                "formulary_id":formulary_ids[0]['FORMULARY_ID']
                }
     else:
         return "More than one found"
@@ -163,6 +162,44 @@ def get_related_drugs(name):
     return drugs, excluded_front
 
 
+def get_ndc( proprietary_name, dose_strength = None, dose_unit = None ):
+    """
+
+    :param self:
+    :param proprietary_name:
+    :param dose_strength:
+    :param dose_unit:
+    :return:
+    """
+    qry = dict( PROPRIETARY_NAME=proprietary_name )
+    if dose_strength:
+        qry.update( dict(PROPRIETARY_NAME=proprietary_name) )
+    if dose_unit:
+        qry.update( dict(DOSE_UNIT=dose_unit) )
+
+    drugs = NDC.get_all(**qry )
+    return [ drug.PRODUCT_NDC for drug in drugs ]
+
+
+def beneficiary_costs( drug, plan ):
+    """
+    :param drugs:
+    :return:
+    """
+    benefit_cost = []
+    drug = int(drug.replace("-",""))
+    meds = Basic_Drugs.get_close_to( drug, plan['formulary_id']  )
+    for med in meds:
+        costs = Beneficiary_Costs.get_all( **dict( CONTRACT_ID = plan.CONTRACT_ID,
+                                                   PLAN_ID     = plan.PLAN_ID,
+                                                   SEGMENT_ID  = plan.SEGMENT_ID,
+                                                   TIER        = med['TIER_LEVEL_VALUE']
+                                                 )
+                                             )
+        benefit_cost.append(costs)
+
+    return benefit_cost
+
 def get_from_medicaid(drug_name, plan_name ):
     """
 
@@ -207,3 +244,25 @@ def get_from_medicaid(drug_name, plan_name ):
 
     return collection, exclude
 
+
+
+def get_from_medicare(drug_name, plan_name, zipcode=None ):
+    """
+
+    :param drug_name:
+    :param plan_name:
+    :return:
+    """
+    plan = get_formulary_id( plan_name, zipcode )
+    drugs = get_ndc( drug_name )
+
+    costs = []
+    for drug in drugs:
+        bc = beneficiary_costs(drug, plan )
+        costs.append(bc)
+
+if __name__ == "__main__":
+    get_from_medicaid( )
+
+    #get_from_medicare( "Victoza", "Anthem MediBlue Essential (HMO)", '43202')
+    get_from_medicare( "SYMBICORT","Silverscript choice (PDP)","07040")

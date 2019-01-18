@@ -6,12 +6,11 @@ from flask      import Flask, request, render_template, jsonify
 from forms      import MedicaidForm
 from models.fta import FTA
 from models.ndc import Plans
-from medicare   import get_location
 
+from tools      import get_location
 
 
 application = Flask(__name__,static_url_path='/static')
-
 
 
 @application.route('/')
@@ -145,16 +144,50 @@ def medicaid_options():
     """
     results = []
     if 'drug_name' in request.args and 'plan_name' in request.args:
+        plan_name = request.args['plan_name']
         alternatives, exclude = tools.get_from_medicaid(request.args['drug_name'], request.args['plan_name'])
 
         for alternative in alternatives:
-            fr = alternative['Formulary_Restrictions'].lower()
+            """
+            if 'Formulary_restrictions' in alternative:
+                fr = alternative['Formulary_restriction'].lower()
+            elif 'Formulary_Restrictions' in alternative:
+                fr = alternative['Formulary_Restrictions'].lower()
+            else:
+                continue
+
             for ex in exclude:
                 if ex in fr:
                     break
-            else:
-                results.append(alternative)
+            """
+            if plan_name.startswith("Caresource"): #Caresourse: Drug_Name,Drug_Tier,Formulary_Restrictions
+                result = alternative
 
+            elif plan_name.startswith("Paramount"):# Paramount: Formulary_restriction, Generic_name, Brand_name
+                result = dict(Drug_Name = alternative['Brand_name'],
+                              Drug_Tier = " ",
+                              Formulary_Restrictions = alternative['Formulary_restriction']
+                             )
+
+            elif plan_name.startswith("Molina"): # Molina: Brand_name,Generic_name,Fomulary_restriction
+                result = dict(Drug_Name=alternative['Brand_name'],
+                              Drug_Tier=" ",
+                              Formulary_Restrictions=alternative['Fomulary_restriction']
+                             )
+
+            elif plan_name.startswith("UHC"):# UHC: Generic,Brand,Tier,Formulary_Restriction
+                result = dict(Drug_Name=alternative['Brand'],
+                              Drug_Tier=alternative['Tier'],
+                              Formulary_Restrictions=alternative['Formulary_Restriction']
+                             )
+
+            elif plan_name.startswith("Buckeye"):# Buckeye: Drug_Name,Preferred_Agent,Fomulary_restriction
+                result = dict(Drug_Name=alternative['Drug_Name'],
+                              Drug_Tier = " ",
+                              Formulary_Restrictions=alternative["Fomulary_restriction"],
+                             )
+
+            results.append(result)
 
     return jsonify( results )
 

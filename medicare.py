@@ -1,21 +1,4 @@
 
-from models.geo import Zipcode, Geolocate
-from models.ndc import NDC, Plans, Basic_Drugs,Beneficiary_Costs
-from models.fta import FTA
-
-def get_location( zipcode ):
-    """
-    Get the geo location infor from a given zipcode
-    :param zipcode: string: zipcode to look in
-    :return: geo_info The geo location information in the Geolocate db
-    """
-    while zipcode.startswith('0'):
-        zipcode = zipcode[1:]
-
-    zip_info = Zipcode.get_one(**dict(ZIPCODE=zipcode))
-    geo_info = Geolocate.get_all(**dict(COUNTY=zip_info.COUNTY.strip(), STATENAME=zip_info.STATENAME.strip()))
-    return geo_info
-
 
 def get_formulary_id( plan_name, geo_info ):
     """
@@ -114,8 +97,7 @@ class Medicare:
 
         return benefit_costs
 
-def medicare( proprietary_name, dose_strength, dose_unit ):
-    m = Medicare()
+def medicare( proprietary_name ):
     geo_info = m.get_location('53558')
     plan = m.get_plan_info( 'Care Improvement Plus Gold Rx (PPO SNP)', geo_info[0])
     drugs = m.get_ndc(proprietary_name, dose_strength, dose_unit )
@@ -124,28 +106,9 @@ def medicare( proprietary_name, dose_strength, dose_unit ):
 
 
 
-def step5_6( drugs ):
-    """
-    :param drugs:
-    :return:
-    """
-    for drug in drugs:
-        int_drug = int(drug.replace("-",""))
-        meds = Basic_Drugs.get_close_to(int_drug)
-        for med in meds:
-            costs = Beneficiary_Costs.get_all( **dict( CONTRACT_ID = plan.CONTRACT_ID,
-                                                       PLAN_ID     = plan.PLAN_ID,
-                                                       SEGMENT_ID  = plan.SEGMENT_ID,
-                                                       TIER        = med['TIER_LEVEL_VALUE']
-                                                     )
-                                             )
-            benefit_costs = []
-            for cost in costs:
-                print(cost)
-
 
 if __name__ == "__main__":
-    #medicare('Strattera', 25,'mg/1')
-    medicare('Victoza', 6, 'mg/mL')
+    #medicare('Strattera')
+    medicare('Victoza')
 
 
