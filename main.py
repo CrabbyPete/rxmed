@@ -3,6 +3,7 @@ import tools
 
 from flask      import Flask, request, render_template, jsonify
 
+from log        import log
 from forms      import MedicaidForm
 from models.fta import FTA
 from models.ndc import Plans
@@ -11,6 +12,12 @@ from tools      import get_location
 
 
 application = Flask(__name__,static_url_path='/static')
+
+
+@application.errorhandler(500)
+def internal_error(error):
+    log.error(f"Exception caught:{str(error)}")
+    return jsonify([])
 
 
 @application.route('/')
@@ -31,7 +38,7 @@ def fit():
                                                         )
 
     context = {}
-    return render_template( 'fit2.html', **context )
+    return render_template( 'fit3.html', **context )
 
 
 @application.route('/medicare')
@@ -104,6 +111,7 @@ def related_drugs():
 @application.route('/formulary_id')
 def formulary_id():
     """
+
     localhost:5000/formulary_id?zipcode=43081&plan_name=CareSource Advantage (HMO)
     Get the formulary_id for a plan in a zipcode
     :return:
@@ -144,6 +152,7 @@ def medicaid_options():
     """
     results = []
     if 'drug_name' in request.args and 'plan_name' in request.args:
+        drug_name = request.args['drug_name']
         plan_name = request.args['plan_name']
         alternatives, exclude = tools.get_from_medicaid(request.args['drug_name'], request.args['plan_name'])
 
@@ -158,10 +167,10 @@ def medicaid_options():
                               Formulary_Restrictions = alternative['Formulary_restriction']
                              )
 
-            elif plan_name.startswith("Molina"): # Molina: Brand_name,Generic_name,Fomulary_restriction
+            elif plan_name.startswith("Molina"): # Molina:Generic_name,Brand_name,Formulary_restriction
                 result = dict(Drug_Name=alternative['Brand_name'],
                               Drug_Tier=" ",
-                              Formulary_Restrictions=alternative['Fomulary_restriction']
+                              Formulary_Restrictions=alternative['Formulary_restriction']
                              )
 
             elif plan_name.startswith("UHC"):# UHC: Generic,Brand,Tier,Formulary_Restriction
@@ -175,6 +184,13 @@ def medicaid_options():
                               Drug_Tier = " ",
                               Formulary_Restrictions=alternative["Fomulary_restriction"],
                              )
+
+
+            if drug_name in result['Drug_Name']  and 'PA' in result['Formulary_Restrictions']:
+                result['Covered'] = False
+            else:
+                result['Covered'] = True
+
 
             fr = result['Formulary_Restrictions'].lower()
             for ex in exclude:
@@ -195,7 +211,7 @@ def medicare_options():
     :return:
     """
     results = []
-    if 'drug_name' in request.args and 'plan_name' in request.args:
+    if 'drug_name' in request.args and 'plan_name' in request.args and 'zipcode' in request.args:
         pass
 
     return jsonify( results )

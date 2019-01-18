@@ -102,7 +102,7 @@ class Basic_Drugs(Base):
         """
         name = f"{name}%"
         if fid:
-            qry = cls.session.query(cls).filter(cls.NDC.ilike(name), cls.FORMULARY_ID == fid )
+            qry = cls.session.query(cls).filter(cls.NDC.ilike(name), cls.FORMULARY_ID == int(fid) )
         else:
             qry = cls.session.query(cls).filter(cls.NDC.ilike(name) )
 

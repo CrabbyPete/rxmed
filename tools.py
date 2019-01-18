@@ -258,11 +258,9 @@ def get_from_medicare(drug_name, plan_name, zipcode=None ):
 
     costs = []
     for drug in drugs:
-        bc = beneficiary_costs(drug, plan )
+        bc = beneficiary_costs(drug, plan)
         costs.append(bc)
 
 if __name__ == "__main__":
-    get_from_medicaid( )
-
     #get_from_medicare( "Victoza", "Anthem MediBlue Essential (HMO)", '43202')
     get_from_medicare( "SYMBICORT","Silverscript choice (PDP)","07040")
