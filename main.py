@@ -148,18 +148,7 @@ def medicaid_options():
         alternatives, exclude = tools.get_from_medicaid(request.args['drug_name'], request.args['plan_name'])
 
         for alternative in alternatives:
-            """
-            if 'Formulary_restrictions' in alternative:
-                fr = alternative['Formulary_restriction'].lower()
-            elif 'Formulary_Restrictions' in alternative:
-                fr = alternative['Formulary_Restrictions'].lower()
-            else:
-                continue
 
-            for ex in exclude:
-                if ex in fr:
-                    break
-            """
             if plan_name.startswith("Caresource"): #Caresourse: Drug_Name,Drug_Tier,Formulary_Restrictions
                 result = alternative
 
@@ -187,7 +176,12 @@ def medicaid_options():
                               Formulary_Restrictions=alternative["Fomulary_restriction"],
                              )
 
-            results.append(result)
+            fr = result['Formulary_Restrictions'].lower()
+            for ex in exclude:
+                if ex in fr:
+                    break
+            else:
+                results.append(result)
 
     return jsonify( results )
 
