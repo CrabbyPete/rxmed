@@ -7,7 +7,7 @@ from models.ndc   import NDC, Plans, Basic_Drugs,Beneficiary_Costs
 from models.fta   import FTA
 from models.plans import Caresource, Paramount, Molina, Molina_Healthcare, UHC, Buckeye
 
-from api          import RxClass
+from api          import RxClass, OhioState
 
 
 def walk(seq, look_for):
@@ -195,10 +195,11 @@ def beneficiary_costs( drug, plan ):
                                                    SEGMENT_ID  = plan.SEGMENT_ID,
                                                    TIER        = med['TIER_LEVEL_VALUE']
                                                  )
-                                             )
+                                         )
         benefit_cost.append(costs)
 
     return benefit_cost
+
 
 def get_from_medicaid(drug_name, plan_name ):
     """
@@ -229,7 +230,10 @@ def get_from_medicaid(drug_name, plan_name ):
                     if name.endswith("PA"):
                         more = Molina_Healthcare.find_brand(record['Brand_name'])
 
-            elif plan_name.lower().startswith("uhc"):
+            elif plan_name.lower().startswith('ohio'):
+                records = OhioState(clean_name)
+
+            elif plan_name.lower().startswith("uhc "):
                 records = UHC.find_by_name(clean_name)
 
             elif plan_name.lower().startswith("buckeye"):
@@ -243,7 +247,6 @@ def get_from_medicaid(drug_name, plan_name ):
                 collection.extend(records)
 
     return collection, exclude
-
 
 
 def get_from_medicare(drug_name, plan_name, zipcode=None ):
@@ -260,7 +263,22 @@ def get_from_medicare(drug_name, plan_name, zipcode=None ):
     for drug in drugs:
         bc = beneficiary_costs(drug, plan)
         costs.append(bc)
+    return costs
 
 if __name__ == "__main__":
-    #get_from_medicare( "Victoza", "Anthem MediBlue Essential (HMO)", '43202')
-    get_from_medicare( "SYMBICORT","Silverscript choice (PDP)","07040")
+    # get_from_medicare( "Victoza", "Anthem MediBlue Essential (HMO)", '43202')
+    # get_from_medicare( "SYMBICORT","Silverscript choice (PDP)","07040")
+    # get_from_medicaid("Admelog", "Caresource" )
+    get_from_medicaid("Breo","Ohio State")
+    # main("Pamidronate Disodium", "Caresource") # CLASS_ID != NULL
+    # main("Tresiba", "Paramount")
+    # main("Advair", "Paramount")
+    # main("epinephrine", "Paramount")
+    # main("Potassium Citrate", "Caresource")
+    # main("Zanaflex", "Caresource")
+    # main("Trelegy", "Caresource")
+    # main("Breo","Caresource")
+    # main('Symbicort','Molina')
+    # main('ARTHROTEC','Molina')
+
+

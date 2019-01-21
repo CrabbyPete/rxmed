@@ -31,13 +31,24 @@ class FTA(Base):
     def find_by_name(cls, name, nonproprietary=True ):
         """ Return an atoms by property
         """
-        name = f"%{name.lower()}%"
+        if not '%' in name:
+            name = f"%{name.lower()}%"
+
         if nonproprietary:
             filter = or_( cls.PROPRIETARY_NAME.ilike(name), cls.NONPROPRIETARY_NAME.ilike(name) )
         else:
             filter = cls.PROPRIETARY_NAME.ilike(name)
 
         qry = cls.session.query(cls).filter( filter )
+        result = qry.all()
+        return result
+
+    @classmethod
+    def find_nonproprietary(cls, name ):
+        if not '%' in name:
+            name = f"%{name.lower()}%"
+
+        qry = cls.session.query(cls).filter( cls.NONPROPRIETARY_NAME.ilike(name) )
         result = qry.all()
         return result
 

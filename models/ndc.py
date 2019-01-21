@@ -1,8 +1,10 @@
 from sqlalchemy import ( Column,
                          Integer,
+                         BigInteger,
                          String,
                          Text,
                          Date,
+                         Boolean,
                          or_
                        )
 
@@ -15,7 +17,7 @@ row2dict = lambda r: {c.name: str(getattr(r, c.name)) for c in r.__table__.colum
 class NDC(Base):
     __tablename__ = 'ndc'
 
-    id                      = Column( Integer,     primary_key= True )
+    id                      = Column( BigInteger, primary_key= True )
     PRODUCTID               = Column( String(255) )
     PRODUCT_NDC             = Column( String(255) )
     PROPRIETARY_NAME        = Column( String(255) )
@@ -40,7 +42,7 @@ class NDC(Base):
 class Plans(Base):
     __tablename__ = 'plans'
 
-    id                  = Column( Integer,     primary_key= True )
+    id                  = Column( BigInteger,     primary_key= True )
     CONTRACT_ID         = Column( String(255) )
     PLAN_ID             = Column( String(255) )
     SEGMENT_ID          = Column( String(255) )
@@ -80,18 +82,18 @@ class Plans(Base):
 class Basic_Drugs(Base):
     __tablename__ = 'basicdrugs'
 
-    id                      = Column( Integer, primary_key=True)
+    id                      = Column( BigInteger, primary_key=True, autoincrement=True)
     FORMULARY_ID            = Column( String(255) )
     FORMULARY_VERSION       = Column( String(255) )
-    CONTRACT_YEAR           = Column( Integer )
+    CONTRACT_YEAR           = Column( String(10) )
     RXCUI                   = Column( String(255) )
-    NDC                     = Column( Text )
+    NDC                     = Column( String(255) )
     TIER_LEVEL_VALUE        = Column( Integer )
-    QUANTITY_LIMIT_YN       = Column( String(1) )
+    QUANTITY_LIMIT_YN       = Column( Boolean )
     QUANTITY_LIMIT_AMOUNT   = Column( String(255) )
     QUANTITY_LIMIT_DAYS     = Column( String(255) )
-    PRIOR_AUTHORIZATION_YN  = Column( String(1) )
-    STEP_THERAPY_YN         = Column( String(1) )
+    PRIOR_AUTHORIZATION_YN  = Column( Boolean )
+    STEP_THERAPY_YN         = Column( Boolean )
 
     @classmethod
     def get_close_to(cls, name, fid=None):
@@ -117,7 +119,7 @@ class Basic_Drugs(Base):
 class Beneficiary_Costs( Base ):
     __tablename__ = 'beneficiarycosts'
 
-    id                          = Column( Integer, primary_key=True)
+    id                          = Column( BigInteger, primary_key=True)
     CONTRACT_ID                 = Column( Text )
     PLAN_ID                     = Column( Integer )
     SEGMENT_ID                  = Column( Integer )

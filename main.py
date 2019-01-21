@@ -3,7 +3,7 @@ import tools
 
 from flask      import Flask, request, render_template, jsonify
 
-from log        import log
+from log        import log, rq_log
 from forms      import MedicaidForm
 from models.fta import FTA
 from models.ndc import Plans
@@ -11,7 +11,7 @@ from models.ndc import Plans
 from tools      import get_location
 
 
-application = Flask(__name__,static_url_path='/static')
+application = Flask(__name__, static_url_path='/static')
 
 
 @application.errorhandler(500)
@@ -38,7 +38,7 @@ def fit():
                                                         )
 
     context = {}
-    return render_template( 'fit3.html', **context )
+    return render_template( 'fit4.html', **context )
 
 
 @application.route('/medicare')
@@ -73,7 +73,7 @@ def plans():
             zipcode = request.args['zipcode']
 
 
-            look_in = get_location( zipcode )[0]
+            look_in = get_location( zipcode )
             county_code = f"%{str(look_in.COUNTY_CODE)}%"
 
     
@@ -125,22 +125,22 @@ def formulary_id():
     return jsonify( results )
 
 
-
 @application.route('/drug_names', methods=['GET'])
 def drug_names():
     """
     Retrieve a list of drugs on spelling
     :return:
     """
-    results=[]
+    results = set()
     if 'qry' in request.args:
         look_for = f"{request.args['qry'].lower()}%"
-        drug_list = FTA.session.query(FTA.PROPRIETARY_NAME).filter( FTA.PROPRIETARY_NAME.ilike(look_for) )
+        drug_list = FTA.find_by_name(look_for, False )
+        results = { d.PROPRIETARY_NAME for d in drug_list }
 
-        for drug in drug_list:
-            results.append( drug.PROPRIETARY_NAME)
+        drug_list = FTA.find_nonproprietary( look_for )
+        results.update( [ d.NONPROPRIETARY_NAME for d in drug_list ])
 
-
+    results = sorted( list(results) )
     return jsonify(results)
 
 
@@ -150,58 +150,44 @@ def medicaid_options():
     Get all the options for a drug for a plan
     :return: json:
     """
+    rq = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+    #request.headers.get('X-Forwarded-For', request.remote_addr)
+
     results = []
     if 'drug_name' in request.args and 'plan_name' in request.args:
+
         drug_name = request.args['drug_name']
         plan_name = request.args['plan_name']
+
+        rq_log.info(f"{rq},{drug_name},{plan_name},medicaid")
+
         alternatives, exclude = tools.get_from_medicaid(request.args['drug_name'], request.args['plan_name'])
 
         for alternative in alternatives:
 
             if plan_name.startswith("Caresource"): #Caresourse: Drug_Name,Drug_Tier,Formulary_Restrictions
-                result = alternative
+                look_in = alternative['Drug_Name']
 
             elif plan_name.startswith("Paramount"):# Paramount: Formulary_restriction, Generic_name, Brand_name
-                result = dict(Drug_Name = alternative['Brand_name'],
-                              Drug_Tier = " ",
-                              Formulary_Restrictions = alternative['Formulary_restriction']
-                             )
+                look_in = alternative['Brand_name']+" "+alternative['Brand_name']
 
             elif plan_name.startswith("Molina"): # Molina:Generic_name,Brand_name,Formulary_restriction
-                result = dict(Drug_Name=alternative['Brand_name'],
-                              Drug_Tier=" ",
-                              Formulary_Restrictions=alternative['Formulary_restriction']
-                             )
+                look_in = alternative['Brand_name']+" "+alternative['Generic_name']
 
-            elif plan_name.startswith("UHC"):# UHC: Generic,Brand,Tier,Formulary_Restriction
-                result = dict(Drug_Name=alternative['Brand'],
-                              Drug_Tier=alternative['Tier'],
-                              Formulary_Restrictions=alternative['Formulary_Restriction']
-                             )
+            elif plan_name.startswith("OH"):# UHC: Generic,Brand,Tier,Formulary_Restriction
+                look_in = alternative['Brand']+" "+alternative['Generic']
 
             elif plan_name.startswith("Buckeye"):# Buckeye: Drug_Name,Preferred_Agent,Fomulary_restriction
-                result = dict(Drug_Name=alternative['Drug_Name'],
-                              Drug_Tier = " ",
-                              Formulary_Restrictions=alternative["Fomulary_restriction"],
-                             )
+                look_in = alternative['Drug_Name']
 
-
-            if drug_name in result['Drug_Name']  and 'PA' in result['Formulary_Restrictions']:
-                result['Covered'] = False
-            else:
-                result['Covered'] = True
-
-
-            fr = result['Formulary_Restrictions'].lower()
+            fr = look_in.lower()
             for ex in exclude:
                 if ex in fr:
                     break
             else:
-                results.append(result)
+                results.append( alternative )
 
-    return jsonify( results )
-
-
+    return jsonify(results)
 
 
 @application.route('/medicare_options', methods=['GET'])
@@ -210,9 +196,14 @@ def medicare_options():
     drug_name, dose_strength, dose_unit, plan_name
     :return:
     """
+    rq = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
+
     results = []
     if 'drug_name' in request.args and 'plan_name' in request.args and 'zipcode' in request.args:
-        pass
+        drug_name = request.args['drug_name']
+        plan_name = request.args['plan_name']
+
+        rq_log.info(f"{rq},{drug_name},{plan_name},'medicare")
 
     return jsonify( results )
 
