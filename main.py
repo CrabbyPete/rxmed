@@ -100,7 +100,7 @@ def related_drugs():
     results = []
 
     if 'drug_name' in request.args:
-        drugs, excluded = tools.get_related_drugs(request.args['drug_name'])
+        drugs, _ = tools.get_related_drugs(request.args['drug_name'])
 
     for drug in drugs:
         results.append(drug)
@@ -185,7 +185,17 @@ def medicaid_options():
                 if ex in fr:
                     break
             else:
-                results.append( alternative )
+                # Reformat the headers
+                alternative.pop('id')
+                result = {}
+                for k,v in alternative.items():
+                    if k.lower().startswith('fo'):
+                        k = 'Formulary Restrictions'
+                    else:
+                        k = " ".join( [ k.capitalize() for k in k.split('_') ] )
+                    result[k] = v
+                    
+                results.append( result )
 
     return jsonify(results)
 
