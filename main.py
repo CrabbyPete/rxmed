@@ -174,19 +174,26 @@ def medicaid_options():
             elif plan_name.startswith("Molina"): # Molina:Generic_name,Brand_name,Formulary_restriction
                 look_in = alternative['Brand_name']+" "+alternative['Generic_name']
 
-            elif plan_name.startswith("OH"):# UHC: Generic,Brand,Tier,Formulary_Restriction
+            elif plan_name.startswith("UHC"):# UHC: Generic,Brand,Tier,Formulary_Restriction
                 look_in = alternative['Brand']+" "+alternative['Generic']
 
             elif plan_name.startswith("Buckeye"):# Buckeye: Drug_Name,Preferred_Agent,Fomulary_restriction
                 look_in = alternative['Drug_Name']
 
+            elif plan_name.startswith("OH State"):
+                look_in = alternative['Product_Description']
+                pa = alternative.pop('Prior_Authorization_Required')
+                alternative['fo'] = 'PA' if 'Y' in pa else "None"
+            
             fr = look_in.lower()
             for ex in exclude:
                 if ex in fr:
                     break
             else:
                 # Reformat the headers
-                alternative.pop('id')
+                if 'id' in alternative:
+                    alternative.pop('id')
+                    
                 result = {}
                 for k,v in alternative.items():
                     if k.lower().startswith('fo'):

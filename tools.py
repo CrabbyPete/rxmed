@@ -230,7 +230,7 @@ def get_from_medicaid(drug_name, plan_name ):
                     if name.endswith("PA"):
                         more = Molina_Healthcare.find_brand(record['Brand_name'])
 
-            elif plan_name.lower().startswith('ohio'):
+            elif plan_name.lower().startswith('oh state'):
                 records = OhioState(clean_name)
 
             elif plan_name.lower().startswith("uhc "):

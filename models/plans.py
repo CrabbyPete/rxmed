@@ -2,6 +2,7 @@ from sqlalchemy import ( Column,
                          BigInteger,
                          Integer,
                          String,
+                         Text,
                          or_
                        )
 
@@ -130,10 +131,10 @@ class UHC(Base):
     __tablename__ = 'UHC'
 
     id                      = Column(BigInteger,   primary_key=True)
-    Generic                 = Column( String(255), nullable=False )
-    Brand                   = Column( String(255), nullable=False )
-    Tier                    = Column( String(255), nullable=False )
-    Formulary_Restriction   = Column( String(255), nullable=False )
+    Generic                 = Column( Text, nullable=False )
+    Brand                   = Column( Text, nullable=False )
+    Tier                    = Column( Text, nullable=False )
+    Formulary_Restrictions  = Column( Text, nullable=False )
 
     @classmethod
     def find_by_name(cls, name ):
@@ -146,7 +147,8 @@ class UHC(Base):
         qry = cls.session.query(cls).filter( or_(cls.Generic.ilike(name),
                                                  cls.Brand.ilike(name)
                                                 )
-                                           )
+                                           ).all()
+                                           
         results = [row2dict(r) for r in qry]
         return results
 
