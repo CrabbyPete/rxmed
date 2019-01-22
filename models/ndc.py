@@ -45,8 +45,7 @@ class NDC(Base):
         qry = cls.session.query(cls).filter(or_(cls.PROPRIETARY_NAME.ilike(name),
                                                 cls.NONPROPRIETARY_NAME.ilike(name)
                                                )
-                                           )
-                                           
+                                           )        
         results = [row2dict(r) for r in qry]
         return results
 
@@ -98,8 +97,26 @@ class Plans(Base):
         else:
             name = name.lower()
 
-        qry = cls.session.query(cls).filter(cls.PLAN_NAME.ilike(name))
+        qry = cls.session.query(cls).filter(cls.PLAN_NAME.ilike(name)).all()
         results = [row2dict(r) for r in qry]
+        return results
+
+    @classmethod
+    def find_in_county(cls, county_code, ma_region, pdp_region, name='*'):
+        """
+        Query plans in a certain county
+        """
+        county_code = f"%{county_code}%"
+        flter = or_( cls.COUNTY_CODE.ilike(county_code),
+                     cls.MA_REGION_CODE.ilike(ma_region),
+                     cls.PDP_REGION_CODE == str(pdp_region)
+                   )
+        if not name == '*':
+                look_for = f"{name.lower()}%"
+                flter = and_( flter, cls.PLAN_NAME.ilike(look_for))
+    
+        qry = cls.session.query(Plans.PLAN_NAME).filter(flter).distinct(cls.PLAN_NAME).all()
+        results = [r.PLAN_NAME for r in qry]
         return results
 
     def __repr__(self):

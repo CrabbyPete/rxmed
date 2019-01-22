@@ -35,7 +35,7 @@ class Geolocate(Base):
     MA_REGION_CODE  = Column( String(255) )
     MA_REGION       = Column( String(255) )
     PDP_REGION_CODE = Column( Integer )
-    PDP_REGION      = Column()
+    PDP_REGION      = Column( String(255) )
 
     def __repr__(self):
         return "<{}-{}>".format(self.STATENAME, self.COUNTY)

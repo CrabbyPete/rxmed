@@ -76,12 +76,7 @@ def get_formulary_id( plan_name, zipcode ):
     # There should only be one
     if len( formulary_ids ) == 1:
         return  formulary_ids[0]
-        """
-        {"plan_name":formulary_ids[0]['PLAN_NAME'],
-                "zipcode":zipcode,
-                "formulary_id":formulary_ids[0]['FORMULARY_ID']
-               }
-        """
+
     else:
         return "More than one found"
 
@@ -186,22 +181,30 @@ def get_ndc( proprietary_name, dose_strength = None, dose_unit = None ):
 
 def beneficiary_costs( drug, plan ):
     """
+    Get the beneficary costs for a drug in plan
     :param drugs:
-    :return:
+    :return:“COST_AMT_PREF” ONLY if “DAYS_SUPPLY” = 1 and “COST_TYPE_PREF” = 1, for each “COVERAGE_LEVEL” 0 AND 1 
     """
-    benefit_cost = []
     drug = int(drug.replace("-",""))
     meds = Basic_Drugs.get_close_to( drug, plan['FORMULARY_ID']  )
+    
+    costs = []
+    bd = None
+    
     for med in meds:
-        costs = Beneficiary_Costs.get_all( **dict( CONTRACT_ID = plan['CONTRACT_ID'],
-                                                   PLAN_ID     = plan['PLAN_ID'],
-                                                   SEGMENT_ID  = plan['SEGMENT_ID'],
-                                                   TIER        = med['TIER_LEVEL_VALUE']
-                                                 )
+        benefit_costs = Beneficiary_Costs.get_all( **dict( CONTRACT_ID = plan['CONTRACT_ID'],
+                                                           PLAN_ID     = plan['PLAN_ID'],
+                                                           SEGMENT_ID  = plan['SEGMENT_ID'],
+                                                           TIER        = med['TIER_LEVEL_VALUE']
+                                                  )
                                          )
-        benefit_cost.append(costs)
+        
+        for bc in benefit_costs:
+            if bc.DAYS_SUPPLY == 1 and bc.COST_TYPE_PREF == 1:
+                costs.append(bc)
+                bd = med
 
-    return benefit_cost
+    return bd, costs
 
 
 def get_from_medicaid(drug_name, plan_name ):
@@ -252,23 +255,57 @@ def get_from_medicaid(drug_name, plan_name ):
     return collection, exclude
 
 
-def get_from_medicare(drug_name, plan_name, zipcode=None, dose=None ):
+def get_from_medicare(drug_name, plan_name, zipcode=None ):
     """
 
     :param drug_name:
     :param plan_name:
     :return:
     """
-    results, exclude = get_related_drugs(drug_name)
+    parts = drug_name.split()
+    if len( parts ) > 2:
+        dose = parts[-2]
+        units = parts[-1]
+        drug_name = " ".join(parts[:-2])
+    
+    drug_list, exclude = get_related_drugs(drug_name)
     plan = get_formulary_id(plan_name, zipcode)
     
-    for result in results:
-        ndc_list = NDC.find_by_name( result, dose )
-        for ndc in ndc_list:
-            bc = beneficiary_costs(ndc['PRODUCT_NDC'], plan)
-            print( bc )
+    results = []
 
+    for drug in drug_list:
+        costs =[]
+        ndc_list = NDC.find_by_name( drug )
+        for ndc in ndc_list:
+            bd, bc = beneficiary_costs(ndc['PRODUCT_NDC'], plan)
         
+            if not bd:
+                pa = 'Yes'
+                ql = ''
+                st = ''
+                copay_p = ''
+                copay_d = ''
+                tier = ''
+            else:
+                pa = bd['PRIOR_AUTHORIZATION_YN']
+                ql = 'Yes :' if bd['QUANTITY_LIMIT_YN'] else 'No :'+ bd['QUANTITY_LIMIT_DAYS']
+                st = 'Yes' if bd['STEP_THERAPY_YN']  else 'No'
+                copay_p = bc[0].COST_AMT_PREF
+                copay_d = bc[0].COST_AMT_NONPREF
+                tier    = bc[0].TIER
+                      
+            
+            result = { 'Brand'  : ndc['PROPRIETARY_NAME'],
+                       'Generic': ndc['NONPROPRIETARY_NAME'],
+                       'Tier'   : tier,
+                       'ST'     : st,
+                       'QL'     : ql,
+                       'PA'     : pa,
+                       'CopayP' :copay_p,
+                       'CopayD' :copay_d
+                     }
+        
+            results.append( result )
     
     return results
 

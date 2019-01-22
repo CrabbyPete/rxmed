@@ -26,6 +26,7 @@
 		  $(this).css("background-color", "#0069a3"),
 	      $(this).css("border-color", "#0069a3")
 	  };
+	  
 	  /***** Autocomplete functionality *****/
       $("#input-plan-medicare").autocomplete({
 		  source: function( request, response )
@@ -43,13 +44,13 @@
 				  });
 		  }
 	  });
-
-      $( "#input-med" ).autocomplete({
+      
+      $( "#input-ndc" ).autocomplete({
 		  source: function( request, response )
 		  {
 			  $.ajax(
 				  {
-					  url: "/drug_names",
+					  url: "/ndc_drugs",
 					  dataType: "json",
 					  data: {qry: request.term },
 					  success: function( data )
@@ -59,6 +60,24 @@
 				  });
 		  }
 	  });
+
+      $( "#input-med" ).autocomplete({
+    	  minLength: 3,
+    	  source: function( request, response )
+		  {
+			  $.ajax(
+				  {
+					  url: "/ndc_drugs",//"/drug_names",
+					  dataType: "json",
+					  data: {qry: request.term },
+					  success: function( data )
+					  {
+						  response( data )
+					  }
+				  });
+		  }
+	  });
+      
 	  /***** Medicare/medicaid button toggles *****/
 
 	  $('#button-medicare').click(function ()
@@ -159,13 +178,14 @@
 					  var tr =
 						  (
 						  '<tr>' +
-						  '<td>' + '</td>' +
-						  '<td>' + '</td>' +
-						  '<td>' + '</td>' +
-						  '<td>' + '</td>' +
-						  '<td>' + '</td>' +
-						  '<td>' + '</td>' +
-						  '<td>' + '</td>' +
+						  '<td>' +resp[d]['Brand']+'</td>' +
+						  '<td>' +resp[d]['Generic']+'</td>' +
+						  '<td>' +resp[d]['Tier']+'</td>' +
+						  '<td>' +resp[d]['ST']+'</td>' +
+						  '<td>' +resp[d]['QL']+'</td>' +
+						  '<td>' +resp[d]['PA']+'</td>' +
+						  '<td>' +resp[d]['CopayP']+'</td>' +
+						  '<td>' +resp[d]['CopayD']+'</td>' +
 						  '</tr>'
 						  );
 					  $("#medicarebody").append(tr)
@@ -205,17 +225,15 @@
 				  $('#medicaidhead').append(header);
 				  
 				  $('#medicaidbody').empty();
+				  drugHasPA = false
+				  
 				  for( d=0; d < resp.length; d++)
 				  {
 					  if( resp[d]['Formulary Restrictions'].search('PA') )
 					    cls = '<td class="table-success">';
 					  else
 					    cls = '<td class="table-danger">';
-
-					 if ( resp[d][0] == false )
-					    drugHasPA = false;
-					 else
-					    drugHasPA = true;
+					  	drugHasPA = true
 
 					  var tr = '<tr id="medicaid-success">' 
 					  for ( h=0; h<headings.length; h++)

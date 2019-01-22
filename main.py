@@ -1,17 +1,16 @@
 
 import tools
 
-from collections import OrderedDict
-from flask       import Flask, request, render_template, jsonify
+from flask       import Flask, request, render_template, jsonify, url_for
 
 from log         import log, rq_log
 from forms       import MedicaidForm
 from models.fta  import FTA
-from models.ndc  import Plans
+from models.ndc  import Plans, NDC
 
 
 application = Flask(__name__, static_url_path='/static')
-
+#application.add_url_rule('/favicon.ico', redirect_to=url_for('static', filename='favicon.ico'))
 
 @application.errorhandler(500)
 def internal_error(error):
@@ -21,7 +20,7 @@ def internal_error(error):
 
 @application.route('/')
 def home():
-    return render_template( 'home.html')
+    return render_template('home.html')
 
 
 @application.route('/fit')
@@ -61,24 +60,16 @@ def plans():
                   ]
     else:
         if 'qry' in request.args:
-            look_for = "{}%".format( request.args['qry'].lower() )
+            look_for = request.args['qry']
             zipcode = request.args['zipcode']
 
-
             look_in = tools.get_location( zipcode )
-            county_code = f"%{str(look_in.COUNTY_CODE)}%"
-
-    
-            plans_list = Plans.session.query(Plans.PLAN_NAME)\
-                                  .filter(Plans.PLAN_NAME.ilike(look_for), Plans.COUNTY_CODE.ilike(county_code))\
-                                  .distinct(Plans.PLAN_NAME)\
-                                  .all()
-
-
-            # If you use a selector in the json, return a json with numbered values, otherwise just a list
-            for val, txt in enumerate(plans_list):
-                results.append(txt[0])
-
+            county_code = look_in.COUNTY_CODE
+            ma_region   = look_in.MA_REGION_CODE
+            pdp_region  = look_in.PDP_REGION_CODE
+            
+            results = Plans.find_in_county(county_code, ma_region, pdp_region, look_for)
+   
     return jsonify(results)
 
 
@@ -115,6 +106,25 @@ def formulary_id():
                                         )
 
     return jsonify( results )
+
+@application.route('/ndc_drugs', methods=['GET'])
+def ndc_drugs():
+    """
+    Type ahead for ncd drugs
+    :return a list of drugs from ncd 
+    """
+    results = set()
+    if 'qry' in request.args:
+        look_for = request.args['qry']
+        drug_list = NDC.find_by_name( look_for )
+        for d in drug_list:
+            s = d['PROPRIETARY_NAME'] 
+            if d['DOSE_STRENGTH'] and d['DOSE_UNIT']:
+                s += f" {d['DOSE_STRENGTH']} {d['DOSE_UNIT']}"
+            results.update([s])
+    
+    print( list(results))
+    return jsonify(list(results))
 
 
 @application.route('/drug_names', methods=['GET'])
@@ -191,7 +201,7 @@ def medicaid_options():
                 if 'id' in alternative:
                     alternative.pop('id')
                     
-                result = OrderedDict()
+                result = {}
                 for k,v in alternative.items():
                     if k.lower().startswith('fo'):
                         k = 'Formulary Restrictions'
@@ -221,10 +231,7 @@ def medicare_options():
 
         rq_log.info(f"{rq},{drug_name},{plan_name},'medicare")
 
-        alternatives = tools.get_from_medicare(drug_name, plan_name, zipcode )
-        for alternative in alternatives:
-            results.append( alternative )
-
+        results = tools.get_from_medicare(drug_name, plan_name, zipcode )
 
     return jsonify( results )
 
