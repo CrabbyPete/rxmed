@@ -67,7 +67,7 @@
 		  {
 			  $.ajax(
 				  {
-					  url: "/ndc_drugs",//"/drug_names",
+					  url: "/drug_names",
 					  dataType: "json",
 					  data: {qry: request.term },
 					  success: function( data )
