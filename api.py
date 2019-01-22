@@ -2,10 +2,14 @@ import re
 import json
 import requests
 
-from xmltodict import parse
-from bs4 import BeautifulSoup
+from bs4            import BeautifulSoup
+from collections    import OrderedDict
+
+#from xmltodict      import parse
+
 
 BASE_URL     = "https://rxnav.nlm.nih.gov/REST"
+HISTORIC_URL = "https://rxnav.nlm.nih.gov/REST/rxcuihistoryconcept?rxcui={}"
 OPENFDA_URL  = 'https://api.fda.gov/drug/event.json?search='
 OHSTATE      = 'https://druglookup.ohgov.changehealthcare.com/DrugSearch/application/search?searchBy=name&name={}'
 
@@ -25,24 +29,34 @@ def OhioState( name ):
     for tr in tbody.find_all('tr'):
         row = [t.text for t in tr.find_all('td')]
 
-        data = dict(Drug_Code                    = row[0],
-                    Product_Description          = row[2],
-                    Route_of_Administration      = row[3],
-                    Package                      = re.sub('\r|\n|\t','',row[4]),
-                    Prior_Authorization_Required = re.sub('\r|\n|\t','',row[5]),
-                    Covered_for_Dual_Eligible    = re.sub('\r|\n|\t','',row[6]),
-                    Copay                        = re.sub('\r|\n|\t','',row[8] )
-                   )
+        data = OrderedDict( [('Product_Description'         ,row[2]),
+                            ('Route_of_Administration'     ,row[3] ),
+                            ('Package'                     ,re.sub('\r|\n|\t','',row[4])),
+                            ('Prior_Authorization_Required',re.sub('\r|\n|\t','',row[5])),
+                            ('Covered_for_Dual_Eligible'   ,re.sub('\r|\n|\t','',row[6])),
+                            ('Copay'                       ,re.sub('\r|\n|\t','',row[8]))]
+                          )
 
         rows.append(data)
+    
     return rows
 
+
+def get_historic_rxcui( rxcui ):
+    url = HISTORIC_URL.format(rxcui)
+    r = requests.get(url)
+    if r.ok:
+        data = json.loads(r.text)
+    else:
+        return r.status_code
+
+    return data
+    
 
 class RxNorm():
     """
 
     """
-
     def __init__(self):
         self.base_url = BASE_URL
         return
@@ -125,6 +139,8 @@ class RxClass():
         kwargs = "&".join("%s=%s" % (k,v) for k,v in kwargs.items())
         data = self.api( url, kwargs )
         return data
+
+
 
 
 

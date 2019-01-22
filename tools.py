@@ -75,10 +75,13 @@ def get_formulary_id( plan_name, zipcode ):
 
     # There should only be one
     if len( formulary_ids ) == 1:
-        return {"plan_name":formulary_ids[0]['PLAN_NAME'],
+        return  formulary_ids[0]
+        """
+        {"plan_name":formulary_ids[0]['PLAN_NAME'],
                 "zipcode":zipcode,
                 "formulary_id":formulary_ids[0]['FORMULARY_ID']
                }
+        """
     else:
         return "More than one found"
 
@@ -178,7 +181,7 @@ def get_ndc( proprietary_name, dose_strength = None, dose_unit = None ):
         qry.update( dict(DOSE_UNIT=dose_unit) )
 
     drugs = NDC.get_all(**qry )
-    return [ drug.PRODUCT_NDC for drug in drugs ]
+    return drugs 
 
 
 def beneficiary_costs( drug, plan ):
@@ -188,11 +191,11 @@ def beneficiary_costs( drug, plan ):
     """
     benefit_cost = []
     drug = int(drug.replace("-",""))
-    meds = Basic_Drugs.get_close_to( drug, plan['formulary_id']  )
+    meds = Basic_Drugs.get_close_to( drug, plan['FORMULARY_ID']  )
     for med in meds:
-        costs = Beneficiary_Costs.get_all( **dict( CONTRACT_ID = plan.CONTRACT_ID,
-                                                   PLAN_ID     = plan.PLAN_ID,
-                                                   SEGMENT_ID  = plan.SEGMENT_ID,
+        costs = Beneficiary_Costs.get_all( **dict( CONTRACT_ID = plan['CONTRACT_ID'],
+                                                   PLAN_ID     = plan['PLAN_ID'],
+                                                   SEGMENT_ID  = plan['SEGMENT_ID'],
                                                    TIER        = med['TIER_LEVEL_VALUE']
                                                  )
                                          )
@@ -249,27 +252,31 @@ def get_from_medicaid(drug_name, plan_name ):
     return collection, exclude
 
 
-def get_from_medicare(drug_name, plan_name, zipcode=None ):
+def get_from_medicare(drug_name, plan_name, zipcode=None, dose=None ):
     """
 
     :param drug_name:
     :param plan_name:
     :return:
     """
-    plan = get_formulary_id( plan_name, zipcode )
-    drugs = get_ndc( drug_name )
+    results, exclude = get_related_drugs(drug_name)
+    plan = get_formulary_id(plan_name, zipcode)
+    
+    for result in results:
+        ndc_list = NDC.find_by_name( result, dose )
+        for ndc in ndc_list:
+            bc = beneficiary_costs(ndc['PRODUCT_NDC'], plan)
+            print( bc )
 
-    costs = []
-    for drug in drugs:
-        bc = beneficiary_costs(drug, plan)
-        costs.append(bc)
-    return costs
+        
+    
+    return results
 
 if __name__ == "__main__":
-    # get_from_medicare( "Victoza", "Anthem MediBlue Essential (HMO)", '43202')
+    get_from_medicare( "Victoza", "Anthem MediBlue Essential (HMO)", '43202')
     # get_from_medicare( "SYMBICORT","Silverscript choice (PDP)","07040")
     # get_from_medicaid("Admelog", "Caresource" )
-    get_from_medicaid("Breo","Ohio State")
+    # get_from_medicaid("Breo","Ohio State")
     # main("Pamidronate Disodium", "Caresource") # CLASS_ID != NULL
     # main("Tresiba", "Paramount")
     # main("Advair", "Paramount")

@@ -1,14 +1,13 @@
 
 import tools
 
-from flask      import Flask, request, render_template, jsonify
+from collections import OrderedDict
+from flask       import Flask, request, render_template, jsonify
 
-from log        import log, rq_log
-from forms      import MedicaidForm
-from models.fta import FTA
-from models.ndc import Plans
-
-from tools      import get_location
+from log         import log, rq_log
+from forms       import MedicaidForm
+from models.fta  import FTA
+from models.ndc  import Plans
 
 
 application = Flask(__name__, static_url_path='/static')
@@ -38,15 +37,8 @@ def fit():
                                                         )
 
     context = {}
-    return render_template( 'fit4.html', **context )
+    return render_template( 'fit.html', **context )
 
-
-@application.route('/medicare')
-def medicare():
-    """
-    get
-    :return:
-    """
 
 
 # Ajax calls
@@ -73,7 +65,7 @@ def plans():
             zipcode = request.args['zipcode']
 
 
-            look_in = get_location( zipcode )
+            look_in = tools.get_location( zipcode )
             county_code = f"%{str(look_in.COUNTY_CODE)}%"
 
     
@@ -178,6 +170,11 @@ def medicaid_options():
                 look_in = alternative['Brand']+" "+alternative['Generic']
 
             elif plan_name.startswith("Buckeye"):# Buckeye: Drug_Name,Preferred_Agent,Fomulary_restriction
+                if alternative['Preferred_Agent'] == "***":
+                    alternative['Preferred_Agent'] = "Yes"
+                else:
+                    alternative['Preferred_Agent'] = "No"
+                    
                 look_in = alternative['Drug_Name']
 
             elif plan_name.startswith("OH State"):
@@ -194,7 +191,7 @@ def medicaid_options():
                 if 'id' in alternative:
                     alternative.pop('id')
                     
-                result = {}
+                result = OrderedDict()
                 for k,v in alternative.items():
                     if k.lower().startswith('fo'):
                         k = 'Formulary Restrictions'
@@ -217,13 +214,19 @@ def medicare_options():
 
     results = []
     if 'drug_name' in request.args and 'plan_name' in request.args and 'zipcode' in request.args:
+
         drug_name = request.args['drug_name']
         plan_name = request.args['plan_name']
+        zipcode = request.args['zipcode']
 
         rq_log.info(f"{rq},{drug_name},{plan_name},'medicare")
 
-    return jsonify( results )
+        alternatives = tools.get_from_medicare(drug_name, plan_name, zipcode )
+        for alternative in alternatives:
+            results.append( alternative )
 
+
+    return jsonify( results )
 
 
 if __name__ == "__main__":

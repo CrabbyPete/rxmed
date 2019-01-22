@@ -5,7 +5,7 @@ from sqlalchemy import ( Column,
                          Text,
                          Date,
                          Boolean,
-                         or_
+                         or_, and_
                        )
 
 from .base import Base
@@ -34,6 +34,33 @@ class NDC(Base):
     DEASCHEDULE             = Column( String(255) )
     NDC_EXCLUDE_FLAG        = Column( String(255) )
     LISTING_RECORD_CERTIFIED_THROUGH = Column( String(255) )
+    
+    @classmethod
+    def find_by_name(cls, name, exact = False ):
+        if not exact:
+            name = "{}%".format(name.lower())
+        else:
+            name = name.lower()
+        
+        qry = cls.session.query(cls).filter(or_(cls.PROPRIETARY_NAME.ilike(name),
+                                                cls.NONPROPRIETARY_NAME.ilike(name)
+                                               )
+                                           )
+                                           
+        results = [row2dict(r) for r in qry]
+        return results
+
+    @classmethod
+    def find_by_dose(cls, proprietary_name, dose_strength = None, dose_unit = None ):
+        name = "{}%".format( proprietary_name.lower() )
+        qry = cls.PROPRIETARY_NAME.ilike(name)
+
+        if dose_strength:
+            dose = "%{}%".format( dose_strength.lower() )
+            qry = and_( qry, cls.DOSE_STRENGTH.ilike(dose) )
+
+        data = cls.session.query(cls).filter(qry).all()
+        return data
 
     def __repr__(self):
         return "<{}>".format(self.PROPRIETARY_NAME)
@@ -102,9 +129,11 @@ class Basic_Drugs(Base):
         :param name: drug name
         :return: matches
         """
-        name = f"{name}%"
+        name = f"%{name}%"
+        
         if fid:
-            qry = cls.session.query(cls).filter(cls.NDC.ilike(name), cls.FORMULARY_ID == int(fid) )
+            fid  = f"%{fid}%"
+            qry = cls.session.query(cls).filter(cls.NDC.ilike(name), cls.FORMULARY_ID.ilike(fid) )
         else:
             qry = cls.session.query(cls).filter(cls.NDC.ilike(name) )
 
