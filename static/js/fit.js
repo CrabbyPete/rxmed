@@ -62,7 +62,7 @@
 	  });
 
       $( "#input-med" ).autocomplete({
-    	  minLength: 3,
+    	  minLength: 2,
     	  source: function( request, response )
 		  {
 			  $.ajax(
@@ -170,29 +170,40 @@
 			  },
 			  success: function( resp )
 			  {
-				  $('#loading').hide;
+				  $('#loading').hide();
 				  
 				  $("#medicarebody").empty();
 				  for( d=0; d < resp.length; d++)
 				  {
+					  if( resp[d]['PA'].search('Yes') )
+						    cls = '<td class="table-success">';
+						  else
+						    cls = '<td class="table-danger">';
+						  	drugHasPA = true
+					  
+					  
 					  var tr =
 						  (
 						  '<tr>' +
-						  '<td>' +resp[d]['Brand']+'</td>' +
-						  '<td>' +resp[d]['Generic']+'</td>' +
-						  '<td>' +resp[d]['Tier']+'</td>' +
-						  '<td>' +resp[d]['ST']+'</td>' +
-						  '<td>' +resp[d]['QL']+'</td>' +
-						  '<td>' +resp[d]['PA']+'</td>' +
-						  '<td>' +resp[d]['CopayP']+'</td>' +
-						  '<td>' +resp[d]['CopayD']+'</td>' +
+						  cls+resp[d]['Brand']+'</td>' +
+						  cls+resp[d]['Generic']+'</td>' +
+						  cls+resp[d]['Tier']+'</td>' +
+						  cls+resp[d]['ST']+'</td>' +
+						  cls+resp[d]['QL']+'</td>' +
+						  cls+resp[d]['PA']+'</td>' +
+						  cls+resp[d]['CopayP']+'</td>' +
+						  cls+resp[d]['CopayD']+'</td>' +
 						  '</tr>'
 						  );
 					  $("#medicarebody").append(tr)
-
 				  }
 				  $('#table-header').show();
 				  $('#table-medicare').show();
+			  },
+			  error:function(resp)
+			  {
+				  console.log(resp);
+				  $('#loading').hide();
 			  }
 		  });
 	  }
@@ -211,7 +222,7 @@
 			  },
 			  success: function( resp )
 			  {
-			  	  $('#loading').hide;
+			  	  $('#loading').hide();
 			  
 				  $('#medicaidhead').empty();
 				  var headings = Object.keys(resp[0]);

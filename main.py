@@ -123,7 +123,6 @@ def ndc_drugs():
                 s += f" {d['DOSE_STRENGTH']} {d['DOSE_UNIT']}"
             results.update([s])
     
-    print( list(results))
     return jsonify(list(results))
 
 

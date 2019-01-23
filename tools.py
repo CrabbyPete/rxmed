@@ -1,6 +1,6 @@
 import re
 
-from log          import log
+from log          import log, log_msg
 
 from models.geo   import Zipcode, Geolocate
 from models.ndc   import NDC, Plans, Basic_Drugs,Beneficiary_Costs
@@ -44,9 +44,13 @@ def get_location( zipcode ):
     while zipcode.startswith('0'):
         zipcode = zipcode[1:]
 
-    zip_info = Zipcode.get_one(**dict(ZIPCODE=zipcode))
-    geo_info = Geolocate.get_all(**dict(COUNTY=zip_info.COUNTY.strip(), STATENAME=zip_info.STATENAME.strip()))
-    return geo_info[0]
+    try:
+        zip_info = Zipcode.get_one(**dict(ZIPCODE=zipcode))
+        geo_info = Geolocate.get_all(**dict(COUNTY=zip_info.COUNTY.strip(), STATENAME=zip_info.STATENAME.strip()))
+        return geo_info[0]
+    except Exception as e:
+        log.error( log_msg(str(e)) )
+        return None
 
 
 def get_formulary_id( plan_name, zipcode ):
@@ -130,7 +134,7 @@ def get_related_drugs(name):
 
             drug_members = walk( members,'drugMemberGroup' )
             if not drug_members:
-                log.error( f"No members of class {class_id}")
+                log.error( log_msg(f"No members of class {class_id}") )
                 continue
 
             for dm in drug_members['drugMember']:
@@ -140,7 +144,7 @@ def get_related_drugs(name):
                         try:
                             look_for =  re.findall(REGEX, look_for )[0]
                         except IndexError:
-                            log.error( f"No brackets in {look_for}")
+                            log.error( log_msg( f"No brackets in {look_for}") )
                             continue
 
                     if look_for.lower() in excluded_back:
@@ -148,7 +152,7 @@ def get_related_drugs(name):
 
                     fta_members = FTA.find_by_name(look_for)
                     if not fta_members:
-                        log.error("{} not found".format(look_for))
+                        log.error( log_msg("{} not found".format(look_for)) )
                         continue
 
                     for fta_member in fta_members:
@@ -230,11 +234,22 @@ def get_from_medicaid(drug_name, plan_name ):
 
             elif plan_name.lower().startswith("molina"):
                 records = Molina.find_by_name(clean_name)
+                """
+                if (Generic_name) has a capital word “PA”, 
+                  then retrieve its respective column B (Brand_name) [2018 Molina PDL 10_9_18]. 
+                  Match (first word match), to [Molina Healthcare PA criteria 10_1_18].DRUG_NAME). 
+                """
                 for record in records:
                     name = record['Generic_name']
                     name = name.split(',')[0] if ',' in name else name
                     if name.endswith("PA"):
-                        more = Molina_Healthcare.find_brand(record['Brand_name'])
+                        try:
+                            adc = Molina_Healthcare.find_brand(record['Brand_name'])[0]
+                            record['Note'] = adc['ALTERNATIVE_DRUG_CRITERIA']
+                        except:
+                            record['Note'] = ''
+                    else:
+                        record['Note'] = ''
 
             elif plan_name.lower().startswith('oh state'):
                 records = OhioState(clean_name)
@@ -246,7 +261,7 @@ def get_from_medicaid(drug_name, plan_name ):
                 records = Buckeye.find_by_name(clean_name)
 
             else:
-                log.error( f'Unknown plan name( {plan_name} )' )
+                log.error( log_msg(f'Unknown plan name( {plan_name} )' ))
                 records = []
 
             if records:
@@ -262,11 +277,14 @@ def get_from_medicare(drug_name, plan_name, zipcode=None ):
     :param plan_name:
     :return:
     """
+    
+    """
     parts = drug_name.split()
     if len( parts ) > 2:
         dose = parts[-2]
         units = parts[-1]
         drug_name = " ".join(parts[:-2])
+    """
     
     drug_list, exclude = get_related_drugs(drug_name)
     plan = get_formulary_id(plan_name, zipcode)
@@ -274,7 +292,6 @@ def get_from_medicare(drug_name, plan_name, zipcode=None ):
     results = []
 
     for drug in drug_list:
-        costs =[]
         ndc_list = NDC.find_by_name( drug )
         for ndc in ndc_list:
             bd, bc = beneficiary_costs(ndc['PRODUCT_NDC'], plan)
@@ -288,12 +305,17 @@ def get_from_medicare(drug_name, plan_name, zipcode=None ):
                 tier = ''
             else:
                 pa = bd['PRIOR_AUTHORIZATION_YN']
-                ql = 'Yes :' if bd['QUANTITY_LIMIT_YN'] else 'No :'+ bd['QUANTITY_LIMIT_DAYS']
-                st = 'Yes' if bd['STEP_THERAPY_YN']  else 'No'
-                copay_p = bc[0].COST_AMT_PREF
-                copay_d = bc[0].COST_AMT_NONPREF
+                ql      = 'Yes :' if bd['QUANTITY_LIMIT_YN'] else 'No :'+ bd['QUANTITY_LIMIT_DAYS']
+                st      = 'Yes' if bd['STEP_THERAPY_YN']  else 'No'
                 tier    = bc[0].TIER
-                      
+                
+                copay_d = ''
+                copay_p = ''
+                for c in bc:
+                    if c.COVERAGE_LEVEL == 0:
+                        copay_p = "{:.2f}".format(c.COST_AMT_PREF)
+                    if c.COVERAGE_LEVEL == 1:
+                        copay_d =  "{:.2f}".format(c.COST_AMT_PREF)
             
             result = { 'Brand'  : ndc['PROPRIETARY_NAME'],
                        'Generic': ndc['NONPROPRIETARY_NAME'],
@@ -305,12 +327,13 @@ def get_from_medicare(drug_name, plan_name, zipcode=None ):
                        'CopayD' :copay_d
                      }
         
-            results.append( result )
+        results.append( result )
     
     return results
 
 if __name__ == "__main__":
-    get_from_medicare( "Victoza", "Anthem MediBlue Essential (HMO)", '43202')
+    #get_from_medicare( "Victoza", "Anthem MediBlue Essential (HMO)", '43202')
+    #get_from_medicare('Levemir','Silverscript plus (PDP)','07040')
     # get_from_medicare( "SYMBICORT","Silverscript choice (PDP)","07040")
     # get_from_medicaid("Admelog", "Caresource" )
     # get_from_medicaid("Breo","Ohio State")
@@ -323,6 +346,6 @@ if __name__ == "__main__":
     # main("Trelegy", "Caresource")
     # main("Breo","Caresource")
     # main('Symbicort','Molina')
-    # main('ARTHROTEC','Molina')
+    get_from_medicaid('ARTHROTEC','Molina')
 
 
