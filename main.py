@@ -135,7 +135,7 @@ def drug_names():
     :return:
     """
     results = set()
-    if 'qry' in request.args:
+    if 'qry' in request.args and len(request.args['qry']) >= 3:
         look_for = f"{request.args['qry'].lower()}%"
         drug_list = FTA.find_by_name(look_for, False )
         results = { d.PROPRIETARY_NAME for d in drug_list }
