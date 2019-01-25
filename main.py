@@ -64,11 +64,12 @@ def plans():
             zipcode = request.args['zipcode']
 
             look_in = tools.get_location( zipcode )
-            county_code = look_in.GEO.COUNTY_CODE
-            ma_region   = look_in.GEO.MA_REGION_CODE
-            pdp_region  = look_in.GEO.PDP_REGION_CODE
+            if look_in:
+                county_code = look_in.GEO.COUNTY_CODE
+                ma_region   = look_in.GEO.MA_REGION_CODE
+                pdp_region  = look_in.GEO.PDP_REGION_CODE
             
-            results = Plans.find_in_county(county_code, ma_region, pdp_region, look_for)
+                results = Plans.find_in_county(county_code, ma_region, pdp_region, look_for)
    
     return jsonify(results)
 
