@@ -1,3 +1,4 @@
+
 from .base import Database, log
 
 try:
@@ -5,4 +6,3 @@ try:
     db.open()
 except Exception as e:
     log.error("Database failed to open:{}".format(str(e)))
-

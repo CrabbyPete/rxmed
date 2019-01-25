@@ -5,8 +5,7 @@ import requests
 from bs4            import BeautifulSoup
 from collections    import OrderedDict
 
-#from xmltodict      import parse
-
+from log import log
 
 BASE_URL     = "https://rxnav.nlm.nih.gov/REST"
 HISTORIC_URL = "https://rxnav.nlm.nih.gov/REST/rxcuihistoryconcept?rxcui={}"
@@ -28,15 +27,19 @@ def OhioState( name ):
     rows = []
     for tr in tbody.find_all('tr'):
         row = [t.text for t in tr.find_all('td')]
+        try:
 
-        data = OrderedDict( [('Product_Description'         ,row[2]),
-                            ('Route_of_Administration'     ,row[3] ),
-                            ('Package'                     ,re.sub('\r|\n|\t','',row[4])),
-                            ('Prior_Authorization_Required',re.sub('\r|\n|\t','',row[5])),
-                            ('Covered_for_Dual_Eligible'   ,re.sub('\r|\n|\t','',row[6])),
-                            ('Copay'                       ,re.sub('\r|\n|\t','',row[8]))]
-                          )
-
+            data = OrderedDict( [('Product_Description'         ,row[2]),
+                                 ('Route_of_Administration'     ,row[3] ),
+                                 ('Package'                     ,re.sub('\r|\n|\t','',row[4])),
+                                 ('Prior_Authorization_Required',re.sub('\r|\n|\t','',row[5])),
+                                 ('Covered_for_Dual_Eligible'   ,re.sub('\r|\n|\t','',row[6])),
+                                 ('Copay'                       ,re.sub('\r|\n|\t','',row[8]))]
+                              )
+        except:
+            log.error(f"Ohio State scrape error {name}")
+            continue
+        
         rows.append(data)
     
     return rows

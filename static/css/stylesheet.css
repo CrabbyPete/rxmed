@@ -33,7 +33,7 @@ body {
 }
 /***** Header (home) *****/
 #home-header {
-	background-image: url(/static/img/blue.png);
+	background-image: url(/static/img/blue.png);;
 }
 #home-header-text {
 	color: #FFFFFF;
@@ -127,4 +127,8 @@ body {
 #table-header {
 	font-variant-caps: petite-caps;
 	color: #0069a3;
+}
+#loading-img {
+	width: 25%;
+	height: 25%;
 }

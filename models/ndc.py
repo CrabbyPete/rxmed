@@ -5,7 +5,8 @@ from sqlalchemy import ( Column,
                          Text,
                          Date,
                          Boolean,
-                         or_, and_
+                         or_,
+                         and_
                        )
 
 from .base import Base
@@ -18,48 +19,42 @@ class NDC(Base):
     __tablename__ = 'ndc'
 
     id                      = Column( BigInteger, primary_key= True )
-    PRODUCTID               = Column( String(255) )
-    PRODUCT_NDC             = Column( String(255) )
-    PROPRIETARY_NAME        = Column( String(255) )
-    DOSE_STRENGTH           = Column( String(255) )
-    DOSE_UNIT               = Column( String(255) )
-    NONPROPRIETARY_NAME     = Column( String(255) )
-    STARTMARKETINGDATE      = Column( Date )
-    ENDMARKETINGDATE        = Column( Date )
-    MARKETINGCATEGORYNAME   = Column( String(255) )
-    APPLICATIONNUMBER       = Column( String(255) )
-    LABELERNAME             = Column( String(255) )
-    SUBSTANCENAME           = Column( String(255) )
-    PHARM_CLASSES           = Column( String(255) )
-    DEASCHEDULE             = Column( String(255) )
-    NDC_EXCLUDE_FLAG        = Column( String(255) )
-    LISTING_RECORD_CERTIFIED_THROUGH = Column( String(255) )
-    
+    PRODUCTID               = Column( String(2048) )
+    PRODUCT_NDC             = Column( String(2048) )
+    PROPRIETARY_NAME        = Column( String(2048) )
+    DOSE_STRENGTH           = Column( String(2048), nullable=True )
+    DOSE_UNIT               = Column( String(2048), nullable=True )
+    NONPROPRIETARY_NAME     = Column( String(2048), nullable=True )
+    STARTMARKETINGDATE      = Column( Date, nullable=True )
+    ENDMARKETINGDATE        = Column( Date, nullable=True )
+    MARKETINGCATEGORYNAME   = Column( String(2048), nullable=True )
+    APPLICATIONNUMBER       = Column( String(2048), nullable=True )
+    LABELERNAME             = Column( String(2048), nullable=True )
+    SUBSTANCENAME           = Column( String(2048), nullable=True )
+    PHARM_CLASSES           = Column( Text, nullable=True )
+    DEASCHEDULE             = Column( String(2048), nullable=True )
+    NDC_EXCLUDE_FLAG        = Column( String(2048), nullable=True )
+    LISTING_RECORD_CERTIFIED_THROUGH = Column( String(2048), nullable=True )
+
+
     @classmethod
-    def find_by_name(cls, name, exact = False ):
-        if not exact:
-            name = "{}%".format(name.lower())
+    def find_by_name(cls, name, nonprop=True):
+        """
+
+        :param name:
+        :return:
+        """
+        if not '%' in name:
+            name = f"%{name.lower()}%"
+
+        if nonprop:
+            flter = or_(cls.PROPRIETARY_NAME.ilike(name), cls.NONPROPRIETARY_NAME.ilike(name))
         else:
-            name = name.lower()
-        
-        qry = cls.session.query(cls).filter(or_(cls.PROPRIETARY_NAME.ilike(name),
-                                                cls.NONPROPRIETARY_NAME.ilike(name)
-                                               )
-                                           )        
-        results = [row2dict(r) for r in qry]
-        return results
+            flter = cls.PROPRIETARY_NAME.ilike(name)
 
-    @classmethod
-    def find_by_dose(cls, proprietary_name, dose_strength = None, dose_unit = None ):
-        name = "{}%".format( proprietary_name.lower() )
-        qry = cls.PROPRIETARY_NAME.ilike(name)
+        qry = cls.session.query(cls).filter(flter)
+        return qry
 
-        if dose_strength:
-            dose = "%{}%".format( dose_strength.lower() )
-            qry = and_( qry, cls.DOSE_STRENGTH.ilike(dose) )
-
-        data = cls.session.query(cls).filter(qry).all()
-        return data
 
     def __repr__(self):
         return "<{}>".format(self.PROPRIETARY_NAME)
@@ -97,7 +92,7 @@ class Plans(Base):
         else:
             name = name.lower()
 
-        qry = cls.session.query(cls).filter(cls.PLAN_NAME.ilike(name)).all()
+        qry = cls.session.query(cls).filter(cls.PLAN_NAME.ilike(name))
         results = [row2dict(r) for r in qry]
         return results
 
@@ -107,14 +102,14 @@ class Plans(Base):
         Query plans in a certain county
         """
         county_code = f"%{county_code}%"
-        flter = or_( cls.COUNTY_CODE.ilike(county_code),
-                     cls.MA_REGION_CODE.ilike(ma_region),
-                     cls.PDP_REGION_CODE == str(pdp_region)
-                   )
+        flter = or_(cls.COUNTY_CODE.ilike(county_code),
+                    cls.MA_REGION_CODE.ilike(ma_region),
+                    cls.PDP_REGION_CODE == str(pdp_region)
+                    )
         if not name == '*':
-                look_for = f"{name.lower()}%"
-                flter = and_( flter, cls.PLAN_NAME.ilike(look_for))
-    
+            look_for = f"{name.lower()}%"
+            flter = and_(flter, cls.PLAN_NAME.ilike(look_for))
+
         qry = cls.session.query(Plans.PLAN_NAME).filter(flter).distinct(cls.PLAN_NAME).all()
         results = [r.PLAN_NAME for r in qry]
         return results
@@ -126,12 +121,12 @@ class Plans(Base):
 class Basic_Drugs(Base):
     __tablename__ = 'basicdrugs'
 
-    id                      = Column( BigInteger, primary_key=True, autoincrement=True)
+    id                      = Column( Integer, primary_key=True)
     FORMULARY_ID            = Column( String(255) )
     FORMULARY_VERSION       = Column( String(255) )
     CONTRACT_YEAR           = Column( String(10) )
     RXCUI                   = Column( String(255) )
-    NDC                     = Column( String(255) )
+    NDC                     = Column( Integer )
     TIER_LEVEL_VALUE        = Column( Integer )
     QUANTITY_LIMIT_YN       = Column( Boolean )
     QUANTITY_LIMIT_AMOUNT   = Column( String(255) )
@@ -147,10 +142,8 @@ class Basic_Drugs(Base):
         :return: matches
         """
         name = f"%{name}%"
-        
         if fid:
-            fid  = f"%{fid}%"
-            qry = cls.session.query(cls).filter(cls.NDC.ilike(name), cls.FORMULARY_ID.ilike(fid) )
+            qry = cls.session.query(cls).filter(cls.NDC.ilike(name), cls.FORMULARY_ID.ilike(f"%{fid}%") )
         else:
             qry = cls.session.query(cls).filter(cls.NDC.ilike(name) )
 

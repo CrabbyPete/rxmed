@@ -12,6 +12,7 @@
 <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
 <!-- Custom styles -->
+<!--<link href="stylesheet.css" rel="stylesheet">-->
 <link href="{{url_for('static',filename='css/stylesheet.css')}}" rel="stylesheet">
 
 </head>
@@ -77,8 +78,9 @@
     
     <!-- Medication -->
     <form class="input-group" id="form-med">
-      <label for="input-med" class="mr-1"><span class="input-group-text">Medication</span></label>
-      <input class="form-control" autocomplete="off" placeholder="Type to search..." id="input-med">
+      <label class="mr-1"><span class="input-group-text">Medication</span></label>
+      <input class="form-control" autocomplete="off" placeholder="Type to search..." id="input-med-medicare">
+		<input class="form-control" autocomplete="off" placeholder="Type to search..." id="input-med-medicaid">
       <button type="button" class="btn btn-primary ml-1" id="button-go-med">Add</button>
     </form>
     <div class="container text-center m-2">
@@ -95,14 +97,15 @@
   
   <!-- Loader -->
   <div class="row justify-content-center" id="loading"><img src="{{url_for('static',filename='img/loader.gif')}}" alt="Loading..."></div>
+
   
   <!-- Text box for medicaid -->
   <div class="container text-center p-5" id="medicaid-text">
     <div class="row justify-content-center p-3" id="infobox-pa-true">
       <div class="card bg-light m-1">
         <div class="card-body">
-          <h5 class="card-title">The medication you selected is not covered by your patient's plan.</h5>
-          <p class="card-text">Please view the table below for therapeutic alternatives to ensure your patient's medication access at the pharmacy.</p>
+          <h5 class="card-title">The drug you selected is not preferred by your prescription drug plan's formulary.</h5>
+          <p class="card-text">Please view from the list of therapeutic alternatives below.</p>
         </div>
       </div>
     </div>

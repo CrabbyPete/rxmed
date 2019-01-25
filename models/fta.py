@@ -26,6 +26,7 @@ class FTA(Base):
     CLASS_ID             = Column( String(255) )
     EXCLUDED_DRUGS_BACK  = Column( String(255) )
     EXCLUDED_DRUGS_FRONT = Column( String(255) )
+    RELATED_DRUGS        = Column( String(2054) )
 
     @classmethod
     def find_by_name(cls, name, nonproprietary=True ):
