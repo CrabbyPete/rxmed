@@ -41,8 +41,7 @@ class FTA(Base):
             flter = cls.PROPRIETARY_NAME.ilike(name)
 
         qry = cls.session.query(cls).filter( flter )
-        result = qry.all()
-        return result
+        return qry
 
     @classmethod
     def find_nonproprietary(cls, name ):
@@ -50,8 +49,7 @@ class FTA(Base):
             name = f"%{name.lower()}%"
 
         qry = cls.session.query(cls).filter( cls.NONPROPRIETARY_NAME.ilike(name) )
-        result = qry.all()
-        return result
+        return qry
 
 
     def __repr__(self):
