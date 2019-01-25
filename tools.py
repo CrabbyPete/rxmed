@@ -2,7 +2,6 @@ import re
 
 from log          import log, log_msg
 
-from models       import db
 from models.geo   import Zipcode, Geolocate
 from models.ndc   import NDC, Plans, Basic_Drugs,Beneficiary_Costs
 from models.fta   import FTA
