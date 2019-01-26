@@ -2,22 +2,30 @@
 import tools
 
 from flask       import Flask, request, render_template, jsonify, url_for
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
 
 from log         import log, rq_log
 from forms       import MedicaidForm
 from models.fta  import FTA
 from models.ndc  import Plans, NDC
-
+from models      import db
 
 application = Flask(__name__, static_url_path='/static')
-#application.add_url_rule('/favicon.ico', redirect_to=url_for('static', filename='favicon.ico'))
+
+application.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
+admin = Admin(application, name='microblog', template_mode='bootstrap3')
+admin.add_view(ModelView(FTA, db.session))
 
 @application.errorhandler(500)
 def internal_error(error):
     log.error(f"Exception caught:{str(error)}")
     return jsonify([])
 
-
+@application.route('/favicon.ico')
+def favicon():
+    return send_from_directory(os.path.join(app.root_path, 'static'),
+                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
 @application.route('/')
 def home():
     return render_template('home.html')
@@ -138,7 +146,7 @@ def drug_names():
     if 'qry' in request.args and len(request.args['qry']) >= 3:
         look_for = f"{request.args['qry'].lower()}%"
         drug_list = FTA.find_by_name(look_for, False )
-        results = { d.PROPRIETARY_NAME for d in drug_list }
+        results = [d.PROPRIETARY_NAME for d in drug_list ]
 
         drug_list = FTA.find_nonproprietary( look_for )
         results.update( [ d.NONPROPRIETARY_NAME for d in drug_list ])
@@ -239,3 +247,5 @@ def medicare_options():
 
 if __name__ == "__main__":
     application.run(host='0.0.0.0', port=5000, debug=False)
+    application.add_url_rule('/favicon.ico', redirect_to=url_for('static', filename='img/favicon (32x32).ico'))
+

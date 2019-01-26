@@ -36,12 +36,12 @@ class FTA(Base):
             name = f"%{name.lower()}%"
 
         if nonproprietary:
-            flter = or_( cls.PROPRIETARY_NAME.ilike(name), cls.NONPROPRIETARY_NAME.ilike(name) )
+            flter = cls.PROPRIETARY_NAME.ilike(name)
         else:
             flter = cls.PROPRIETARY_NAME.ilike(name)
 
         qry = cls.session.query(cls).filter( flter )
-        return qry
+        return qry.all()
 
     @classmethod
     def find_nonproprietary(cls, name ):

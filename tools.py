@@ -338,9 +338,9 @@ def get_from_medicare(drug_name, plan_name, zipcode=None ):
                 if bc:
                     for c in bc:
                         if c.COVERAGE_LEVEL == 0:
-                            copay_p = "{:.2f}".format(c.COST_AMT_PREF)
+                            copay_p = "${:.2f}".format(c.COST_AMT_PREF)
                         if c.COVERAGE_LEVEL == 1:
-                            copay_d =  "{:.2f}".format(c.COST_AMT_PREF)
+                            copay_d =  "${:.2f}".format(c.COST_AMT_PREF)
             
             result = { 'Brand'  : ndc.PROPRIETARY_NAME,
                        'Generic': ndc.NONPROPRIETARY_NAME,
