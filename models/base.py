@@ -114,7 +114,7 @@ class Database(object):
         if not 'sqlite' in url:
             self.engine = create_engine(url, echo=False, isolation_level="AUTOCOMMIT")
         else:
-            self.engine = create_engine(url, echo=False)
+            self.engine = create_engine(url, echo=False, pool_recycle=3600)
 
         self.schema = schema
 

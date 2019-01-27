@@ -1,9 +1,12 @@
 from sqlalchemy import ( Column,
                          Integer,
+                         BigInteger,
                          String,
                          Text,
                          Date,
-                         or_
+                         Boolean,
+                         or_,
+                         and_
                        )
 
 from .base import Base
@@ -15,23 +18,43 @@ row2dict = lambda r: {c.name: str(getattr(r, c.name)) for c in r.__table__.colum
 class NDC(Base):
     __tablename__ = 'ndc'
 
-    id                      = Column( Integer,     primary_key= True )
-    PRODUCTID               = Column( String(255) )
-    PRODUCT_NDC             = Column( String(255) )
-    PROPRIETARY_NAME        = Column( String(255) )
-    DOSE_STRENGTH           = Column( String(255) )
-    DOSE_UNIT               = Column( String(255) )
-    NONPROPRIETARY_NAME     = Column( String(255) )
-    STARTMARKETINGDATE      = Column( Date )
-    ENDMARKETINGDATE        = Column( Date )
-    MARKETINGCATEGORYNAME   = Column( String(255) )
-    APPLICATIONNUMBER       = Column( String(255) )
-    LABELERNAME             = Column( String(255) )
-    SUBSTANCENAME           = Column( String(255) )
-    PHARM_CLASSES           = Column( String(255) )
-    DEASCHEDULE             = Column( String(255) )
-    NDC_EXCLUDE_FLAG        = Column( String(255) )
-    LISTING_RECORD_CERTIFIED_THROUGH = Column( String(255) )
+    id                      = Column( BigInteger, primary_key= True )
+    PRODUCTID               = Column( String(2048) )
+    PRODUCT_NDC             = Column( String(2048) )
+    PROPRIETARY_NAME        = Column( String(2048) )
+    DOSE_STRENGTH           = Column( String(2048), nullable=True )
+    DOSE_UNIT               = Column( String(2048), nullable=True )
+    NONPROPRIETARY_NAME     = Column( String(2048), nullable=True )
+    STARTMARKETINGDATE      = Column( Date, nullable=True )
+    ENDMARKETINGDATE        = Column( Date, nullable=True )
+    MARKETINGCATEGORYNAME   = Column( String(2048), nullable=True )
+    APPLICATIONNUMBER       = Column( String(2048), nullable=True )
+    LABELERNAME             = Column( String(2048), nullable=True )
+    SUBSTANCENAME           = Column( String(2048), nullable=True )
+    PHARM_CLASSES           = Column( Text, nullable=True )
+    DEASCHEDULE             = Column( String(2048), nullable=True )
+    NDC_EXCLUDE_FLAG        = Column( String(2048), nullable=True )
+    LISTING_RECORD_CERTIFIED_THROUGH = Column( String(2048), nullable=True )
+
+
+    @classmethod
+    def find_by_name(cls, name, nonprop=True):
+        """
+
+        :param name:
+        :return:
+        """
+        if not '%' in name:
+            name = f"%{name.lower()}%"
+
+        if nonprop:
+            flter = or_(cls.PROPRIETARY_NAME.ilike(name), cls.NONPROPRIETARY_NAME.ilike(name))
+        else:
+            flter = cls.PROPRIETARY_NAME.ilike(name)
+
+        qry = cls.session.query(cls).filter(flter)
+        return qry
+
 
     def __repr__(self):
         return "<{}>".format(self.PROPRIETARY_NAME)
@@ -40,7 +63,7 @@ class NDC(Base):
 class Plans(Base):
     __tablename__ = 'plans'
 
-    id                  = Column( Integer,     primary_key= True )
+    id                  = Column( BigInteger,     primary_key= True )
     CONTRACT_ID         = Column( String(255) )
     PLAN_ID             = Column( String(255) )
     SEGMENT_ID          = Column( String(255) )
@@ -73,6 +96,24 @@ class Plans(Base):
         results = [row2dict(r) for r in qry]
         return results
 
+    @classmethod
+    def find_in_county(cls, county_code, ma_region, pdp_region, name='*'):
+        """
+        Query plans in a certain county
+        """
+        county_code = f"%{county_code}%"
+        flter = or_(cls.COUNTY_CODE.ilike(county_code),
+                    cls.MA_REGION_CODE.ilike(ma_region),
+                    cls.PDP_REGION_CODE == str(pdp_region)
+                    )
+        if not name == '*':
+            look_for = f"{name.lower()}%"
+            flter = and_(flter, cls.PLAN_NAME.ilike(look_for))
+
+        qry = cls.session.query(Plans.PLAN_NAME).filter(flter).distinct(cls.PLAN_NAME).all()
+        results = [r.PLAN_NAME for r in qry]
+        return results
+
     def __repr__(self):
         return "<{}>".format(self.PLAN_NAME)
 
@@ -83,15 +124,15 @@ class Basic_Drugs(Base):
     id                      = Column( Integer, primary_key=True)
     FORMULARY_ID            = Column( String(255) )
     FORMULARY_VERSION       = Column( String(255) )
-    CONTRACT_YEAR           = Column( Integer )
+    CONTRACT_YEAR           = Column( String(10) )
     RXCUI                   = Column( String(255) )
-    NDC                     = Column( Text )
+    NDC                     = Column( Integer )
     TIER_LEVEL_VALUE        = Column( Integer )
-    QUANTITY_LIMIT_YN       = Column( String(1) )
+    QUANTITY_LIMIT_YN       = Column( Boolean )
     QUANTITY_LIMIT_AMOUNT   = Column( String(255) )
     QUANTITY_LIMIT_DAYS     = Column( String(255) )
-    PRIOR_AUTHORIZATION_YN  = Column( String(1) )
-    STEP_THERAPY_YN         = Column( String(1) )
+    PRIOR_AUTHORIZATION_YN  = Column( Boolean )
+    STEP_THERAPY_YN         = Column( Boolean )
 
     @classmethod
     def get_close_to(cls, name, fid=None):
@@ -100,9 +141,9 @@ class Basic_Drugs(Base):
         :param name: drug name
         :return: matches
         """
-        name = f"{name}%"
+        name = f"%{name}%"
         if fid:
-            qry = cls.session.query(cls).filter(cls.NDC.ilike(name), cls.FORMULARY_ID == int(fid) )
+            qry = cls.session.query(cls).filter(cls.NDC.ilike(name), cls.FORMULARY_ID.ilike(f"%{fid}%") )
         else:
             qry = cls.session.query(cls).filter(cls.NDC.ilike(name) )
 
@@ -117,7 +158,7 @@ class Basic_Drugs(Base):
 class Beneficiary_Costs( Base ):
     __tablename__ = 'beneficiarycosts'
 
-    id                          = Column( Integer, primary_key=True)
+    id                          = Column( BigInteger, primary_key=True)
     CONTRACT_ID                 = Column( Text )
     PLAN_ID                     = Column( Integer )
     SEGMENT_ID                  = Column( Integer )

@@ -1,17 +1,65 @@
+import re
 import json
 import requests
 
-from xmltodict import parse
+from bs4            import BeautifulSoup
+from collections    import OrderedDict
+
+from log import log
 
 BASE_URL     = "https://rxnav.nlm.nih.gov/REST"
+HISTORIC_URL = "https://rxnav.nlm.nih.gov/REST/rxcuihistoryconcept?rxcui={}"
 OPENFDA_URL  = 'https://api.fda.gov/drug/event.json?search='
+OHSTATE      = 'https://druglookup.ohgov.changehealthcare.com/DrugSearch/application/search?searchBy=name&name={}'
 
+
+def OhioState( name ):
+    url = OHSTATE.format(name)
+    r = requests.get(url)
+
+    if r.ok:
+        html=r.text
+    else:
+        return r.status_code
+
+    soup = BeautifulSoup(html,features="lxml")
+    tbody = soup.tbody
+    rows = []
+    for tr in tbody.find_all('tr'):
+        row = [t.text for t in tr.find_all('td')]
+        try:
+
+            data = OrderedDict( [('Product_Description'         ,row[2]),
+                                 ('Route_of_Administration'     ,row[3] ),
+                                 ('Package'                     ,re.sub('\r|\n|\t','',row[4])),
+                                 ('Prior_Authorization_Required',re.sub('\r|\n|\t','',row[5])),
+                                 ('Covered_for_Dual_Eligible'   ,re.sub('\r|\n|\t','',row[6])),
+                                 ('Copay'                       ,re.sub('\r|\n|\t','',row[8]))]
+                              )
+        except:
+            log.error(f"Ohio State scrape error {name}")
+            continue
+        
+        rows.append(data)
+    
+    return rows
+
+
+def get_historic_rxcui( rxcui ):
+    url = HISTORIC_URL.format(rxcui)
+    r = requests.get(url)
+    if r.ok:
+        data = json.loads(r.text)
+    else:
+        return r.status_code
+
+    return data
+    
 
 class RxNorm():
     """
 
     """
-
     def __init__(self):
         self.base_url = BASE_URL
         return
@@ -97,7 +145,11 @@ class RxClass():
 
 
 
+
+
 if __name__ == "__main__":
+    r = OhioState('ADMEL')
+    """
     r = RxClass()
     data = r.byDrugName(drugName='morphine', relaSource='MEDRT',relas='may_treat')
     for d in data['rxclassDrugInfo']:
@@ -108,3 +160,4 @@ if __name__ == "__main__":
                                 )
 
         print( drug )
+    """

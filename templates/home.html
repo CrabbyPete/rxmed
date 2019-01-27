@@ -16,8 +16,8 @@
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="navbar-toggler-icon"></span> </button>
   <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
     <ul class="navbar-nav">
-      <li class="nav-item"> <a class="nav-link" href="/patients">Patients</a> </li>
-      <li class="nav-item"> <a class="nav-link" href="/providers">Providers</a> </li>
+      <li class="nav-item"> <a class="nav-link" href="/fit">Patients</a> </li>
+      <li class="nav-item"> <a class="nav-link" href="/fit">Providers</a> </li>
       <li class="nav-item"> <a class="nav-link" href="/about">About Us</a> </li>
     </ul>
   </div>
@@ -48,7 +48,7 @@
   </div>
   <center class="jumbotron">
     <div class="embed-responsive embed-responsive-16by9" id="video">
-      <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/9ZYc8UWWOUI?rel=0&modestbranding=1&autohide=1&showinfo=0" allowfullscreen></iframe>
+      <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/WqM5pwOMZa8?rel=0&modestbranding=1&autohide=1&showinfo=0" allowfullscreen></iframe>
     </div>
   </center>
   <div class="position-relative" id="divider"> <img src="{{url_for('static',filename='img/divider (1346x10).png')}}" class="img" alt="Divider">
@@ -58,11 +58,11 @@
   </div>
   <div class="row px-5 justify-content-center">
     <div class="container col-6" id="patient-container">
-      <div class="row justify-content-center"><img src="{{url_for('static',filename='img/patient (150x150).png')}}" alt="Patients" class="img" id="patient" href="/patients">&nbsp;</div>
-      <div class="row justify-content-center"> <a href="/patients" id="patients-img-link">Patients</a> </div>
+      <div class="row justify-content-center"><img src="{{url_for('static',filename='img/patient (150x150).png')}}" alt="Patients" class="img" id="patient" href="{{url_for('fit')}}">&nbsp;</div>
+      <div class="row justify-content-center"> <a href="{{url_for('fit')}}" id="patients-img-link">Patients</a> </div>
     </div>
     <div class="container col-6" id="provider-container">
-      <div class="row justify-content-center"><img src="{{url_for('static',filename='img/physician (150x150).png')}}" alt="Providers" class="img" id="provider" href="/providers">&nbsp;</div>
+      <div class="row justify-content-center"><img src="{{url_for('static',filename='img/physician (150x150).png')}}" alt="Providers" class="img" id="provider" href="{{url_for('fit')}}">&nbsp;</div>
       <div class="row justify-content-center"> <a href="{{url_for('fit')}}"id="providers-img-link">Providers</a> </div>
     </div>
   </div>

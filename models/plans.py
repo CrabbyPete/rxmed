@@ -1,6 +1,8 @@
 from sqlalchemy import ( Column,
+                         BigInteger,
                          Integer,
                          String,
+                         Text,
                          or_
                        )
 
@@ -10,10 +12,23 @@ from .base import Base
 # Just return the results not the whole class
 row2dict = lambda r: {c.name: str(getattr(r, c.name)) for c in r.__table__.columns}
 
+"""
+class DrugPlans(Base):
+    id                      = Column( BigInteger, primary_key= True )
+    Plan_Name               = Column(String(255), nullable=False )
+    Drug_Name               = Column(String(255), nullable=False )
+    Generic_name            = Column(String(255))
+    Tier                    = Column(String(255))
+    Formulary_Restrictions  = Column(String(255))
+    PA_Code                 = Column(String(255))
+    Preferred_Agent         = Column(String(255))
+"""
+
+
 class Caresource(Base):
     __tablename__ = 'caresource'
 
-    id                     = Column( Integer,     primary_key= True )
+    id                     = Column( BigInteger,  primary_key= True )
     Drug_Name              = Column( String(255), nullable=False )
     Drug_Tier              = Column( String(255), nullable=False )
     Formulary_Restrictions = Column( String(255), nullable=False )
@@ -32,13 +47,15 @@ class Caresource(Base):
         return results
 
 
+
+
     def __repr__(self):
         return "<{}>".format(self.Drug_Name )
 
 
 class Paramount(Base):
     __tablename__ = 'paramount'
-    id                      = Column( Integer,     primary_key= True )
+    id                      = Column( BigInteger,  primary_key= True )
     Formulary_restriction   = Column( String(255), nullable=False )
     Generic_name            = Column( String(255), nullable=False )
     Brand_name              = Column( String(255), nullable=False )
@@ -64,7 +81,7 @@ class Paramount(Base):
 
 class Molina(Base):
     __tablename__ = 'molina'
-    id                          = Column( Integer,     primary_key= True )
+    id                          = Column( BigInteger,  primary_key= True )
     Generic_name                = Column( String(255), nullable=False )
     Brand_name                  = Column( String(255), nullable=False )
     Formulary_restriction       = Column( String(255), nullable=False )
@@ -94,7 +111,7 @@ class Molina_Healthcare( Base ):
     """
     __tablename__ = "molinahealthcare"
 
-    id                        = Column( Integer, primary_key=True)
+    id                        = Column( BigInteger,  primary_key=True)
     DRUG_NAME                 = Column( String(255), nullable=False )
     PA_CODE                   = Column( String(255), nullable=False )
     ALTERNATIVE_DRUG_CRITERIA = Column( String(255), nullable=False )
@@ -113,11 +130,11 @@ class Molina_Healthcare( Base ):
 class UHC(Base):
     __tablename__ = 'UHC'
 
-    id                      = Column(Integer, primary_key=True)
-    Generic                 = Column( String(255), nullable=False )
-    Brand                   = Column( String(255), nullable=False )
-    Tier                    = Column( String(255), nullable=False )
-    Formulary_Restriction   = Column( String(255), nullable=False )
+    id                      = Column(BigInteger,   primary_key=True)
+    Generic                 = Column( Text, nullable=False )
+    Brand                   = Column( Text, nullable=False )
+    Tier                    = Column( Text, nullable=False )
+    Formulary_Restrictions  = Column( Text, nullable=False )
 
     @classmethod
     def find_by_name(cls, name ):
@@ -130,7 +147,8 @@ class UHC(Base):
         qry = cls.session.query(cls).filter( or_(cls.Generic.ilike(name),
                                                  cls.Brand.ilike(name)
                                                 )
-                                           )
+                                           ).all()
+                                           
         results = [row2dict(r) for r in qry]
         return results
 
@@ -141,7 +159,7 @@ class UHC(Base):
 
 class Buckeye(Base):
     __tablename__ = 'buckeye'
-    id                   = Column(Integer, primary_key=True)
+    id                   = Column(BigInteger,   primary_key=True)
     Drug_Name            = Column( String(255), nullable=False )
     Preferred_Agent      = Column( String(255), nullable=False )
     Fomulary_restriction = Column( String(255), nullable=False )
