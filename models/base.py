@@ -13,6 +13,20 @@ class BaseMixin(object):
     """ Base class mixin to handle everything for Session
     """
     session = None
+    bulk_buffer = None
+
+    def bulk_save(self, finish=False):
+        self.bulk_buffer.append(self)
+        if len(self.bulk_buffer) == 1000 or finish:
+            try:
+                self.session.bulk_save_objects(self.bulk_buffer)
+                self.session.commit()
+                self.bulk_buffer = []
+                pass
+
+            except Exception as e:
+                log.error("Database Exception {} adding ".format(str(e), self))
+                self.session.rollback()
 
     def save(self):
         try:
@@ -100,6 +114,8 @@ class Database(object):
     """ Singleton Class to initalize the database
         Can be used as a context manager or simple open and close
     """
+    bulk_buffer = []
+
     def __new__(cls,val):
         """
         Create a singleton
@@ -118,6 +134,7 @@ class Database(object):
 
         self.schema = schema
 
+
     def open(self):
         self.session = scoped_session(sessionmaker(bind=self.engine))
 
@@ -125,17 +142,34 @@ class Database(object):
         Base.metadata.create_all(bind=self.engine)
         Base.session = self.session
         Base.query = self.session.query_property()
+        Base.bulk_buffer = self.bulk_buffer
         return self.session
+
 
     def close(self):
         self.session.close()
         self.engine.dispose()
 
+
     def __enter__(self):
-        return self.open()
+        self.open()
+        return self
+
 
     def __exit__(self, type, value, traceback):
         return self.close()
+
+
+    def bulk_flush(self):
+        if len(self.bulk_buffer) > 0:
+            try:
+                self.session.bulk_save_objects(self.bulk_buffer)
+                self.session.commit()
+                self.bulk_buffer = []
+            except Exception as e:
+                log.error("Database Exception {} adding ".format(str(e), self))
+                self.session.rollback()
+
 
     def load(self, csv_file, table, encoding = 'utf-8', sep=',', dtype=None ):
         if sep == ',':

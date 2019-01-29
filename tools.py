@@ -1,15 +1,11 @@
 import re
 
-from log          import log, log_msg
+from log                import log, log_msg
 
-from models.geo   import Zipcode, Geolocate
-from models.ndc   import NDC, Plans, Basic_Drugs,Beneficiary_Costs
-from models.fta   import FTA
-from models.plans import Caresource, Paramount, Molina, Molina_Healthcare, UHC, Buckeye
+from models             import Zipcode, Geolocate, Plans, Basic_Drugs,Beneficiary_Costs, NDC, Drug
+from models.medicaid    import Caresource, Paramount, Molina, Molina_Healthcare, UHC, Buckeye
 
-from api          import RxClass, OhioState
-
-from sqlalchemy.orm import join
+from api                import RxClass, OhioState
 
 def walk(seq, look_for):
     """
@@ -43,7 +39,7 @@ def get_location( zipcode ):
     :return: geo_info The geo location information in the Geolocate db
     """
     try:
-        zipcode = Zipcode.find_one( zipcode )
+        zipcode = Zipcode.session.query(Zipcode).filter( Zipcode.ZIPCODE == zipcode ).one()
     except Exception as e:
         log.error( log_msg(str(e)) )
         return None
@@ -51,37 +47,22 @@ def get_location( zipcode ):
     return zipcode
 
 
-def get_formulary_id( plan_name, zipcode ):
+def get_plan( plan_name, zipcode ):
     """
     Get the formulary_id for a plan
     :param plan_name: Full or partial name of a plan
     :param zipcode: zipcode for the plan
     :return: a formulary_id for that plan for that zipcode
     """
-    plans = Plans.find_by_plan_name(plan_name)
     zipcode  = get_location( zipcode )
-
-    formulary_ids = []
-    for plan in plans:
-        if plan['CONTRACT_ID'].startswith('S'):
-            if int(plan['PDP_REGION_CODE']) == zipcode.GEO.PDP_REGION_CODE:
-                formulary_ids.append(plan)
-
-        elif plan['CONTRACT_ID'].startswith('H'):
-            if int(plan['COUNTY_CODE']) == int(zipcode.GEO.COUNTY_CODE):
-                formulary_ids.append(plan)
-
-        elif plan['CONTRACT_ID'].startswith('R'):
-            if int(plan['MA_REGION_CODE']) == zipcode.GEO.COUNTY_CODE:
-                formulary_ids.append(plan)
+    plans = Plans.find_by_plan_name(plan_name, geo=zipcode.GEO.id)
 
     # There should only be one
-    if len( formulary_ids ) == 1:
-        return  formulary_ids[0]
+    if len( plans ) == 1:
+        return plans[0]
 
     else:
         return "More than one found"
-
 
 REGEX = '\[(.*?)\]'
 def get_related_drugs(name):
@@ -90,13 +71,15 @@ def get_related_drugs(name):
     :param proprietaryName: the proprietary name to look for
     :return: drugs that are the same class
     """
-    drugs = set()
+    results = set()
     excluded_front = []
 
     rx = RxClass()
 
     # There should only be one
-    for fta in FTA.find_by_name(name):
+    drugs = Drug.find_by_name(name)
+    for drug in drugs:
+        fta = drug.FTA[0]
         if fta.RELATED_DRUGS:
             if fta.EXCLUDED_DRUGS_FRONT:
                 exclude = fta.EXCLUDED_DRUGS_FRONT.lower().split("|")
@@ -110,7 +93,7 @@ def get_related_drugs(name):
             excluded_front = []
 
         if fta.EXCLUDED_DRUGS_BACK:
-            excluded_back = [s.strip() for s in fta.EXCLUDED_DRUGS_BACK.lower().split("|")]
+            excluded_back = [s.strip() for s in drug.FTA.EXCLUDED_DRUGS_BACK.lower().split("|")]
         else:
             excluded_back = []
 
@@ -167,18 +150,19 @@ def get_related_drugs(name):
                     if look_for.lower() in excluded_back:
                         continue
 
-                    fta_members = FTA.find_by_name(look_for)
+                    fta_members = fta.find_by_name(look_for)
                     if not fta_members:
                         log.error( log_msg("{} not found in FTA".format(look_for)) )
                         continue
 
                     for fta_member in fta_members:
-                        #print(f"{fta_member.ID + 2} = {fta_member.PROPRIETARY_NAME}")
+                        #(f"{fta_member.id} = {fta_member.PROPRIETARY_NAME}")
+
                         if not fta_member.PROPRIETARY_NAME in excluded_back and \
                            not fta_member.NONPROPRIETARY_NAME in excluded_back:
-                            drugs.update([fta_member.PROPRIETARY_NAME])
+                            results.update([fta_member.PROPRIETARY_NAME])
 
-    return drugs, excluded_front
+    return results, excluded_front
 
 
 def get_ndc( proprietary_name, dose_strength = None, dose_unit = None ):
@@ -206,20 +190,19 @@ def beneficiary_costs( drug, plan ):
     :param drugs:
     :return:“COST_AMT_PREF” ONLY if “DAYS_SUPPLY” = 1 and “COST_TYPE_PREF” = 1, for each “COVERAGE_LEVEL” 0 AND 1
     """
-    drug = int(drug.replace("-",""))
-    bd = Basic_Drugs.get_close_to(drug, plan['FORMULARY_ID'])
+    bd = Basic_Drugs.get_close_to(drug, plan.FORMULARY_ID)
     try:
         if len( bd ) > 1:
-            log.error( log_msg(f"{drug}-{plan['FORMULARY_ID']} returned more than 1 value"))
+            log.error( log_msg(f"{drug}-{plan.FORMULARY_ID} returned more than 1 value"))
 
         bd = bd[0]
     except IndexError:
-        log.error(f"No Basic Drug for {drug}-{plan['FORMULARY_ID'] }")
+        log.error(f"No Basic Drug for NDC:{drug} Formulary ID:{plan.FORMULARY_ID}")
         return None,None
 
-    benefit_costs = Beneficiary_Costs.get_all( **dict( CONTRACT_ID    = plan['CONTRACT_ID'],
-                                                       PLAN_ID        = int(plan['PLAN_ID']),
-                                                       SEGMENT_ID     = int(plan['SEGMENT_ID']),
+    benefit_costs = Beneficiary_Costs.get_all( **dict( CONTRACT_ID    = plan.CONTRACT_ID,
+                                                       PLAN_ID        = int(plan.PLAN_ID),
+                                                       SEGMENT_ID     = int(plan.SEGMENT_ID),
                                                        TIER           = int(bd['TIER_LEVEL_VALUE']),
                                                        DAYS_SUPPLY    = 1,
                                                        COST_TYPE_PREF = 1
@@ -237,7 +220,7 @@ def get_from_medicaid(drug_name, plan_name ):
     :return:
     """
 
-    collection = []
+    data = []
     results, exclude = get_related_drugs(drug_name)
 
     for drug_name in results:
@@ -283,9 +266,9 @@ def get_from_medicaid(drug_name, plan_name ):
                 records = []
 
             if records:
-                collection.extend(records)
+                data.extend(records)
 
-    return collection, exclude
+    return data, exclude
 
 
 def get_from_medicare(drug_name, plan_name, zipcode=None ):
@@ -295,15 +278,17 @@ def get_from_medicare(drug_name, plan_name, zipcode=None ):
     :param plan_name:
     :return:
     """
-    
-    drug_list, exclude = get_related_drugs(drug_name)
-    plan = get_formulary_id(plan_name, zipcode)
+
+    plan = get_plan(plan_name, zipcode)
     
     results = []
+    for drug in Drug.find_by_name( drug_name ):
+        if not drug.NDC:
+            drug_list = NDC.find_by_name(drug_name)
+        else:
+            drug_list = drug.NDC
 
-    for drug in drug_list:
-        ndc_list = NDC.find_by_name( drug )
-        for ndc in ndc_list:
+        for ndc in drug_list:
             bd, bc = beneficiary_costs(ndc.PRODUCT_NDC, plan)
         
             if not bd:
@@ -357,22 +342,32 @@ def get_from_medicare(drug_name, plan_name, zipcode=None ):
     return results
 
 if __name__ == "__main__":
-    #get_location('07481')
-    get_from_medicare( "Victoza", "Anthem MediBlue Essential (HMO)", '43202')
-    #get_from_medicare('Levemir','Silverscript plus (PDP)','07040')
-    # get_from_medicare( "SYMBICORT","Silverscript choice (PDP)","07040")
-    # get_from_medicaid("Admelog", "Caresource" )
-    # get_from_medicaid("Breo","Ohio State")
-    # get_from_medicaid("Trulicity","OH State Medicaid")
-    # main("Pamidronate Disodium", "Caresource") # CLASS_ID != NULL
-    # main("Tresiba", "Paramount")
-    # main("Advair", "Paramount")
-    # main("epinephrine", "Paramount")
-    # main("Potassium Citrate", "Caresource")
-    # main("Zanaflex", "Caresource")
-    # main("Trelegy", "Caresource")
-    # main("Breo","Caresource")
-    # main('Symbicort','Molina')
-    # get_from_medicaid('ARTHROTEC','Molina')
+    from settings      import DATABASE
+    from models.base   import Database
+
+    with Database(DATABASE) as db:
+        # get_location('07481')
+        # get_from_medicare( "Victoza", "Anthem MediBlue Essential (HMO)", '43202')
+        # result = get_from_medicare('Levemir','SilverScript Plus (PDP)','07040')
+        # result = get_from_medicaid('Levemir','UHC Community')
+        result = get_from_medicare( "SYMBICORT","Silverscript choice (PDP)","07040")
+        # result = get_from_medicaid("Admelog", "Caresource" )
+        # get_from_medicaid("Breo","Ohio State")
+        # get_from_medicaid("Trulicity","OH State Medicaid")
+        # main("Pamidronate Disodium", "Caresource") # CLASS_ID != NULL
+        # main("Tresiba", "Paramount")
+        # main("Advair", "Paramount")
+        # main("epinephrine", "Paramount")
+        # main("Potassium Citrate", "Caresource")
+        # main("Zanaflex", "Caresource")
+        # main("Trelegy", "Caresource")
+        # main("Breo","Caresource")
+        # main('Symbicort','Molina')
+        # result = get_from_medicaid('ARTHROTEC','Molina')
+        # result = get_from_medicaid('Tresiba','Caresource')
+        # result = get_from_medicaid('Lantus', 'Ohio State')
+
+        print(result)
+
 
 

@@ -225,22 +225,23 @@
 			  	  $('#loading').hide();
 			  
 				  $('#medicaidhead').empty();
-				  var headings = Object.keys(resp[0]);
+				  var headings = resp['heading'];
 				  var header = "<tr>";
 				  
-				  for( h=0; h<headings.length; h++)
+				  for( h=0; h < headings.length; h++)
 				  {
 					  header += '<th scope="col">'+headings[h]+'</th>';
 				  }
 				  header += '</tr>';
 				  $('#medicaidhead').append(header);
-				  
+
+
 				  $('#medicaidbody').empty();
+				  var data = resp['data']
 				  drugHasPA = false
-				  
-				  for( d=0; d < resp.length; d++)
+				  for( d=0; d < data.length; d++)
 				  {
-					  if( resp[d]['Formulary Restrictions'].search('PA') )
+					  if( data[d]['Formulary Restrictions'].search('PA') )
 					    cls = '<td class="table-success">';
 					  else
 					    cls = '<td class="table-danger">';
@@ -249,7 +250,7 @@
 					  var tr = '<tr id="medicaid-success">' 
 					  for ( h=0; h<headings.length; h++)
 					  {
-						  tr += cls + resp[d][headings[h]]+ '</td>' 
+						  tr += cls + data[d][headings[h]]+ '</td>'
 					  }
 					  $('#medicaidbody').append(tr);
 				  }

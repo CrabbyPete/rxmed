@@ -8,24 +8,30 @@ from flask_admin.contrib.sqla import ModelView
 from log         import log, rq_log
 from forms       import MedicaidForm
 from models.fta  import FTA
-from models.ndc  import Plans, NDC
-from models      import db
+from models      import Plans, NDC
+from models.base import Database
+
+from settings    import DATABASE
+
+from user       import init_user
 
 application = Flask(__name__, static_url_path='/static')
 
+
 application.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
-admin = Admin(application, name='microblog', template_mode='bootstrap3')
+admin = Admin(application, name='RxMedAccess', template_mode='bootstrap3')
+db = Database( DATABASE )
+db.open()
 admin.add_view(ModelView(FTA, db.session))
+
+init_user( application )
 
 @application.errorhandler(500)
 def internal_error(error):
     log.error(f"Exception caught:{str(error)}")
     return jsonify([])
 
-@application.route('/favicon.ico')
-def favicon():
-    return send_from_directory(os.path.join(app.root_path, 'static'),
-                               'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
 @application.route('/')
 def home():
     return render_template('home.html')
@@ -37,7 +43,7 @@ def fit():
     Get medicaid results
     :return:
     """
-    form = MedicaidForm(request.form)
+#    form = MedicaidForm(request.form)
     if request.method == 'POST' and form.validate():
         alternatives, exclude = tools.get_from_medicaid(request.args['drug_name'],
                                                         request.args['plan_name']
@@ -146,10 +152,10 @@ def drug_names():
     if 'qry' in request.args and len(request.args['qry']) >= 3:
         look_for = f"{request.args['qry'].lower()}%"
         drug_list = FTA.find_by_name(look_for, False )
-        results = [d.PROPRIETARY_NAME for d in drug_list ]
+        results = [d.PROPRIETARY_NAME.capitalize() for d in drug_list ]
 
         drug_list = FTA.find_nonproprietary( look_for )
-        results.update( [ d.NONPROPRIETARY_NAME for d in drug_list ])
+        results.extend( [ d.NONPROPRIETARY_NAME.capitalize() for d in drug_list ])
 
     results = sorted( list(results) )
     return jsonify(results)
@@ -178,15 +184,19 @@ def medicaid_options():
 
             if plan_name.startswith("Caresource"): #Caresourse: Drug_Name,Drug_Tier,Formulary_Restrictions
                 look_in = alternative['Drug_Name']
+                heading = ['Drug Name','Drug Tier','Formulary Restrictions']
 
             elif plan_name.startswith("Paramount"):# Paramount: Formulary_restriction, Generic_name, Brand_name
-                look_in = alternative['Brand_name']+" "+alternative['Brand_name']
+                look_in = alternative['Brand_name']+" "+alternative['Generic_name']
+                heading = ['Brand Name', 'Generic Name', 'Formulary Restrictions']
 
             elif plan_name.startswith("Molina"): # Molina:Generic_name,Brand_name,Formulary_restriction
                 look_in = alternative['Brand_name']+" "+alternative['Generic_name']
+                heading = ['Brand Name', 'Generic Name', 'Formulary Restrictions']
 
             elif plan_name.startswith("UHC"):# UHC: Generic,Brand,Tier,Formulary_Restriction
                 look_in = alternative['Brand']+" "+alternative['Generic']
+                heading = ['Brand','Generic','Formulary Restrictions']
 
             elif plan_name.startswith("Buckeye"):# Buckeye: Drug_Name,Preferred_Agent,Fomulary_restriction
                 if alternative['Preferred_Agent'] == "***":
@@ -195,11 +205,19 @@ def medicaid_options():
                     alternative['Preferred_Agent'] = "No"
                     
                 look_in = alternative['Drug_Name']
+                heading = ['Drug Name','Preferred Agent','Formulary Restrictions']
 
             elif plan_name.startswith("OH State"):
                 look_in = alternative['Product_Description']
                 pa = alternative.pop('Prior_Authorization_Required')
                 alternative['fo'] = 'PA' if 'Y' in pa else "None"
+                heading = ['Product Description',
+                            'Formulary Restrictions',
+                            'Copay',
+                            'Package',
+                            'Route Of Administration',
+                            'Covered For Dual Eligible',
+                            ]
             
             fr = look_in.lower()
             for ex in exclude:
@@ -220,7 +238,10 @@ def medicaid_options():
                     
                 results.append( result )
 
-    return jsonify(results)
+
+
+    reply = jsonify({'heading':heading, 'data':results})
+    return reply
 
 
 @application.route('/medicare_options', methods=['GET'])
@@ -247,5 +268,4 @@ def medicare_options():
 
 if __name__ == "__main__":
     application.run(host='0.0.0.0', port=5000, debug=False)
-    application.add_url_rule('/favicon.ico', redirect_to=url_for('static', filename='img/favicon (32x32).ico'))
 

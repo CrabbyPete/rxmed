@@ -1,181 +1,128 @@
-from sqlalchemy import ( Column,
-                         BigInteger,
-                         Integer,
+from sqlalchemy import ( or_,
+                         and_,
+                         any_,
+                         ARRAY,
+                         Column,
                          String,
-                         Text,
-                         or_
+                         Integer,
+                         Boolean,
+                         DECIMAL,
+                         ForeignKey,
                        )
 
-from .base import Base
+from sqlalchemy.orm     import relationship
+from .base              import Base
+
+class Geolocate(Base):
+    __tablename__ = 'geolocate'
+
+    id              = Column( Integer, primary_key= True )
+    COUNTY_CODE     = Column( Integer )
+    STATENAME       = Column( String )
+    COUNTY          = Column( String )
+    MA_REGION_CODE  = Column( String )
+    MA_REGION       = Column( String )
+    PDP_REGION_CODE = Column( Integer )
+    PDP_REGION      = Column( String )
+
+    def __repr__(self):
+        return "<{},{}>".format(self.STATENAME, self.COUNTY)
 
 
-# Just return the results not the whole class
-row2dict = lambda r: {c.name: str(getattr(r, c.name)) for c in r.__table__.columns}
-
-"""
-class DrugPlans(Base):
-    id                      = Column( BigInteger, primary_key= True )
-    Plan_Name               = Column(String(255), nullable=False )
-    Drug_Name               = Column(String(255), nullable=False )
-    Generic_name            = Column(String(255))
-    Tier                    = Column(String(255))
-    Formulary_Restrictions  = Column(String(255))
-    PA_Code                 = Column(String(255))
-    Preferred_Agent         = Column(String(255))
-"""
-
-
-class Caresource(Base):
-    __tablename__ = 'caresource'
-
-    id                     = Column( BigInteger,  primary_key= True )
-    Drug_Name              = Column( String(255), nullable=False )
-    Drug_Tier              = Column( String(255), nullable=False )
-    Formulary_Restrictions = Column( String(255), nullable=False )
+class Zipcode(Base):
+    __tablename__ = 'zipcode'
+    id          = Column( Integer, primary_key= True )
+    ZIPCODE     = Column( String )
+    CITY        = Column( String )
+    STATE       = Column( String )
+    STATENAME   = Column( String )
+    COUNTY      = Column( String )
+    GEO_id      = Column( Integer, ForeignKey('geolocate.id') )
+    GEO         = relationship( Geolocate, primaryjoin = GEO_id == Geolocate.id )
 
     @classmethod
-    def find_by_name(cls, name ):
+    def find_one(cls, zipcode ):
         """
-        Find the drug by its name
-        :param name:
+        Return a simlar zipcode
+        :param zipcode:
         :return:
         """
-        name = f"%{name.lower()}%"
-        qry = cls.session.query(cls).filter( cls.Drug_Name.ilike(name) )
-        results = [ row2dict(r) for r  in qry ]
-
-        return results
-
-
-
+        qry = cls.session.query(cls).filter(cls.ZIPCODE.ilike(f'{zipcode}'))
+        zc  = qry.one()
+        return zc
 
     def __repr__(self):
-        return "<{}>".format(self.Drug_Name )
+        return "<{}>".format(self.ZIPCODE)
 
+class Plans(Base):
+    __tablename__ = 'plans'
 
-class Paramount(Base):
-    __tablename__ = 'paramount'
-    id                      = Column( BigInteger,  primary_key= True )
-    Formulary_restriction   = Column( String(255), nullable=False )
-    Generic_name            = Column( String(255), nullable=False )
-    Brand_name              = Column( String(255), nullable=False )
+    id                  = Column( Integer, primary_key= True )
+    CONTRACT_ID         = Column( String )
+    PLAN_ID             = Column( Integer )
+    SEGMENT_ID          = Column( String )
+    CONTRACT_NAME       = Column( String )
+    PLAN_NAME           = Column( String )
+    FORMULARY_ID        = Column( Integer )
+    PREMIUM             = Column( DECIMAL(precision=8,asdecimal=True,scale=2), nullable=True)
+    DEDUCTIBLE          = Column( DECIMAL(precision=8,asdecimal=True,scale=2), nullable=True)
+    ICL                 = Column( Integer, nullable= True )
+    MA_REGION_CODE      = Column( String, nullable= True  )
+    PDP_REGION_CODE     = Column( String, nullable= True  )
+    STATE               = Column( String )
+    COUNTY_CODE         = Column( String )
+    SNP                 = Column( Integer, nullable=True)
+    PLAN_SUPPRESSED_YN  = Column( Boolean )
+    GEO_ids             = Column( ARRAY( Integer, ForeignKey('geolocate.id') ) )
+
 
     @classmethod
-    def find_by_name(cls, name ):
+    def find_by_formulary_id(cls, fid):
+        """
+
+        :param fid:
+        :return:
+        """
+        qry = cls.session.query(cls).filter(cls.FORMULARY_ID == fid)
+        return qry.all()
+
+    @classmethod
+    def find_by_plan_name(cls, name, exact = False, geo=None):
         """
         Find similar drugs in the database
         :param name: drug name
         :return: matches
         """
-        name = f"%{name.lower()}%"
-        qry = cls.session.query(cls).filter( or_( cls.Generic_name.ilike(name),
-                                                  cls.Brand_name.ilike(name)
-                                                )
-                                           )
-        results = [row2dict(r) for r in qry]
-        return results
+        if not exact:
+            name = f"%{name.lower()}%"
+        else:
+            name = name.lower()
 
-    def __repr__(self):
-        return "<{}>".format(self.Generic_name )
+        fltr = cls.PLAN_NAME.ilike(name)
+        if geo:
+            #select * from plans where 2090 = ANY("GEO_ids");
+            fltr = and_(fltr, cls.GEO_ids.any(geo))
 
-
-class Molina(Base):
-    __tablename__ = 'molina'
-    id                          = Column( BigInteger,  primary_key= True )
-    Generic_name                = Column( String(255), nullable=False )
-    Brand_name                  = Column( String(255), nullable=False )
-    Formulary_restriction       = Column( String(255), nullable=False )
+        qry = cls.session.query(cls).filter(fltr)
+        return qry.all()
 
     @classmethod
-    def find_by_name(cls, name ):
+    def find_in_county(cls, county_code, ma_region, pdp_region, name='*'):
         """
-        Find similar drugs in the database
-        :param name: drug name
-        :return: matches
+        Query plans in a certain county
         """
-        name = f"%{name.lower()}%"
-        qry = cls.session.query(cls).filter( or_( cls.Generic_name.ilike(name),
-                                                  cls.Brand_name.ilike(name)
-                                                )
-                                           )
-        results = [row2dict(r) for r in qry]
+        county_code = f"%{county_code}%"
+        flter = or_(cls.COUNTY_CODE.ilike(county_code),
+                    cls.MA_REGION_CODE.ilike(ma_region),
+                    cls.PDP_REGION_CODE == str(pdp_region)
+                    )
+        if not name == '*':
+            look_for = f"{name.lower()}%"
+            flter = and_(flter, cls.PLAN_NAME.ilike(look_for))
+
+        qry = cls.session.query(Plans.PLAN_NAME).filter(flter).distinct(cls.PLAN_NAME).all()
+        results = [r.PLAN_NAME for r in qry]
         return results
 
     def __repr__(self):
-        return "<{}>".format(self.DRUG_NAME )
-
-
-class Molina_Healthcare( Base ):
-    """
-    class based on PLANS/Molina Healthcare PA criteria 10_1_18.csv
-    """
-    __tablename__ = "molinahealthcare"
-
-    id                        = Column( BigInteger,  primary_key=True)
-    DRUG_NAME                 = Column( String(255), nullable=False )
-    PA_CODE                   = Column( String(255), nullable=False )
-    ALTERNATIVE_DRUG_CRITERIA = Column( String(255), nullable=False )
-
-    @classmethod
-    def find_brand(cls, name ):
-        name = f"%{name.lower()}%"
-        qry = cls.session.query(cls).filter( cls.DRUG_NAME.ilike(name) )
-        results = [row2dict(r) for r in qry]
-        return results
-
-    def __repr__(self):
-        return "<{}>".format(self.DRUG_NAME )
-
-
-class UHC(Base):
-    __tablename__ = 'UHC'
-
-    id                      = Column(BigInteger,   primary_key=True)
-    Generic                 = Column( Text, nullable=False )
-    Brand                   = Column( Text, nullable=False )
-    Tier                    = Column( Text, nullable=False )
-    Formulary_Restrictions  = Column( Text, nullable=False )
-
-    @classmethod
-    def find_by_name(cls, name ):
-        """
-        Find similar drugs in the database
-        :param name: drug name
-        :return: matches
-        """
-        name = f"%{name.lower()}%"
-        qry = cls.session.query(cls).filter( or_(cls.Generic.ilike(name),
-                                                 cls.Brand.ilike(name)
-                                                )
-                                           ).all()
-                                           
-        results = [row2dict(r) for r in qry]
-        return results
-
-
-    def __repr__(self):
-        return "<{}>".format(self.Generic )
-
-
-class Buckeye(Base):
-    __tablename__ = 'buckeye'
-    id                   = Column(BigInteger,   primary_key=True)
-    Drug_Name            = Column( String(255), nullable=False )
-    Preferred_Agent      = Column( String(255), nullable=False )
-    Fomulary_restriction = Column( String(255), nullable=False )
-
-    @classmethod
-    def find_by_name(cls, name ):
-        """
-        Find similar drugs in the database
-        :param name: drug name
-        :return: matches
-        """
-        name = f"%{name.lower()}%"
-        qry = cls.session.query(cls).filter( cls.Drug_Name.ilike(name))
-        results = [row2dict(r) for r in qry]
-        return results
-
-
-    def __repr__(self):
-        return "<{}>".format(self.Drug_Name )
+        return "<{}>".format(self.PLAN_NAME)

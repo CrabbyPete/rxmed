@@ -9,7 +9,7 @@ from log import log
 
 BASE_URL     = "https://rxnav.nlm.nih.gov/REST"
 HISTORIC_URL = "https://rxnav.nlm.nih.gov/REST/rxcuihistoryconcept?rxcui={}"
-OPENFDA_URL  = 'https://api.fda.gov/drug/event.json?search='
+OPENFDA_URL  = 'https://api.fda.gov/drug/ndc.json?search=brand_name:{}'
 OHSTATE      = 'https://druglookup.ohgov.changehealthcare.com/DrugSearch/application/search?searchBy=name&name={}'
 
 
