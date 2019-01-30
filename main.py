@@ -1,28 +1,27 @@
 
 import tools
 
-from flask       import Flask, request, render_template, jsonify, url_for
-from flask_admin import Admin
-from flask_admin.contrib.sqla import ModelView
+from flask          import Flask, request, render_template, jsonify, url_for
+from flask_admin    import Admin
 
-from log         import log, rq_log
-from forms       import MedicaidForm
-from models.fta  import FTA
-from models      import Plans, NDC
-from models.base import Database
+from log            import log, rq_log
+from models.fta     import FTA
+from models         import Plans, NDC
+from models.base    import Database
+from models.admin   import FTAModelView
 
-from settings    import DATABASE
+from settings       import DATABASE
 
-from user       import init_user
+from user           import init_user
 
 application = Flask(__name__, static_url_path='/static')
-
-
 application.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
-admin = Admin(application, name='RxMedAccess', template_mode='bootstrap3')
+
 db = Database( DATABASE )
 db.open()
-admin.add_view(ModelView(FTA, db.session))
+
+admin = Admin(application, name='RxMedAccess', template_mode='bootstrap3')
+admin.add_view( FTAModelView(FTA, db.session))
 
 init_user( application )
 

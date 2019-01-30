@@ -93,7 +93,7 @@ def get_related_drugs(name):
             excluded_front = []
 
         if fta.EXCLUDED_DRUGS_BACK:
-            excluded_back = [s.strip() for s in drug.FTA.EXCLUDED_DRUGS_BACK.lower().split("|")]
+            excluded_back = [s.strip() for s in fta.EXCLUDED_DRUGS_BACK.lower().split("|")]
         else:
             excluded_back = []
 
@@ -197,7 +197,7 @@ def beneficiary_costs( drug, plan ):
 
         bd = bd[0]
     except IndexError:
-        log.error(f"No Basic Drug for NDC:{drug} Formulary ID:{plan.FORMULARY_ID}")
+        log.error(f"No Basic Drug for NDC:{drug} FormularyID:{plan.FORMULARY_ID}")
         return None,None
 
     benefit_costs = Beneficiary_Costs.get_all( **dict( CONTRACT_ID    = plan.CONTRACT_ID,
