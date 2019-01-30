@@ -149,7 +149,7 @@ class Buckeye(Base):
     id                    = Column(Integer,   primary_key=True)
     Drug_Name             = Column( String, nullable=False )
     Preferred_Agent       = Column( String, nullable=False )
-    Fomulary_Restrictions = Column( String, nullable=False )
+    Fomulary_restriction  = Column( String, nullable=False )
 
     @classmethod
     def find_by_name(cls, name ):

@@ -13,15 +13,15 @@ class BaseMixin(object):
     """ Base class mixin to handle everything for Session
     """
     session = None
-    bulk_buffer = None
 
     def bulk_save(self, finish=False):
         self.bulk_buffer.append(self)
         if len(self.bulk_buffer) == 1000 or finish:
             try:
+                print('saving')
                 self.session.bulk_save_objects(self.bulk_buffer)
                 self.session.commit()
-                self.bulk_buffer = []
+                self.bulk_buffer.clear()
                 pass
 
             except Exception as e:
@@ -165,7 +165,7 @@ class Database(object):
             try:
                 self.session.bulk_save_objects(self.bulk_buffer)
                 self.session.commit()
-                self.bulk_buffer = []
+                self.bulk_buffer.clear()
             except Exception as e:
                 log.error("Database Exception {} adding ".format(str(e), self))
                 self.session.rollback()
