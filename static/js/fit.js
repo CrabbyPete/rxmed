@@ -238,21 +238,28 @@
 
 				  $('#medicaidbody').empty();
 				  var data = resp['data']
-				  drugHasPA = false
-				  for( d=0; d < data.length; d++)
+				  if (data.length == 0)
+				    drugHasPA = false;
+				  else
 				  {
-					  if( data[d]['Formulary Restrictions'].search('PA') )
-					    cls = '<td class="table-success">';
-					  else
-					    cls = '<td class="table-danger">';
-					  	drugHasPA = true
+				    drugHasPA = false;
+				    for(d=0; d < data.length; d++)
+				    {
+					    if( data[d]['Formulary Restrictions'].search('PA') )
+					        cls = '<td class="table-success">';
+					    else
+					    {
+					        cls = '<td class="table-danger">';
+					  	    drugHasPA = true
+					  	}
 
-					  var tr = '<tr id="medicaid-success">' 
-					  for ( h=0; h<headings.length; h++)
-					  {
+					    var tr = '<tr id="medicaid-success">'
+					    for ( h=0; h<headings.length; h++)
+					    {
 						  tr += cls + data[d][headings[h]]+ '</td>'
-					  }
-					  $('#medicaidbody').append(tr);
+					    }
+					    $('#medicaidbody').append(tr);
+				    }
 				  }
 
 				  $('#table-medicaid').show();
