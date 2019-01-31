@@ -225,50 +225,49 @@
 			  	  $('#loading').hide();
 			  
 				  $('#medicaidhead').empty();
-				  var headings = resp['heading'];
+
+				  var heading = resp['heading'];
 				  var header = "<tr>";
-				  
-				  for( h=0; h < headings.length; h++)
+				  for( h=0; h < heading.length; h++)
 				  {
-					  header += '<th scope="col">'+headings[h]+'</th>';
+					  header += '<th scope="col">'+heading[h]+'</th>';
 				  }
+
 				  header += '</tr>';
 				  $('#medicaidhead').append(header);
 
 
 				  $('#medicaidbody').empty();
-				  var data = resp['data']
-				  if (data.length == 0)
-				    drugHasPA = false;
-				  else
-				  {
-				    drugHasPA = false;
-				    for(d=0; d < data.length; d++)
-				    {
-					    if( data[d]['Formulary Restrictions'].search('PA') )
-					        cls = '<td class="table-success">';
-					    else
-					    {
-					        cls = '<td class="table-danger">';
-					  	    drugHasPA = true
-					  	}
 
-					    var tr = '<tr id="medicaid-success">'
-					    for ( h=0; h<headings.length; h++)
-					    {
-						  tr += cls + data[d][headings[h]]+ '</td>'
-					    }
-					    $('#medicaidbody').append(tr);
-				    }
+				  if (resp['pa'] == true)
+				    drugHasPA = true;
+				  else
+				    drugHasPA = false;
+
+                  var data = resp['data']
+				  for(d=0; d < data.length; d++)
+				  {
+				    if( data[d]['Formulary Restrictions'].search('PA') )
+					    cls = '<td class="table-success">';
+					else
+					    cls = '<td class="table-danger">';
+
+					var tr = '<tr id="medicaid-success">'
+
+					for ( h=0; h<heading.length; h++)
+					{
+				        tr += cls + data[d][heading[h]]+ '</td>'
+					}
+					$('#medicaidbody').append(tr);
 				  }
 
 				  $('#table-medicaid').show();
 				  $('#table-header').show();
 
 				  if (drugHasPA)
-				    $('#infobox-pa-false').show();
-				  else
 				    $('#infobox-pa-true').show();
+				  else
+				    $('#infobox-pa-false').show();
 
 				  $('#color-codes').show();
 			  }

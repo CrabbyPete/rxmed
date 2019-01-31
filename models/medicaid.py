@@ -13,7 +13,7 @@ from .base import Base
 row2dict = lambda r: {c.name: str(getattr(r, c.name)) for c in r.__table__.columns}
 
 
-class Caresource(Base):
+class Caresource(Base): # Drug_Name,Drug_Tier,Formulary_Restrictions
     __tablename__ = 'caresource'
 
     id                     = Column( Integer,  primary_key= True )
@@ -40,7 +40,7 @@ class Caresource(Base):
         return "<{}>".format(self.Drug_Name )
 
 
-class Paramount(Base):
+class Paramount(Base): # Formulary_restriction,Generic_name,Brand_name
     __tablename__ = 'paramount'
     id                      = Column( Integer,  primary_key= True )
     Formulary_restriction   = Column( String, nullable=False )
@@ -66,12 +66,12 @@ class Paramount(Base):
         return "<{}>".format(self.Generic_name )
 
 
-class Molina(Base):
+class Molina(Base): # Generic_name,Brand_name,Formulary_Restrictions
     __tablename__ = 'molina'
     id                          = Column( Integer,  primary_key= True )
     Generic_name                = Column( String, nullable=False )
     Brand_name                  = Column( String, nullable=False )
-    Formulary_restriction       = Column( String, nullable=False )
+    Formulary_Restrictions      = Column( String, nullable=False )
 
     @classmethod
     def find_by_name(cls, name ):
@@ -92,7 +92,7 @@ class Molina(Base):
         return "<{}>".format(self.DRUG_NAME )
 
 
-class Molina_Healthcare( Base ):
+class Molina_Healthcare( Base ): # DRUG_NAME,PA_CODE,ALTERNATIVE_DRUG_CRITERIA
     """
     class based on PLANS/Molina Healthcare PA criteria 10_1_18.csv
     """
@@ -114,7 +114,7 @@ class Molina_Healthcare( Base ):
         return "<{}>".format(self.DRUG_NAME )
 
 
-class UHC(Base):
+class UHC(Base): # Generic,Brand,Tier,Formulary_Restrictions
     __tablename__ = 'UHC'
 
     id                      = Column(Integer,   primary_key=True)
@@ -144,7 +144,7 @@ class UHC(Base):
         return "<{}>".format(self.Generic )
 
 
-class Buckeye(Base):
+class Buckeye(Base): # Drug_Name,Preferred_Agent,Fomulary_Restrictions
     __tablename__ = 'buckeye'
     id                    = Column(Integer,   primary_key=True)
     Drug_Name             = Column( String, nullable=False )

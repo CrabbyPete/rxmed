@@ -153,8 +153,7 @@ class Drug(Base):
             flter = cls.PROPRIETARY_NAME.ilike(name)
 
         qry = cls.session.query(cls).filter(flter)
-        results = qry.all()
-        return results
+        return qry.all()
 
     def __repr__(self):
         return "<{}:{}={}>".format(self.PROPRIETARY_NAME,self.NONPROPRIETARY_NAME,self.id)

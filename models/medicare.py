@@ -17,7 +17,6 @@ from .base              import Base
 # Just return the results not the whole class
 row2dict = lambda r: {c.name: str(getattr(r, c.name)) for c in r.__table__.columns}
 
-
 class Basic_Drugs(Base):
     __tablename__ = 'basicdrugs'
 
@@ -90,3 +89,5 @@ class Beneficiary_Costs( Base ):
 
     def __repr__(self):
         return "<{}-{}>".format(self.CONTRACT_ID, self.PLAN_ID)
+
+

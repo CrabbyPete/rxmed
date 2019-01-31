@@ -2,7 +2,7 @@ import re
 
 from log                import log, log_msg
 
-from models             import Zipcode, Geolocate, Plans, Basic_Drugs,Beneficiary_Costs, NDC, Drug
+from models             import Zipcode, Plans, Basic_Drugs,Beneficiary_Costs, NDC, Drug
 from models.medicaid    import Caresource, Paramount, Molina, Molina_Healthcare, UHC, Buckeye
 
 from api                import RxClass, OhioState
@@ -286,25 +286,18 @@ def get_from_medicare(drug_name, plan_name, zipcode=None ):
 
     drug_list = set()
     for drug_name in drugs:
-        drug = Drug.find_by_name(drug_name)[0]
-        drugs = NDC.find_by_name( drug_name )
-        drug_list |= set(drugs)
-
-
+        #drug = Drug.find_by_name(drug_name)[0]
+        drugs =[ncd for ncd in NDC.find_by_name( drug_name )]
+        drug_list.update(set(drugs))
 
     for ndc in drug_list:
         bd, bc = beneficiary_costs(ndc.PRODUCT_NDC, plan)
         
         if not bd:
-            continue
-            """
             pa = 'Yes'
             ql = ''
             st = ''
-            copay_p = ''
-            copay_d = ''
             tier = ''
-            """
         else:
             if bd['PRIOR_AUTHORIZATION_YN'] == 'False':
                 pa = 'No'
@@ -325,27 +318,28 @@ def get_from_medicare(drug_name, plan_name, zipcode=None ):
             except IndexError:
                 tier = bd['TIER_LEVEL_VALUE']
                 
-            copay_d = ''
-            copay_p = ''
-            if bc:
-                for c in bc:
-                    if c.COVERAGE_LEVEL == 0:
-                        copay_p = "${:.2f}".format(c.COST_AMT_PREF)
-                    if c.COVERAGE_LEVEL == 1:
-                        copay_d =  "${:.2f}".format(c.COST_AMT_PREF)
+        copay_d = ''
+        copay_p = ''
+        if bc:
+            for c in bc:
+                if c.COVERAGE_LEVEL == 0:
+                    copay_p = "${:.2f}".format(c.COST_AMT_PREF)
+                if c.COVERAGE_LEVEL == 1:
+                    copay_d =  "${:.2f}".format(c.COST_AMT_PREF)
             
-            result = { 'Brand'  : ndc.PROPRIETARY_NAME,
-                       'Generic': ndc.NONPROPRIETARY_NAME,
-                       'Tier'   : tier,
-                       'ST'     : st,
-                       'QL'     : ql,
-                       'PA'     : pa,
-                       'CopayP' :copay_p,
-                       'CopayD' :copay_d
-                     }
-        
-            results.append( result )
-    
+        result = {'Brand'  : ndc.PROPRIETARY_NAME,
+                  'Generic': ndc.NONPROPRIETARY_NAME,
+                  'Tier'   : tier,
+                  'ST'     : st,
+                  'QL'     : ql,
+                  'PA'     : pa,
+                  'CopayP' :copay_p,
+                  'CopayD' :copay_d
+                  }
+        results.append( result )
+
+    #final_results = list({''.join(row[col] for col in results[0].keys()): row for row in results}.values())
+
     return results
 
 if __name__ == "__main__":
