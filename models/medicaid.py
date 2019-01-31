@@ -34,8 +34,6 @@ class Caresource(Base): # Drug_Name,Drug_Tier,Formulary_Restrictions
         return results
 
 
-
-
     def __repr__(self):
         return "<{}>".format(self.Drug_Name )
 

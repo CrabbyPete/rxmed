@@ -8,18 +8,21 @@ class FTAModelView(ModelView):
 
 class MolinaView(ModelView):
     can_delete = False
+    column_searchable_list = ['Brand_name','Generic_name']
 
 class CaresourceView(ModelView):
     can_delete = False
+    column_searchable_list = ['Brand_name']
 
 class BuckeyeView(ModelView):
     can_delete = False
+    column_searchable_list = ['Drug_Name']
 
 class ParamountView(ModelView):
     can_delete = False
+    column_searchable_list = ['Brand_name','Generic_name']
 
 class UHCView(ModelView):
     can_delete = False
+    column_searchable_list = ['Brand','Generic']
 
-class OHStateView(ModelView):
-    can_delete = False
