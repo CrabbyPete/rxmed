@@ -71,7 +71,7 @@ class Molina(Base): # Generic_name,Brand_name,Formulary_Restrictions
     id                          = Column( Integer,  primary_key= True )
     Generic_name                = Column( String, nullable=False )
     Brand_name                  = Column( String, nullable=False )
-    Formulary_Restrictions      = Column( String, nullable=False )
+    Formulary_restriction       = Column( String, nullable=False )
 
     @classmethod
     def find_by_name(cls, name ):

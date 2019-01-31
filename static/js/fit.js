@@ -223,7 +223,6 @@
 			  success: function( resp )
 			  {
 			  	  $('#loading').hide();
-			  
 				  $('#medicaidhead').empty();
 
 				  var heading = resp['heading'];
@@ -235,8 +234,6 @@
 
 				  header += '</tr>';
 				  $('#medicaidhead').append(header);
-
-
 				  $('#medicaidbody').empty();
 
 				  if (resp['pa'] == true)
@@ -265,10 +262,15 @@
 				  $('#table-header').show();
 
 				  if (drugHasPA)
+				  {
 				    $('#infobox-pa-true').show();
+				    $('#infobox-pa-false').hide();
+				  }
 				  else
+				  {
 				    $('#infobox-pa-false').show();
-
+				    $('#infobox-pa-true').hide();
+                  }
 				  $('#color-codes').show();
 			  }
 		  });
@@ -284,6 +286,7 @@
 			  $('#table-header').text(drug);
 			  if (medicareSelected)
 			  {
+
 				  generateMedicareResults();
 			  } else
 			  {

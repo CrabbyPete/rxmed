@@ -197,14 +197,14 @@ def medicaid_options():
 
                 if 'PA' in alternative['Formulary_restriction']:
                     if drug_name in alternative['Brand_name'].lower() or \
-                       drug_name in alternative['Generic_name']:
+                       drug_name in alternative['Generic_name'].lower():
                         pa = True
 
-            elif plan_name.startswith("Molina"): # Molina:# Generic_name,Brand_name,Formulary_Restrictions
+            elif plan_name.startswith("Molina"): # Molina:# Generic_name,Brand_name,Formulary_restriction
                 look_in = alternative['Brand_name']+" "+alternative['Generic_name']
                 heading = ['Brand Name', 'Generic Name', 'Formulary Restrictions']
 
-                if 'PA' in alternative['Formulary_Restrictions']:
+                if 'PA' in alternative['Formulary_restriction']:
                     if drug_name in alternative['Brand_name'].lower() or \
                        drug_name in alternative['Generic_name'].lower():
                         pa = True
@@ -214,7 +214,7 @@ def medicaid_options():
                 look_in = alternative['Brand']+" "+alternative['Generic']
                 heading = ['Brand','Generic','Formulary Restrictions']
 
-                if 'PA' in alternative['Formulary_Restriction']:
+                if 'PA' in alternative['Formulary_Restrictions']:
                     if drug_name in alternative['Brand'].lower() or \
                        drug_name in alternative['Generic'].lower():
                         pa = True
