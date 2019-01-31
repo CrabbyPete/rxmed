@@ -193,11 +193,11 @@ def beneficiary_costs( drug, plan ):
     bd = Basic_Drugs.get_close_to(drug, plan.FORMULARY_ID)
     try:
         if len( bd ) > 1:
-            log.error( log_msg(f"{drug}-{plan.FORMULARY_ID} returned more than 1 value"))
+            log.info( log_msg(f"{drug}-{plan.FORMULARY_ID} returned more than 1 value"))
 
         bd = bd[0]
     except IndexError:
-        log.error(f"No Basic Drug for NDC:{drug} FormularyID:{plan.FORMULARY_ID}")
+        log.info(f"No Basic Drug for NDC:{drug} FormularyID:{plan.FORMULARY_ID}")
         return None,None
 
     benefit_costs = Beneficiary_Costs.get_all( **dict( CONTRACT_ID    = plan.CONTRACT_ID,
@@ -282,50 +282,57 @@ def get_from_medicare(drug_name, plan_name, zipcode=None ):
     plan = get_plan(plan_name, zipcode)
     
     results = []
-    for drug in Drug.find_by_name( drug_name ):
-        if not drug.NDC:
-            drug_list = NDC.find_by_name(drug_name)
-        else:
-            drug_list = drug.NDC
+    drugs, exclude = get_related_drugs(drug_name)
 
-        for ndc in drug_list:
-            bd, bc = beneficiary_costs(ndc.PRODUCT_NDC, plan)
+    drug_list = set()
+    for drug_name in drugs:
+        drug = Drug.find_by_name(drug_name)[0]
+        drugs = NDC.find_by_name( drug_name )
+        drug_list |= set(drugs)
+
+
+
+    for ndc in drug_list:
+        bd, bc = beneficiary_costs(ndc.PRODUCT_NDC, plan)
         
-            if not bd:
-                pa = 'Yes'
-                ql = ''
-                st = ''
-                copay_p = ''
-                copay_d = ''
-                tier = ''
+        if not bd:
+            continue
+            """
+            pa = 'Yes'
+            ql = ''
+            st = ''
+            copay_p = ''
+            copay_d = ''
+            tier = ''
+            """
+        else:
+            if bd['PRIOR_AUTHORIZATION_YN'] == 'False':
+                pa = 'No'
             else:
-                if bd['PRIOR_AUTHORIZATION_YN'] == 'False':
-                    pa = 'No'
-                else:
-                    pa = 'Yes'
+                pa = 'Yes'
 
-                if bd['STEP_THERAPY_YN'] == 'False':
-                    st = 'No'
-                else:
-                    st = 'Yes'
+            if bd['STEP_THERAPY_YN'] == 'False':
+                st = 'No'
+            else:
+                st = 'Yes'
 
-                if bd['QUANTITY_LIMIT_YN'] == 'True':
-                    ql = f"Yes {bd['QUANTITY_LIMIT_AMOUNT']}:{bd['QUANTITY_LIMIT_DAYS']}"
-                else:
-                    ql = f"No"
-                try:
-                    tier    = bc[0].TIER
-                except IndexError:
-                    tier = bd['TIER_LEVEL_VALUE']
+            if bd['QUANTITY_LIMIT_YN'] == 'True':
+                ql = f"Yes {bd['QUANTITY_LIMIT_AMOUNT']}:{bd['QUANTITY_LIMIT_DAYS']}"
+            else:
+                ql = f"No"
+            try:
+                tier    = bc[0].TIER
+            except IndexError:
+                tier = bd['TIER_LEVEL_VALUE']
                 
-                copay_d = ''
-                copay_p = ''
-                if bc:
-                    for c in bc:
-                        if c.COVERAGE_LEVEL == 0:
-                            copay_p = "${:.2f}".format(c.COST_AMT_PREF)
-                        if c.COVERAGE_LEVEL == 1:
-                            copay_d =  "${:.2f}".format(c.COST_AMT_PREF)
+            copay_d = ''
+            copay_p = ''
+            if bc:
+                for c in bc:
+                    if c.COVERAGE_LEVEL == 0:
+                        copay_p = "${:.2f}".format(c.COST_AMT_PREF)
+                    if c.COVERAGE_LEVEL == 1:
+                        copay_d =  "${:.2f}".format(c.COST_AMT_PREF)
             
             result = { 'Brand'  : ndc.PROPRIETARY_NAME,
                        'Generic': ndc.NONPROPRIETARY_NAME,
@@ -337,7 +344,7 @@ def get_from_medicare(drug_name, plan_name, zipcode=None ):
                        'CopayD' :copay_d
                      }
         
-        results.append( result )
+            results.append( result )
     
     return results
 

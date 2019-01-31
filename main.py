@@ -1,14 +1,15 @@
 
 import tools
 
-from flask          import Flask, request, render_template, jsonify, url_for
-from flask_admin    import Admin
+from flask              import Flask, request, render_template, jsonify, url_for
+from flask_admin        import Admin
 
-from log            import log, rq_log
-from models.fta     import FTA
-from models         import Plans, NDC
-from models.base    import Database
-from models.admin   import FTAModelView
+from log                import log, rq_log
+from models.fta         import FTA
+from models.medicaid    import Caresource, Molina, Paramount, Buckeye, UHC
+from models             import Plans, NDC
+from models.base        import Database
+from models.admin       import *
 
 from settings       import DATABASE
 
@@ -22,6 +23,11 @@ db.open()
 
 admin = Admin(application, name='RxMedAccess', template_mode='bootstrap3')
 admin.add_view( FTAModelView(FTA, db.session))
+admin.add_view( CaresourceView(Caresource, db.session))
+admin.add_view( MolinaView(Molina,db.session))
+admin.add_view( ParamountView(Paramount,db.session))
+admin.add_view( BuckeyeView(Buckeye,db.session))
+admin.add_view( UHCView(UHC,db.session))
 
 init_user( application )
 
@@ -42,15 +48,8 @@ def fit():
     Get medicaid results
     :return:
     """
-#    form = MedicaidForm(request.form)
-    if request.method == 'POST' and form.validate():
-        alternatives, exclude = tools.get_from_medicaid(request.args['drug_name'],
-                                                        request.args['plan_name']
-                                                        )
-
     context = {}
     return render_template( 'fit.html', **context )
-
 
 
 # Ajax calls
@@ -236,8 +235,6 @@ def medicaid_options():
                     result[k] = v
                     
                 results.append( result )
-
-
 
     reply = jsonify({'heading':heading, 'data':results})
     return reply
