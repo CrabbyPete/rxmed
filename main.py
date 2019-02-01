@@ -179,51 +179,67 @@ def medicaid_options():
         alternatives, exclude = tools.get_from_medicaid(request.args['drug_name'], request.args['plan_name'])
 
         pa = False
+        included = False
+
         drug_name = drug_name.lower()
+        headings = {'caresource':['Drug Name', 'Drug Tier', 'Formulary Restrictions'],
+                    'paramount' :['Brand Name', 'Generic Name', 'Formulary Restrictions'],
+                    'molina'    :['Brand Name', 'Generic Name', 'Formulary Restrictions'],
+                    'uhc'       :['Brand', 'Generic', 'Formulary Restrictions'],
+                    'buckeye'   :['Drug Name', 'Preferred Agent', 'Formulary Restrictions'],
+                    'oh'        :['Product Description',
+                                  'Formulary Restrictions',
+                                  'Copay',
+                                  'Package',
+                                  'Route Of Administration',
+                                  'Covered For Dual Eligible',
+                                 ]
+                   }
+
+        heading = headings[plan_name.lower().split(' ')[0]]
         for alternative in alternatives:
 
             # Caresource
             if plan_name.startswith("Caresource"): #Caresourse: Drug_Name,Drug_Tier,Formulary_Restrictions
                 look_in = alternative['Drug_Name']
-                heading = ['Drug Name','Drug Tier','Formulary Restrictions']
 
-                if 'PA' in alternative['Formulary_Restrictions']:
-                    if drug_name in alternative['Drug_Name'].lower():
+                if drug_name in alternative['Drug_Name'].lower():
+                    included = True
+                    if 'PA' in alternative['Formulary_Restrictions']:
                         pa = True
 
             # Paramount
             elif plan_name.startswith("Paramount"):# Paramount: Formulary_restriction, Generic_name, Brand_name
                 look_in = alternative['Brand_name']+" "+alternative['Generic_name']
-                heading = ['Brand Name', 'Generic Name', 'Formulary Restrictions']
 
-                if 'PA' in alternative['Formulary_restriction']:
-                    if drug_name in alternative['Brand_name'].lower() or \
-                       drug_name in alternative['Generic_name'].lower():
+                if drug_name in alternative['Brand_name'].lower() or \
+                   drug_name in alternative['Generic_name'].lower():
+                    included = True
+                    if 'PA' in alternative['Formulary_restriction']:
                         pa = True
 
             # Molina
             elif plan_name.startswith("Molina"): # Molina:# Generic_name,Brand_name,Formulary_restriction
                 look_in = alternative['Brand_name']+" "+alternative['Generic_name']
-                heading = ['Brand Name', 'Generic Name', 'Formulary Restrictions']
 
                 # For Molina check for the word prior authorization or PA in Generic
                 if 'prior' in alternative['Formulary_restriction'] or 'PA' in alternative['Generic_name']:
                     alternative['Formulary_restriction'] = 'PA'
 
-
-                if 'PA' in alternative['Formulary_restriction']:
-                    if drug_name in alternative['Brand_name'].lower() or \
-                       drug_name in alternative['Generic_name'].lower():
+                if drug_name in alternative['Brand_name'].lower() or \
+                   drug_name in alternative['Generic_name'].lower():
+                    included = True
+                    if 'PA' in alternative['Formulary_restriction']:
                         pa = True
 
-
+            #UHC
             elif plan_name.startswith("UHC"):# UHC: Generic,Brand,Tier,Formulary_Restriction
                 look_in = alternative['Brand']+" "+alternative['Generic']
-                heading = ['Brand','Generic','Formulary Restrictions']
 
-                if 'PA' in alternative['Formulary_Restrictions']:
-                    if drug_name in alternative['Brand'].lower() or \
-                       drug_name in alternative['Generic'].lower():
+                if drug_name in alternative['Brand'].lower() or \
+                   drug_name in alternative['Generic'].lower():
+                    included = True
+                    if 'PA' in alternative['Formulary_Restrictions']:
                         pa = True
 
             elif plan_name.startswith("Buckeye"):# Buckeye: Drug_Name,Preferred_Agent,Fomulary_restriction
@@ -233,28 +249,25 @@ def medicaid_options():
                     alternative['Preferred_Agent'] = "Yes"
                     
                 look_in = alternative['Drug_Name']
-                heading = ['Drug Name','Preferred Agent','Formulary Restrictions']
 
-                if 'PA' in alternative['Fomulary_restriction']:
-                    if drug_name in alternative['Drug_Name'].lower():
+                if drug_name in alternative['Drug_Name'].lower():
+                    included = True
+                    if 'PA' in alternative['Fomulary_restriction']:
                         pa = True
 
-
+            # Ohio State
             elif plan_name.startswith("OH State"):
                 look_in = alternative['Product_Description']
                 pa = alternative.pop('Prior_Authorization_Required')
                 alternative['fo'] = 'PA' if 'Y' in pa else "None"
-                heading = ['Product Description',
-                           'Formulary Restrictions',
-                           'Copay',
-                           'Package',
-                           'Route Of Administration',
-                           'Covered For Dual Eligible',
-                            ]
-                if 'PA' in alternative['fo']:
-                    if drug_name in alternative['Product_Description'].lower():
+
+                if drug_name in alternative['Product_Description'].lower():
+                    included = True
+                    if 'PA' in alternative['fo']:
                         pa = True
 
+
+            # Check the front end exclusions
             fr = look_in.lower()
             for ex in exclude:
                 if ex in fr:
@@ -273,6 +286,9 @@ def medicaid_options():
                     result[k] = v
                     
                 data.append( result )
+
+    if not included:
+        pa = True
 
     reply = jsonify({'heading':heading, 'data':data, 'pa':pa} )
     return reply

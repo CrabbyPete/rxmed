@@ -79,7 +79,7 @@ def get_related_drugs(name):
     # There should only be one
     drugs = Drug.find_by_name(name)
     for drug in drugs:
-        fta = drug.FTA[0]
+        fta = drug.fta
         if fta.RELATED_DRUGS:
             if fta.EXCLUDED_DRUGS_FRONT:
                 exclude = fta.EXCLUDED_DRUGS_FRONT.lower().split("|")
@@ -278,7 +278,6 @@ def get_from_medicare(drug_name, plan_name, zipcode=None ):
     :param plan_name:
     :return:
     """
-
     plan = get_plan(plan_name, zipcode)
     
     results = []
@@ -286,9 +285,8 @@ def get_from_medicare(drug_name, plan_name, zipcode=None ):
 
     drug_list = set()
     for drug_name in drugs:
-        #drug = Drug.find_by_name(drug_name)[0]
-        drugs =[ncd for ncd in NDC.find_by_name( drug_name )]
-        drug_list.update(set(drugs))
+        drugs = set(ncd for ncd in NDC.find_by_name( drug_name ))
+        drug_list.update(drugs)
 
     for ndc in drug_list:
         bd, bc = beneficiary_costs(ndc.PRODUCT_NDC, plan)

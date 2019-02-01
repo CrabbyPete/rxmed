@@ -35,7 +35,6 @@ class NDC(Base):
     NDC_EXCLUDE_FLAG        = Column( String, nullable=True )
     LISTING_RECORD_CERTIFIED_THROUGH = Column( String, nullable=True )
 
-    NAME_ID                 = Column(Integer, ForeignKey('drug.id'))
 
     @classmethod
     def find_similar(cls, ndc, cache=None):
@@ -135,8 +134,12 @@ class Drug(Base):
     PROPRIETARY_NAME    = Column(String)
     NONPROPRIETARY_NAME = Column(String)
 
-    FTA                 = Column(Integer, ForeignKey('drug.id'))
-    NDC                 = Column(ARRAY(Integer,ForeignKey('ndc.id')))
+    FTA_id              = Column(Integer, ForeignKey('fta.id'))
+    NDC_id              = Column(ARRAY(Integer,ForeignKey('ndc.id')))
+
+    fta  = relationship( FTA, primaryjoin=FTA_id==FTA.id )
+
+
 
     @classmethod
     def find_by_name(cls, name, nonproprietary=True):
