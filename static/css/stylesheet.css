@@ -43,7 +43,7 @@ body {
 }
 /***** Header (home) *****/
 #home-header {
-	background-image: url("home/blue (1346x800).png");
+	background-image: url("/static/img/blue (1346x800).png");
 }
 #home-header-text {
 	color: #FFFFFF;
