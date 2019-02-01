@@ -242,19 +242,26 @@
 				    drugHasPA = false;
 
                   var data = resp['data']
-				  for(d=0; d < data.length; d++)
+                  var cls;
+                  var tr;
+				  for(var d=0; d < data.length; d++)
 				  {
-				    if( data[d]['Formulary Restrictions'].search('PA') )
-					    cls = '<td class="table-success">';
-					else
+				    if( data[d]['Formulary Restrictions'].includes('PA') )
+				    {
 					    cls = '<td class="table-danger">';
-
-					var tr = '<tr id="medicaid-success">'
+					    tr  = '<tr class="table-danger">';
+					}
+					else
+					{
+					    cls = '<td class="table-success">';
+					    tr  = '<tr class="table-success">';
+                    }
 
 					for ( h=0; h<heading.length; h++)
 					{
 				        tr += cls + data[d][heading[h]]+ '</td>'
 					}
+                    tr += '</tr>'
 					$('#medicaidbody').append(tr);
 				  }
 

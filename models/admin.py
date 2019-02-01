@@ -12,7 +12,7 @@ class MolinaView(ModelView):
 
 class CaresourceView(ModelView):
     can_delete = False
-    column_searchable_list = ['Brand_name']
+    column_searchable_list = ['Drug_Name']
 
 class BuckeyeView(ModelView):
     can_delete = False
