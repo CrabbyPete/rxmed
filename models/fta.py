@@ -97,8 +97,6 @@ class FTA(Base):
     EXCLUDED_DRUGS_FRONT = Column( String )
     RELATED_DRUGS        = Column( ARRAY(Integer) )
 
-    NAME_ID              = Column(Integer, ForeignKey('drug.id'))
-
     @classmethod
     def find_by_name(cls, name, nonproprietary=True ):
         """ Return an atoms by property
@@ -137,8 +135,8 @@ class Drug(Base):
     PROPRIETARY_NAME    = Column(String)
     NONPROPRIETARY_NAME = Column(String)
 
-    FTA                 = relationship("FTA")
-    NDC                 = relationship("NDC")
+    FTA                 = Column(Integer, ForeignKey('drug.id'))
+    NDC                 = Column(ARRAY(Integer,ForeignKey('ndc.id')))
 
     @classmethod
     def find_by_name(cls, name, nonproprietary=True):

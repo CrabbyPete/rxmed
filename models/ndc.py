@@ -51,8 +51,7 @@ class Basic_Drugs(Base):
             qry = cls.session.query(cls).filter(cls.NDC.ilike(ndc) )
 
         data = qry.all()
-        results = [row2dict(r) for r in data]
-        return results
+        return data
 
     def __repr__(self):
         return "<{}>".format(self.FORMULARY_ID)
