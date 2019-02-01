@@ -278,6 +278,10 @@
 				    $('#infobox-pa-true').hide();
                   }
 				  $('#color-codes').show();
+				  $('#table-medicaid').DataTable({
+				                                    paging: false,
+				                                    searching:false
+				  });
 			  }
 		  });
 	  }
