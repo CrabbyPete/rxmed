@@ -31,21 +31,21 @@
 </nav>
 
 <!-- Main -->
-<div class="container text-center m-5 px-5">
+<div class="container text-center my-5 px-5">
   <h1 class="mb-4" id="fit">Formulary Insight Tool</h1>
   <p class="px-5">Instantly gain insight on your patients' medications and save more time with our Formulary Insight Tool.</p>
 </div>
 
 <!-- Select health coverage -->
 <h5 class="text-center">Select a health plan type:</h5>
-<div class="row justify-content-center m-3">
+<div class="row justify-content-center my-3 pb-5">
   <button type="button" class="btn btn-primary med-button mx-3" id="button-medicare">Medicare</button>
   <button type="button" class="btn btn-primary med-button mx-3" id="button-medicaid">Medicaid</button>
 </div>
 
 <!-- Form -->
-<main class="container m-5">
-  <div class="form-row m-5"> 
+<main class="container">
+  <div class="form-row px-3">
     
     <!-- Zipcode -->
     <form class="input-group" id="form-zipcode">
@@ -94,7 +94,7 @@
   </div>
   
   <!-- Loader -->
-  <div class="row justify-content-center" id="loading"><img src="{{url_for('static',filename='img/loader.gif')}}" alt="Loading..."></div>
+  <div class="row justify-content-center" id="loading-img"><img src="{{url_for('static',filename='img/loader.gif')}}" alt="Loading..."></div>
   
   <!-- Text box for medicaid -->
   <div class="container text-center p-5" id="medicaid-text">

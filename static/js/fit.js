@@ -1,7 +1,7 @@
   $(function () {
 	  /***** Initialization, variables, and helper functions *****/
 	  $('main').hide();
-	  $('#loading').hide();
+	  $('#loading-img').hide();
 	  $('#table-header').hide();
 	  $('#table-medicare').hide();
 	  $('#table-medicaid').hide();
@@ -165,12 +165,11 @@
 			  dataType: "json",
 			  data: {zipcode: zipcode, drug_name: drug, plan_name: plan},
 			  beforeSend: function() {
-				  $('#loading').show();
-				  $('#loading')[0].scrollIntoView();
+				  $('#loading-img').show();
 			  },
 			  success: function( resp )
 			  {
-				  $('#loading').hide();
+				  $('#loading-img').hide();
 				  
 				  $("#medicarebody").empty();
 				  for( d=0; d < resp.length; d++)
@@ -203,7 +202,7 @@
 			  error:function(resp)
 			  {
 				  console.log(resp);
-				  $('#loading').hide();
+				  $('#loading-img').hide();
 			  }
 		  });
 	  }
@@ -213,16 +212,16 @@
 		  $.ajax
 		  ({
 			  url: "/medicaid_options",
-			  async: false,
+			  async: true,
 			  dataType: "json",
 			  data: {drug_name: drug, plan_name: plan},
 			  beforeSend: function() {
-				  $('#loading').show();
-				  $('#loading')[0].scrollIntoView();
+				  $('#loading-img').show();
+				  $('#loading-img')[0].scrollIntoView();
 			  },
 			  success: function( resp )
 			  {
-			  	  $('#loading').hide();
+			  	  $('#loading-img').hide();
 				  $('#medicaidhead').empty();
 
 				  var heading = resp['heading'];
