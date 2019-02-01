@@ -1,0 +1,131 @@
+@charset "utf-8";
+html {
+	position: relative;
+	min-height: 100%;
+	overflow-x: hidden;
+	font-size: 12px;
+}
+@media screen and (min-width: 320px) {
+  html {
+    font-size: calc(12px + 6 * ((100vw - 320px) / 680));
+  }
+}
+@media screen and (min-width: 1000px) {
+  html {
+    font-size: 18px;
+  }
+}
+body {
+	margin-bottom: 50px; /* Margin bottom by footer height */
+}
+/***** Navigation bar (universal) *****/
+.navbar {
+	-webkit-box-shadow: 0px 5px 5px -5px rgba(75,75,100,1);
+	-moz-box-shadow: 0px 5px 5px -5px rgba(75,75,100,1);
+	box-shadow: 0px 5px 5px -5px rgba(75,75,100,1);
+	overflow-y: hidden;
+}
+.nav-item {
+	font-size: 15px;
+	text-transform: uppercase;
+	text-align: center;
+}
+/***** Footer (universal) *****/
+.footer {
+	position: absolute;
+	bottom: 0;
+	width: 100%;
+	height: 50px;
+	line-height: 25px;
+	text-align: right;
+	background-color: #0069a3;
+	color: #FFFFFF;
+}
+/***** Header (home) *****/
+#home-header {
+	background-image: url("/static/img/blue (1346x800).png");
+}
+#home-header-text {
+	color: #FFFFFF;
+	font-family: Cambria, "serif";
+}
+#home-header-main {
+	font-weight: bold;
+}
+#home-header-tagline {
+	font-weight: bold;
+}
+.jumbotron-fluid {
+	height: 100%;
+	background: no-repeat center center fixed;
+	-webkit-background-size: cover;
+	-moz-background-size: cover;
+	-o-background-size: cover;
+	background-size: cover;
+}
+#divider-text {
+	color: #0069a3;
+	top: 0;
+	width: 100%;
+}
+/***** Main (home) *****/
+#main-container {
+	align-content: center;
+	box-sizing: border-box;
+}
+.lead {
+	font-family: Cambria, "serif";
+}
+.jumbotron {
+	margin: 2.5vw;
+}
+#video {
+	max-width: 75vw;
+}
+#divider img {
+	width: 100%;
+}
+#patient-container, #provider-container {
+	padding: 5vw;
+}
+#patient, #provider {
+	max-width: 15vw;
+	max-height: 15vw;
+}
+#patients-img-link, #providers-img-link {
+	font-family: Cambria, "serif";
+	font-weight: bold;
+	color: #0069a3;
+}
+#patients-img-link:hover, #providers-img-link:hover {
+	color: #f88428;
+	text-decoration-line: none;
+}
+/***** FIT *****/
+#fit {
+	font-family: Cambria, "serif";
+}
+.btn-primary {
+	background-color: #0069a3;
+	border-color: #0069a3;
+}
+.med-button {
+	font-variant-caps: petite-caps;
+}
+.input-group {
+	width: 80vw;
+}
+#table-header {
+	font-variant-caps: petite-caps;
+	color: #0069a3;
+}
+.table {
+	text-align: center;
+}
+.table-responsive {
+	display: table;
+}
+#loading-img {
+	width: 25%;
+	height: 25%;
+}

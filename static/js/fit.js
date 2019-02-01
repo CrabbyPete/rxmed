@@ -1,7 +1,7 @@
   $(function () {
 	  /***** Initialization, variables, and helper functions *****/
 	  $('main').hide();
-	  $('#loading').hide();
+	  $('#loading-img').hide();
 	  $('#table-header').hide();
 	  $('#table-medicare').hide();
 	  $('#table-medicaid').hide();
@@ -165,12 +165,11 @@
 			  dataType: "json",
 			  data: {zipcode: zipcode, drug_name: drug, plan_name: plan},
 			  beforeSend: function() {
-				  $('#loading').show();
-				  $('#loading')[0].scrollIntoView();
+				  $('#loading-img').show();
 			  },
 			  success: function( resp )
 			  {
-				  $('#loading').hide();
+				  $('#loading-img').hide();
 				  
 				  $("#medicarebody").empty();
 				  for( d=0; d < resp.length; d++)
@@ -203,7 +202,7 @@
 			  error:function(resp)
 			  {
 				  console.log(resp);
-				  $('#loading').hide();
+				  $('#loading-img').hide();
 			  }
 		  });
 	  }
@@ -213,16 +212,16 @@
 		  $.ajax
 		  ({
 			  url: "/medicaid_options",
-			  async: false,
+			  async: true,
 			  dataType: "json",
 			  data: {drug_name: drug, plan_name: plan},
 			  beforeSend: function() {
-				  $('#loading').show();
-				  $('#loading')[0].scrollIntoView();
+				  $('#loading-img').show();
+				  $('#loading-img')[0].scrollIntoView();
 			  },
 			  success: function( resp )
 			  {
-			  	  $('#loading').hide();
+			  	  $('#loading-img').hide();
 				  $('#medicaidhead').empty();
 
 				  var heading = resp['heading'];
@@ -242,19 +241,26 @@
 				    drugHasPA = false;
 
                   var data = resp['data']
-				  for(d=0; d < data.length; d++)
+                  var cls;
+                  var tr;
+				  for(var d=0; d < data.length; d++)
 				  {
-				    if( data[d]['Formulary Restrictions'].search('PA') )
-					    cls = '<td class="table-success">';
-					else
+				    if( data[d]['Formulary Restrictions'].includes('PA') )
+				    {
 					    cls = '<td class="table-danger">';
-
-					var tr = '<tr id="medicaid-success">'
+					    tr  = '<tr class="table-danger">';
+					}
+					else
+					{
+					    cls = '<td class="table-success">';
+					    tr  = '<tr class="table-success">';
+                    }
 
 					for ( h=0; h<heading.length; h++)
 					{
 				        tr += cls + data[d][heading[h]]+ '</td>'
 					}
+                    tr += '</tr>'
 					$('#medicaidbody').append(tr);
 				  }
 
@@ -272,6 +278,10 @@
 				    $('#infobox-pa-true').hide();
                   }
 				  $('#color-codes').show();
+				  $('#table-medicaid').DataTable({
+				                                    paging: false,
+				                                    searching:false
+				  });
 			  }
 		  });
 	  }

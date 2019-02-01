@@ -182,6 +182,7 @@ def medicaid_options():
         drug_name = drug_name.lower()
         for alternative in alternatives:
 
+            # Caresource
             if plan_name.startswith("Caresource"): #Caresourse: Drug_Name,Drug_Tier,Formulary_Restrictions
                 look_in = alternative['Drug_Name']
                 heading = ['Drug Name','Drug Tier','Formulary Restrictions']
@@ -190,7 +191,7 @@ def medicaid_options():
                     if drug_name in alternative['Drug_Name'].lower():
                         pa = True
 
-
+            # Paramount
             elif plan_name.startswith("Paramount"):# Paramount: Formulary_restriction, Generic_name, Brand_name
                 look_in = alternative['Brand_name']+" "+alternative['Generic_name']
                 heading = ['Brand Name', 'Generic Name', 'Formulary Restrictions']
@@ -200,9 +201,15 @@ def medicaid_options():
                        drug_name in alternative['Generic_name'].lower():
                         pa = True
 
+            # Molina
             elif plan_name.startswith("Molina"): # Molina:# Generic_name,Brand_name,Formulary_restriction
                 look_in = alternative['Brand_name']+" "+alternative['Generic_name']
                 heading = ['Brand Name', 'Generic Name', 'Formulary Restrictions']
+
+                # For Molina check for the word prior authorization or PA in Generic
+                if 'prior' in alternative['Formulary_restriction'] or 'PA' in alternative['Generic_name']:
+                    alternative['Formulary_restriction'] = 'PA'
+
 
                 if 'PA' in alternative['Formulary_restriction']:
                     if drug_name in alternative['Brand_name'].lower() or \
@@ -221,9 +228,9 @@ def medicaid_options():
 
             elif plan_name.startswith("Buckeye"):# Buckeye: Drug_Name,Preferred_Agent,Fomulary_restriction
                 if alternative['Preferred_Agent'] == "***":
-                    alternative['Preferred_Agent'] = "Yes"
-                else:
                     alternative['Preferred_Agent'] = "No"
+                else:
+                    alternative['Preferred_Agent'] = "Yes"
                     
                 look_in = alternative['Drug_Name']
                 heading = ['Drug Name','Preferred Agent','Formulary Restrictions']
