@@ -120,7 +120,7 @@ class RxClass():
             kwargs = "&".join("%s=%s" % (k,v) for k,v in kwargs.items())
 
         data = self.api( url, kwargs )
-        if 'rxclassDrugInfoList' in data:
+        if data and 'rxclassDrugInfoList' in data:
             return data['rxclassDrugInfoList']
         else:
             return None

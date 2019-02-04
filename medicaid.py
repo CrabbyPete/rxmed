@@ -21,7 +21,7 @@ from models.medicaid import Caresource, Molina, Molina_Healthcare, Paramount, Bu
 row2dict = lambda r: {c.name: str(getattr(r, c.name)) for c in r.__table__.columns}
 
 
-def front_end_excluded( drug, excluded)->bool:
+def front_end_excluded( drug, excluded:list)->bool:
     """
     Check if this record should be excluded
     :param exclude:
@@ -29,7 +29,7 @@ def front_end_excluded( drug, excluded)->bool:
     :return:
     """
     for ex in excluded:
-        if len(ex) and ex in drug:
+        if len(ex) and ex in drug.lower():
             return True
     return False
 
@@ -130,7 +130,10 @@ def molina( drug_name ):
             Match (first word match), to [Molina Healthcare PA criteria 10_1_18].DRUG_NAME). 
         """
         for record in records:
-            if front_end_excluded( record.Brand_name+" "+record.Generic_name, excluded):
+            look_at = record.Brand_name
+            if isinstance(record.Generic_name, str):
+                look_at += " "+record.Generic_name
+            if front_end_excluded(look_at, excluded):
                 continue
 
             record = row2dict(record)
@@ -180,6 +183,13 @@ def uhc_community( drug_name ):
         records  = UHC.find_by_name(drug)
         for record in records:
 
+            look_at = record.Brand
+            if isinstance(record.Generic, str):
+                look_at += record.Generic
+            if front_end_excluded(look_at, excluded):
+                continue
+
+
             record = row2dict(record)
             record.pop('id')
 
@@ -212,7 +222,11 @@ def paramount( drug_name ):
     for drug in drug_list:
         records = Paramount.find_by_name(drug)
         for record in records:
-            if front_end_excluded(record.Brand_name+" "+record.Generic_name, excluded ):
+
+            look_at = record.Brand_name
+            if isinstance(record.Generic, str):
+                look_at += " "+record.Generic_name
+            if front_end_excluded(look_at, excluded ):
                 continue
 
             record = row2dict(record)
@@ -229,6 +243,7 @@ def paramount( drug_name ):
     if not included:
         pa = True
 
+    data = pd.DataFrame(data).drop_duplicates().to_dict('records')
     return { 'data':data, 'pa':pa, 'heading':heading }
 
 
@@ -286,10 +301,11 @@ def buckeye( drug_name ):
     for drug in drug_list:
         records = Buckeye.find_by_name(drug)
         for record in records:
+
             if front_end_excluded(record.Drug_Name, excluded):
                 continue
 
-            record = record = row2dict(record)
+            record = row2dict(record)
             record.pop('id')
 
             if record['Preferred_Agent'] == "***":
@@ -357,22 +373,19 @@ if __name__ == "__main__":
         result = get_medicaid_plan("Admelog", "Molina Healthcare")
         print( result )
         result = get_medicaid_plan("Admelog", "Paramount Advantage")
-
-        """
-        result =get_from_medicaid("Breo","Ohio State")
-        result =get_from_medicaid("Trulicity","OH State Medicaid")
-        result =get_from_medicaid("Pamidronate Disodium", "Caresource") # CLASS_ID != NULL
-        result = get_from_medicaid("Tresiba", "Paramount")
-        result = get_from_medicaid("Advair", "Paramount")
-        result = get_from_medicaid("epinephrine", "Paramount")
-        result =get_from_medicaid("Potassium Citrate", "Caresource")
-        result =get_from_medicaid("Zanaflex", "Caresource")
-        result =get_from_medicaid("Trelegy", "Caresource")
-        result =get_from_medicaid("Breo","Caresource")
-        result =get_from_medicaid('Symbicort','Molina')
-        result = get_from_medicaid('ARTHROTEC','Molina')
-        result = get_from_medicaid('Tresiba','Caresource')
-        result = get_from_medicaid('Lantus', 'Ohio State')
-        """
-
+        result = get_medicaid_plan('pulmicort', "Caresource")
+        result = get_medicaid_plan("Breo","Ohio State")
+        result = get_medicaid_plan("Trulicity","OH State Medicaid")
+        result = get_medicaid_plan("Pamidronate Disodium", "Caresource") # CLASS_ID != NULL
+        result = get_medicaid_plan("Tresiba", "Paramount")
+        result = get_medicaid_plan("Advair", "Paramount")
+        result = get_medicaid_plan("epinephrine", "Paramount")
+        result = get_medicaid_plan("Potassium Citrate", "Caresource")
+        result = get_medicaid_plan("Zanaflex", "Caresource")
+        result = get_medicaid_plan("Trelegy", "Caresource")
+        result = get_medicaid_plan("Breo","Caresource")
+        result = get_medicaid_plan('Symbicort','Molina')
+        result = get_medicaid_plan('ARTHROTEC','Molina')
+        result = get_medicaid_plan('Tresiba','Caresource')
+        result = get_medicaid_plan('Lantus', 'Ohio State')
         print(result)

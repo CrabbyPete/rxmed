@@ -6,13 +6,12 @@ from flask_admin        import Admin
 
 from log                import log, rq_log
 
-from models.fta         import FTA
 from models             import Plans, NDC, FTA
-from models.medicaid    import *
 from models.base        import Database
 from models.admin       import *
 
 from medicaid           import get_medicaid_plan
+from medicare           import get_medicare_plan
 
 from settings           import DATABASE
 
@@ -26,11 +25,13 @@ db.open()
 
 admin = Admin(application, name='RxMedAccess', template_mode='bootstrap3')
 admin.add_view( FTAModelView(FTA, db.session))
+"""
 admin.add_view( CaresourceView(Caresource, db.session))
 admin.add_view( MolinaView(Molina,db.session))
 admin.add_view( ParamountView(Paramount,db.session))
 admin.add_view( BuckeyeView(Buckeye,db.session))
 admin.add_view( UHCView(UHC,db.session))
+"""
 
 init_user( application )
 
@@ -110,7 +111,7 @@ def related_drugs():
 @application.route('/formulary_id')
 def formulary_id():
     """
-
+    API to get formulary id
     localhost:5000/formulary_id?zipcode=43081&plan_name=CareSource Advantage (HMO)
     Get the formulary_id for a plan in a zipcode
     :return:
@@ -146,6 +147,7 @@ def ndc_drugs():
 @application.route('/drug_names', methods=['GET'])
 def drug_names():
     """
+    Type ahead api for drugs
     Retrieve a list of drugs on spelling
     :return:
     """
@@ -156,9 +158,9 @@ def drug_names():
         results = [d.PROPRIETARY_NAME.capitalize() for d in drug_list ]
 
         drug_list = FTA.find_nonproprietary( look_for )
-        results.extend( [ d.NONPROPRIETARY_NAME.capitalize() for d in drug_list ])
+        results.extend([d.NONPROPRIETARY_NAME.capitalize() for d in drug_list])
 
-    results = sorted( list(results) )
+    results = sorted(list(results))
     return jsonify(results)
 
 
@@ -203,7 +205,7 @@ def medicare_options():
         zipcode = request.args['zipcode']
 
         rq_log.info(f"{rq},{drug_name},{plan_name},'medicare")
-        results = tools.get_from_medicare(drug_name, plan_name, zipcode )
+        results = get_medicare_plan(drug_name, plan_name, zipcode )
 
         return jsonify( results )
 

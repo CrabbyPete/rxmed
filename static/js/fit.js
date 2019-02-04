@@ -1,10 +1,12 @@
   $(function () {
 	  /***** Initialization, variables, and helper functions *****/
+
 	  $('main').hide();
 	  $('#loading-img').hide();
 	  $('#table-header').hide();
 	  $('#table-medicare').hide();
 	  $('#table-medicaid').hide();
+	  $('#table-medicaid').tablesorter();
 	  $('#infobox-pa-true').hide();
 	  $('#infobox-pa-false').hide()
 	  $('#color-codes').hide();
@@ -278,6 +280,10 @@
 				    $('#infobox-pa-true').hide();
                   }
 				  $('#color-codes').show();
+
+				  var resort = true;
+                  $('table-medicaid').trigger("update", [resort]);
+
 				  /*
 				  $('#table-medicaid').DataTable({
 				                                    paging: false,
