@@ -1,19 +1,22 @@
 
 import tools
 
-from flask              import Flask, request, render_template, jsonify, url_for
+from flask              import Flask, request, render_template, jsonify, abort
 from flask_admin        import Admin
 
 from log                import log, rq_log
+
 from models.fta         import FTA
-from models.medicaid    import Caresource, Molina, Paramount, Buckeye, UHC
-from models             import Plans, NDC
+from models             import Plans, NDC, FTA
+from models.medicaid    import *
 from models.base        import Database
 from models.admin       import *
 
-from settings       import DATABASE
+from medicaid           import get_medicaid_plan
 
-from user           import init_user
+from settings           import DATABASE
+
+from user               import init_user
 
 application = Flask(__name__, static_url_path='/static')
 application.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
@@ -176,122 +179,12 @@ def medicaid_options():
 
         rq_log.info(f"{rq},{drug_name},{plan_name},medicaid")
 
-        alternatives, exclude = tools.get_from_medicaid(request.args['drug_name'], request.args['plan_name'])
+        results = get_medicaid_plan( drug_name, plan_name )
 
-        pa = False
-        included = False
+        reply = jsonify( results )
+        return reply
 
-        drug_name = drug_name.lower()
-        headings = {'caresource':['Drug Name', 'Drug Tier', 'Formulary Restrictions'],
-                    'paramount' :['Brand Name', 'Generic Name', 'Formulary Restrictions'],
-                    'molina'    :['Brand Name', 'Generic Name', 'Formulary Restrictions'],
-                    'uhc'       :['Brand', 'Generic', 'Formulary Restrictions'],
-                    'buckeye'   :['Drug Name', 'Preferred Agent', 'Formulary Restrictions'],
-                    'oh'        :['Product Description',
-                                  'Formulary Restrictions',
-                                  'Copay',
-                                  'Package',
-                                  'Route Of Administration',
-                                  'Covered For Dual Eligible',
-                                 ]
-                   }
-
-        heading = headings[plan_name.lower().split(' ')[0]]
-        for alternative in alternatives:
-
-            # Caresource
-            if plan_name.startswith("Caresource"): #Caresourse: Drug_Name,Drug_Tier,Formulary_Restrictions
-                look_in = alternative['Drug_Name']
-
-                if drug_name in alternative['Drug_Name'].lower():
-                    included = True
-                    if 'PA' in alternative['Formulary_Restrictions']:
-                        pa = True
-
-            # Paramount
-            elif plan_name.startswith("Paramount"):# Paramount: Formulary_restriction, Generic_name, Brand_name
-                look_in = alternative['Brand_name']+" "+alternative['Generic_name']
-
-                if drug_name in alternative['Brand_name'].lower() or \
-                   drug_name in alternative['Generic_name'].lower():
-                    included = True
-                    if 'PA' in alternative['Formulary_restriction']:
-                        pa = True
-
-            # Molina
-            elif plan_name.startswith("Molina"): # Molina:# Generic_name,Brand_name,Formulary_restriction
-                look_in = alternative['Brand_name']+" "+alternative['Generic_name']
-
-                # For Molina check for the word prior authorization or PA in Generic
-                if 'prior' in alternative['Formulary_restriction'] or 'PA' in alternative['Generic_name']:
-                    alternative['Formulary_restriction'] = 'PA'
-
-                if drug_name in alternative['Brand_name'].lower() or \
-                   drug_name in alternative['Generic_name'].lower():
-                    included = True
-                    if 'PA' in alternative['Formulary_restriction']:
-                        pa = True
-
-            #UHC
-            elif plan_name.startswith("UHC"):# UHC: Generic,Brand,Tier,Formulary_Restriction
-                look_in = alternative['Brand']+" "+alternative['Generic']
-
-                if drug_name in alternative['Brand'].lower() or \
-                   drug_name in alternative['Generic'].lower():
-                    included = True
-                    if 'PA' in alternative['Formulary_Restrictions']:
-                        pa = True
-
-            elif plan_name.startswith("Buckeye"):# Buckeye: Drug_Name,Preferred_Agent,Fomulary_restriction
-                if alternative['Preferred_Agent'] == "***":
-                    alternative['Preferred_Agent'] = "No"
-                else:
-                    alternative['Preferred_Agent'] = "Yes"
-                    
-                look_in = alternative['Drug_Name']
-
-                if drug_name in alternative['Drug_Name'].lower():
-                    included = True
-                    if 'PA' in alternative['Fomulary_restriction']:
-                        pa = True
-
-            # Ohio State
-            elif plan_name.startswith("OH State"):
-                look_in = alternative['Product_Description']
-                pa = alternative.pop('Prior_Authorization_Required')
-                alternative['fo'] = 'PA' if 'Y' in pa else "None"
-
-                if drug_name in alternative['Product_Description'].lower():
-                    included = True
-                    if 'PA' in alternative['fo']:
-                        pa = True
-
-
-            # Check the front end exclusions
-            fr = look_in.lower()
-            for ex in exclude:
-                if ex in fr:
-                    break
-            else:
-                # Reformat the headers
-                if 'id' in alternative:
-                    alternative.pop('id')
-                    
-                result = {}
-                for k,v in alternative.items():
-                    if k.lower().startswith('fo'):
-                        k = 'Formulary Restrictions'
-                    else:
-                        k = " ".join( [ k.capitalize() for k in k.split('_') ] )
-                    result[k] = v
-                    
-                data.append( result )
-
-    if not included:
-        pa = True
-
-    reply = jsonify({'heading':heading, 'data':data, 'pa':pa} )
-    return reply
+    abort(404)
 
 
 @application.route('/medicare_options', methods=['GET'])
@@ -310,10 +203,11 @@ def medicare_options():
         zipcode = request.args['zipcode']
 
         rq_log.info(f"{rq},{drug_name},{plan_name},'medicare")
-
         results = tools.get_from_medicare(drug_name, plan_name, zipcode )
 
-    return jsonify( results )
+        return jsonify( results )
+
+    abort(404)
 
 
 if __name__ == "__main__":

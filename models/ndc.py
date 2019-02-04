@@ -53,8 +53,17 @@ class Basic_Drugs(Base):
         data = qry.all()
         return data
 
+    @classmethod
+    def get_by_ndc(cls, ndc_id, formulary_id):
+        qry = cls.session.query(cls).filter(cls.NDC_id == ndc_id, cls.FORMULARY_ID == formulary_id)
+        return qry.all()
+
+
+
     def __repr__(self):
         return "<{}>".format(self.FORMULARY_ID)
+
+
 
 
 class Beneficiary_Costs( Base ):

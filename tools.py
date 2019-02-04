@@ -1,11 +1,10 @@
 import re
 
-from log                import log, log_msg
+from log        import log, log_msg
 
-from models             import Zipcode, Plans, Basic_Drugs,Beneficiary_Costs, NDC, Drug
-from models.medicaid    import Caresource, Paramount, Molina, Molina_Healthcare, UHC, Buckeye
+from models     import Zipcode, Plans, Basic_Drugs,Beneficiary_Costs, NDC, FTA
+from api        import RxClass
 
-from api                import RxClass, OhioState
 
 def walk(seq, look_for):
     """
@@ -65,6 +64,7 @@ def get_plan( plan_name, zipcode ):
         return "More than one found"
 
 REGEX = '\[(.*?)\]'
+
 def get_related_drugs(name):
     """
     Step one is search from the FTA DB and get from the xxx APIs for name
@@ -77,15 +77,18 @@ def get_related_drugs(name):
     rx = RxClass()
 
     # There should only be one
-    drugs = Drug.find_by_name(name)
-    for drug in drugs:
-        fta = drug.fta
-        if fta.RELATED_DRUGS:
-            if fta.EXCLUDED_DRUGS_FRONT:
-                exclude = fta.EXCLUDED_DRUGS_FRONT.lower().split("|")
-            else:
-                exclude = []
-            return fta.RELATED_DRUGS.split(';'), exclude
+    fta_list = FTA.find_by_name(name)
+    for fta in fta_list:
+        try:
+            excluded = []
+            if not fta.RELATED_DRUGS is None:
+                if fta.EXCLUDED_DRUGS_FRONT:
+                    excluded = fta.EXCLUDED_DRUGS_FRONT.lower().split("|")
+
+                return fta.RELATED_DRUGS, excluded
+        except:
+            pass
+
 
         if fta.EXCLUDED_DRUGS_FRONT:
             excluded_front = [s.strip() for s in fta.EXCLUDED_DRUGS_FRONT.lower().split("|") if len(s) > 1]
@@ -160,7 +163,7 @@ def get_related_drugs(name):
 
                         if not fta_member.PROPRIETARY_NAME in excluded_back and \
                            not fta_member.NONPROPRIETARY_NAME in excluded_back:
-                            results.update([fta_member.PROPRIETARY_NAME])
+                            results.update([fta_member.id])
 
     return results, excluded_front
 
@@ -190,7 +193,8 @@ def beneficiary_costs( drug, plan ):
     :param drugs:
     :return:“COST_AMT_PREF” ONLY if “DAYS_SUPPLY” = 1 and “COST_TYPE_PREF” = 1, for each “COVERAGE_LEVEL” 0 AND 1
     """
-    bd = Basic_Drugs.get_close_to(drug, plan.FORMULARY_ID)
+    #bd = Basic_Drugs.get_close_to(drug, plan.FORMULARY_ID)
+    bd = Basic_Drugs.get_by_ndc( drug, plan.FORMULARY_ID )
     try:
         if len( bd ) > 1:
             log.info( log_msg(f"{drug}-{plan.FORMULARY_ID} returned more than 1 value"))
@@ -200,83 +204,29 @@ def beneficiary_costs( drug, plan ):
         log.info(f"No Basic Drug for NDC:{drug} FormularyID:{plan.FORMULARY_ID}")
         return None,None
 
-    benefit_costs = Beneficiary_Costs.get_all( **dict( CONTRACT_ID    = plan.CONTRACT_ID,
-                                                       PLAN_ID        = int(plan.PLAN_ID),
-                                                       SEGMENT_ID     = int(plan.SEGMENT_ID),
-                                                       TIER           = int(bd['TIER_LEVEL_VALUE']),
-                                                       DAYS_SUPPLY    = 1,
-                                                       COST_TYPE_PREF = 1
-                                                     )
-                                             )
+    try:
+        benefit_costs = Beneficiary_Costs.get_all( **dict(CONTRACT_ID    = plan.CONTRACT_ID,
+                                                          PLAN_ID        = int(plan.PLAN_ID),
+                                                          SEGMENT_ID     = int(plan.SEGMENT_ID),
+                                                          TIER           = int(bd.TIER_LEVEL_VALUE),
+                                                          DAYS_SUPPLY    = 1,
+                                                          COST_TYPE_PREF = 1
+                                                         )
+                                                  )
+    except TypeError:
+        pass
+
     bc = [c for c in benefit_costs if c.COVERAGE_LEVEL in (1,0) ]
     return bd, bc
 
 
-def get_from_medicaid(drug_name, plan_name ):
-    """
-
-    :param drug_name: Name of the drug to find
-    :param source: Source to look through
-    :return:
-    """
-
-    data = []
-    results, exclude = get_related_drugs(drug_name)
-
-    for drug_name in results:
-        for clean_name in drug_name.split(' / '):
-            clean_name = clean_name.strip()
-
-            if plan_name.lower().startswith("caresource"):
-                records = Caresource.find_by_name(clean_name)
-
-            elif plan_name.lower().startswith("paramount"):
-                records = Paramount.find_by_name(clean_name)
-
-            elif plan_name.lower().startswith("molina"):
-                records = Molina.find_by_name(clean_name)
-                """
-                if (Generic_name) has a capital word “PA”, 
-                  then retrieve its respective column B (Brand_name) [2018 Molina PDL 10_9_18]. 
-                  Match (first word match), to [Molina Healthcare PA criteria 10_1_18].DRUG_NAME). 
-                """
-                for record in records:
-                    name = record['Generic_name']
-                    name = name.split(',')[0] if ',' in name else name
-                    if name.endswith("PA"):
-                        try:
-                            adc = Molina_Healthcare.find_brand(record['Brand_name'])[0]
-                            record['Note'] = adc['ALTERNATIVE_DRUG_CRITERIA']
-                        except:
-                            record['Note'] = ''
-                    else:
-                        record['Note'] = ''
-
-            elif plan_name.lower().startswith('oh'):
-                records = OhioState(clean_name)
-
-            elif plan_name.lower().startswith("uhc "):
-                records = UHC.find_by_name(clean_name)
-
-            elif plan_name.lower().startswith("buckeye"):
-                records = Buckeye.find_by_name(clean_name)
-
-            else:
-                log.error( log_msg(f'Unknown plan name( {plan_name} )' ))
-                records = []
-
-            if records:
-                data.extend(records)
-
-    return data, exclude
-
 
 def get_from_medicare(drug_name, plan_name, zipcode=None ):
     """
-
-    :param drug_name:
-    :param plan_name:
-    :return:
+    Get alternative drugs for medicare for a plane and drug
+    :param drug_name: string: drug name
+    :param plan_name: string: plan name
+    :return: dict: results
     """
     plan = get_plan(plan_name, zipcode)
     
@@ -284,37 +234,47 @@ def get_from_medicare(drug_name, plan_name, zipcode=None ):
     drugs, exclude = get_related_drugs(drug_name)
 
     drug_list = set()
-    for drug_name in drugs:
-        drugs = set(ncd for ncd in NDC.find_by_name( drug_name ))
-        drug_list.update(drugs)
+    for drg in drugs:
+        fta = FTA.get(drg)
+        if fta.NDC_IDS:
+            drug_list.update(fta.NDC_IDS)
+        else:
+            ndcs = [ndc.id for ndc in NDC.find_by_name(fta.PROPRIETARY_NAME)]
+            fta.NDC_IDS = ndcs
+            fta.save()
+            drug_list.update(ndcs)
 
-    for ndc in drug_list:
-        bd, bc = beneficiary_costs(ndc.PRODUCT_NDC, plan)
+    for ndc_id in drug_list:
+        ndc = NDC.get(ndc_id)
+        bd, bc = beneficiary_costs(ndc.id, plan)
         
         if not bd:
+            """
             pa = 'Yes'
             ql = ''
             st = ''
             tier = ''
+            """
+            continue
         else:
-            if bd['PRIOR_AUTHORIZATION_YN'] == 'False':
+            if bd.PRIOR_AUTHORIZATION_YN == 'False':
                 pa = 'No'
             else:
                 pa = 'Yes'
 
-            if bd['STEP_THERAPY_YN'] == 'False':
+            if bd.STEP_THERAPY_YN== 'False':
                 st = 'No'
             else:
                 st = 'Yes'
 
-            if bd['QUANTITY_LIMIT_YN'] == 'True':
-                ql = f"Yes {bd['QUANTITY_LIMIT_AMOUNT']}:{bd['QUANTITY_LIMIT_DAYS']}"
+            if bd.QUANTITY_LIMIT_YN == 'True':
+                ql = f"Yes {bd.QUANTITY_LIMIT_AMOUNT}:{bd.QUANTITY_LIMIT_DAYS}"
             else:
                 ql = f"No"
             try:
                 tier    = bc[0].TIER
             except IndexError:
-                tier = bd['TIER_LEVEL_VALUE']
+                tier = bd.TIER_LEVEL_VALUE
                 
         copay_d = ''
         copay_p = ''
@@ -347,24 +307,10 @@ if __name__ == "__main__":
     with Database(DATABASE) as db:
         # get_location('07481')
         # get_from_medicare( "Victoza", "Anthem MediBlue Essential (HMO)", '43202')
-        # result = get_from_medicare('Levemir','SilverScript Plus (PDP)','07040')
-        # result = get_from_medicaid('Levemir','UHC Community')
-        result = get_from_medicare( "SYMBICORT","Silverscript choice (PDP)","07040")
-        # result = get_from_medicaid("Admelog", "Caresource" )
-        # get_from_medicaid("Breo","Ohio State")
-        # get_from_medicaid("Trulicity","OH State Medicaid")
-        # main("Pamidronate Disodium", "Caresource") # CLASS_ID != NULL
-        # main("Tresiba", "Paramount")
-        # main("Advair", "Paramount")
-        # main("epinephrine", "Paramount")
-        # main("Potassium Citrate", "Caresource")
-        # main("Zanaflex", "Caresource")
-        # main("Trelegy", "Caresource")
-        # main("Breo","Caresource")
-        # main('Symbicort','Molina')
-        # result = get_from_medicaid('ARTHROTEC','Molina')
-        # result = get_from_medicaid('Tresiba','Caresource')
-        # result = get_from_medicaid('Lantus', 'Ohio State')
+        result = get_from_medicare('Levemir','SilverScript Plus (PDP)','07040')
+        #result = get_from_medicaid('Levemir','UHC Community')
+        #result = get_from_medicare( "SYMBICORT","Silverscript choice (PDP)","07040")
+
 
         print(result)
 

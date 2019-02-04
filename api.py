@@ -9,7 +9,7 @@ from log import log
 
 BASE_URL     = "https://rxnav.nlm.nih.gov/REST"
 HISTORIC_URL = "https://rxnav.nlm.nih.gov/REST/rxcuihistoryconcept?rxcui={}"
-OPENFDA_URL  = 'https://api.fda.gov/drug/ndc.json?search=brand_name:{}'
+OPENFDA_URL  = 'https://api.fda.gov/drug/ndc.json?search={}'
 OHSTATE      = 'https://druglookup.ohgov.changehealthcare.com/DrugSearch/application/search?searchBy=name&name={}'
 
 
@@ -93,10 +93,6 @@ class RxNorm():
 
 
 class RxClass():
-    """
-
-    """
-
     def __init__(self):
         self.base_url = BASE_URL + '/rxclass'
         pass
@@ -143,6 +139,20 @@ class RxClass():
         data = self.api( url, kwargs )
         return data
 
+
+def open_fda( brand_name, generic_name = None ):
+    search = f'brand_name:"{brand_name}"'
+    if generic_name:
+        search += f'+AND+generic_name:"{generic_name}"'
+    url = OPENFDA_URL.format(search)
+    r = requests.get(url)
+
+    if r.ok:
+        data = json.loads(r.text)
+    else:
+        return r.status_code
+
+    return data['results']
 
 
 

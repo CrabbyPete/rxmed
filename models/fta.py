@@ -5,7 +5,8 @@ from sqlalchemy         import ( Column,
                                  ForeignKey,
                                  Date,
                                  ARRAY,
-                                 or_
+                                 or_,
+                                 and_
                                )
 
 from sqlalchemy.orm     import relationship
@@ -60,16 +61,19 @@ class NDC(Base):
         return result
 
     @classmethod
-    def find_by_name(cls, name):
+    def find_by_name(cls, proprietary, nonproprietary=None):
         """
 
         :param name:
         :return:
         """
-        if not '%' in name:
-            name = f"%{name.lower()}%"
+        proprietary = f"%{proprietary.lower()}%"
+        if not nonproprietary:
+            flter = or_(cls.PROPRIETARY_NAME.ilike(proprietary), cls.NONPROPRIETARY_NAME.ilike(proprietary))
+        else:
+            nonpropietary = f"%{nonproprietary.lower()}%"
+            flter = and_(cls.PROPRIETARY_NAME.ilike(proprietary),cls.NONPROPRIETARY_NAME.ilike(nonproprietary))
 
-        flter = or_(cls.PROPRIETARY_NAME.ilike(name), cls.NONPROPRIETARY_NAME.ilike(name))
         qry = cls.session.query(cls).filter(flter)
         result = qry.all()
         return result
@@ -94,7 +98,9 @@ class FTA(Base):
     CLASS_ID             = Column( String )
     EXCLUDED_DRUGS_BACK  = Column( String )
     EXCLUDED_DRUGS_FRONT = Column( String )
-    RELATED_DRUGS        = Column( ARRAY(Integer) )
+
+    RELATED_DRUGS        = Column( ARRAY(Integer, ForeignKey('fta.id')))
+    NDC_IDS              = Column( ARRAY(Integer, ForeignKey('ndc.id')))
 
     @classmethod
     def find_by_name(cls, name, nonproprietary=True ):
@@ -119,42 +125,6 @@ class FTA(Base):
         qry = cls.session.query(cls).filter( cls.NONPROPRIETARY_NAME.ilike(name) )
         return qry.all()
 
-    def __repr__(self):
-        return f"<{self.NAME_ID}>"
 
     def __repr__(self):
-        return "<{}>".format(self.PROPRIETARY_NAME )
-
-
-class Drug(Base):
-    __tablename__ = 'drug'
-    __table_args__ = (UniqueConstraint('PROPRIETARY_NAME','NONPROPRIETARY_NAME'),)
-
-    id                  = Column(Integer, primary_key=True)
-    PROPRIETARY_NAME    = Column(String)
-    NONPROPRIETARY_NAME = Column(String)
-
-    FTA_id              = Column(Integer, ForeignKey('fta.id'))
-    NDC_id              = Column(ARRAY(Integer,ForeignKey('ndc.id')))
-
-    fta  = relationship( FTA, primaryjoin=FTA_id==FTA.id )
-
-
-
-    @classmethod
-    def find_by_name(cls, name, nonproprietary=True):
-        """ Return an atoms by property
-        """
-        if not '%' in name:
-            name = f"%{name.lower()}%"
-
-        if nonproprietary:
-            flter = or_( cls.PROPRIETARY_NAME.ilike(name), cls.NONPROPRIETARY_NAME.ilike(name) )
-        else:
-            flter = cls.PROPRIETARY_NAME.ilike(name)
-
-        qry = cls.session.query(cls).filter(flter)
-        return qry.all()
-
-    def __repr__(self):
-        return "<{}:{}={}>".format(self.PROPRIETARY_NAME,self.NONPROPRIETARY_NAME,self.id)
+        return "<{}:{}>".format(self.id, self.PROPRIETARY_NAME )
