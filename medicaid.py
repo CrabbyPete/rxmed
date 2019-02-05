@@ -67,11 +67,14 @@ def get_drug_list( drug_name ):
         else:
             drug_list.append( drug )
 
+    drug_list.append(drug_name.lower())
+
     return set(drug_list), excluded
+
 
 def caresource(drug_name):
     """
-    Get all the alternatives for caresource
+    Get all the alternatives for Caresource
     :param drug_name:
     :return:
     """
@@ -109,7 +112,7 @@ def caresource(drug_name):
 
 def molina( drug_name ):
     """
-
+    Return results from Molina
     :param drug_name:
     :return:
     """
@@ -209,6 +212,11 @@ def uhc_community( drug_name ):
 
 
 def paramount( drug_name ):
+    """
+    Return all results for Paramount
+    :param drug_name:
+    :return: dict:
+    """
     heading = ['Brand Name', 'Generic Name', 'Formulary Restrictions']
 
     pa = False
@@ -248,6 +256,11 @@ def paramount( drug_name ):
 
 
 def ohio_state( drug_name ):
+    """
+    Return results from Ohio State
+    :param drug_name:
+    :return: dict
+    """
     heading = ['Product Description',
                'Formulary Restrictions',
                'Copay',
@@ -270,7 +283,10 @@ def ohio_state( drug_name ):
             if front_end_excluded(record['Product_Description'], excluded):
                 continue
 
-            # Change name of Prior Authorization
+            # Change name of Prior Authorization and Yes to PA
+            if record['Prior_Authorization_Required'] == 'Yes':
+                record['Prior_Authorization_Required'] = 'PA'
+
             record['Formulary_Restrictions']=record['Prior_Authorization_Required']
             del record['Prior_Authorization_Required']
 
@@ -326,7 +342,7 @@ def buckeye( drug_name ):
     data = pd.DataFrame(data).drop_duplicates().to_dict('records')
     return {'data':data, 'pa':pa, 'heading':heading}
 
-@lru_cache(1024*10)
+
 def get_medicaid_plan( drug_name, plan_name ):
     """
     Get the plan by its name

@@ -29,7 +29,7 @@ class Caresource(Base): # Drug_Name,Drug_Tier,Formulary_Restrictions
         :return:
         """
         name = f"%{name.lower()}%"
-        qry = cls.session.query(cls).filter( cls.Drug_Name.ilike(name) ).all()
+        qry = cls.session.query(cls).filter(cls.Drug_Name.ilike(name)).all()
         return qry
 
     def __repr__(self):

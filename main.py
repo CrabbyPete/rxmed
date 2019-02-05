@@ -155,10 +155,10 @@ def drug_names():
     if 'qry' in request.args and len(request.args['qry']) >= 3:
         look_for = f"{request.args['qry'].lower()}%"
         drug_list = FTA.find_by_name(look_for, False )
-        results = [d.PROPRIETARY_NAME.capitalize() for d in drug_list ]
+        results = set([d.PROPRIETARY_NAME.capitalize() for d in drug_list ])
 
         drug_list = FTA.find_nonproprietary( look_for )
-        results.extend([d.NONPROPRIETARY_NAME.capitalize() for d in drug_list])
+        results.update([d.NONPROPRIETARY_NAME.capitalize() for d in drug_list])
 
     results = sorted(list(results))
     return jsonify(results)

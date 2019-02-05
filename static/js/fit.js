@@ -45,22 +45,6 @@
 				  });
 		  }
 	  });
-      
-      $( "#input-ndc" ).autocomplete({
-		  source: function( request, response )
-		  {
-			  $.ajax(
-				  {
-					  url: "/ndc_drugs",
-					  dataType: "json",
-					  data: {qry: request.term },
-					  success: function( data )
-					  {
-						  response( data )
-					  }
-				  });
-		  }
-	  });
 
       $( "#input-med" ).autocomplete({
     	  minLength: 2,
@@ -180,8 +164,7 @@
 						  else
 						    cls = '<td class="table-danger">';
 						  	drugHasPA = true
-					  
-					  
+
 					  var tr =
 						  (
 						  '<tr>' +
@@ -281,8 +264,8 @@
 				  $('#color-codes').show();
 
 				  $('#table-medicaid').DataTable({
-				                                    destroy: true,
-				                                    paging: false,
+				                                    destroy:true,
+				                                    paging:false,
 				                                    searching:false
 				  });
 			  }
@@ -299,7 +282,6 @@
 			  $('#table-header').text(drug);
 			  if (medicareSelected)
 			  {
-
 				  generateMedicareResults();
 			  } else
 			  {
