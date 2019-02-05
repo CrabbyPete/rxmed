@@ -6,7 +6,6 @@
 	  $('#table-header').hide();
 	  $('#table-medicare').hide();
 	  $('#table-medicaid').hide();
-	  $('#table-medicaid').tablesorter();
 	  $('#infobox-pa-true').hide();
 	  $('#infobox-pa-false').hide()
 	  $('#color-codes').hide();
@@ -281,15 +280,11 @@
                   }
 				  $('#color-codes').show();
 
-				  var resort = true;
-                  $('table-medicaid').trigger("update", [resort]);
-
-				  /*
 				  $('#table-medicaid').DataTable({
+				                                    destroy: true,
 				                                    paging: false,
 				                                    searching:false
 				  });
-				  */
 			  }
 		  });
 	  }
