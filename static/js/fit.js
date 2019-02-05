@@ -288,6 +288,7 @@
 				  generateMedicaidResults();
 			  }
 			  $('#table-header').show();
+			  $('#display_results').show()
 		  }
 	  })
 
@@ -315,11 +316,11 @@
       {
 		  $('#input-med').val(''),
 		  drug = '',
-		  $('#selected-med').html('')
+		  $('#display_results').hide()
 	  })
 	  $('#button-clear-all').click(function ()
       {
-		  $('main').hide(),
+		  $('main').hide();
 		  $('html').clearAllInput();
 		  if (medicareSelected)
 		  {
