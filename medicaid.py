@@ -36,7 +36,7 @@ def front_end_excluded( drug, excluded:list)->bool:
 
 def reform_data( data ):
     """
-
+    Reformat the data to ensure there is a Formulary Restrictions, and capitalize drugs
     :param data:
     :return:
     """
@@ -59,14 +59,7 @@ def get_drug_list( drug_name ):
     :return: set of drugs and excluded front end
     """
     fta_list, excluded = get_related_drugs(drug_name)
-    drugs = [FTA.get(fta).PROPRIETARY_NAME for fta in fta_list]
-    drug_list = []
-    for drug in drugs:
-        if '/' in drug:
-            drug_list.extend([ d.strip() for d in drug.split('/')])
-        else:
-            drug_list.append( drug )
-
+    drug_list = [FTA.get(fta).PROPRIETARY_NAME for fta in fta_list]
     drug_list.append(drug_name.lower())
 
     return set(drug_list), excluded
@@ -106,7 +99,8 @@ def caresource(drug_name):
     if not included:
         pa = True
 
-    data = pd.DataFrame(data).drop_duplicates().to_dict('records')
+    if data:
+        data = pd.DataFrame(data).drop_duplicates().to_dict('records')
     return {'data': data, 'pa':pa, 'heading':heading}
 
 
@@ -133,7 +127,7 @@ def molina( drug_name ):
             Match (first word match), to [Molina Healthcare PA criteria 10_1_18].DRUG_NAME). 
         """
         for record in records:
-            look_at = record.Brand_name
+            look_at = record.Brand_name if record.Brand_name else ''
             if isinstance(record.Generic_name, str):
                 look_at += " "+record.Generic_name
             if front_end_excluded(look_at, excluded):
@@ -167,7 +161,8 @@ def molina( drug_name ):
     if not included:
         pa = True
 
-    data = pd.DataFrame(data).drop_duplicates().to_dict('records')
+    if data:
+        data = pd.DataFrame(data).drop_duplicates().to_dict('records')
     return {'data':data, 'pa':pa, 'heading':heading}
 
 
@@ -186,12 +181,11 @@ def uhc_community( drug_name ):
         records  = UHC.find_by_name(drug)
         for record in records:
 
-            look_at = record.Brand
+            look_at = record.Brand if record.Brand else ''
             if isinstance(record.Generic, str):
                 look_at += record.Generic
             if front_end_excluded(look_at, excluded):
                 continue
-
 
             record = row2dict(record)
             record.pop('id')
@@ -207,7 +201,8 @@ def uhc_community( drug_name ):
     if not included:
         pa = True
 
-    data = pd.DataFrame(data).drop_duplicates().to_dict('records')
+    if data:
+        data = pd.DataFrame(data).drop_duplicates().to_dict('records')
     return {'data': data, 'pa': pa, 'heading':heading}
 
 
@@ -231,8 +226,8 @@ def paramount( drug_name ):
         records = Paramount.find_by_name(drug)
         for record in records:
 
-            look_at = record.Brand_name
-            if isinstance(record.Generic, str):
+            look_at = record.Brand_name if record.Brand_name else ''
+            if isinstance(record.Generic_name, str):
                 look_at += " "+record.Generic_name
             if front_end_excluded(look_at, excluded ):
                 continue
@@ -251,7 +246,9 @@ def paramount( drug_name ):
     if not included:
         pa = True
 
-    data = pd.DataFrame(data).drop_duplicates().to_dict('records')
+    if data:
+        data = pd.DataFrame(data).drop_duplicates().to_dict('records')
+
     return { 'data':data, 'pa':pa, 'heading':heading }
 
 
@@ -300,7 +297,9 @@ def ohio_state( drug_name ):
     if not included:
         pa = True
 
-    data = pd.DataFrame(data).drop_duplicates().to_dict('records')
+    if data:
+        data = pd.DataFrame(data).drop_duplicates().to_dict('records')
+
     return { 'data':data, 'pa':pa, 'heading':heading }
 
 
@@ -339,7 +338,8 @@ def buckeye( drug_name ):
     if not included:
         pa = True
 
-    data = pd.DataFrame(data).drop_duplicates().to_dict('records')
+    if data:
+        data = pd.DataFrame(data).drop_duplicates().to_dict('records')
     return {'data':data, 'pa':pa, 'heading':heading}
 
 
@@ -389,19 +389,34 @@ if __name__ == "__main__":
         result = get_medicaid_plan("Admelog", "Molina Healthcare")
         print( result )
         result = get_medicaid_plan("Admelog", "Paramount Advantage")
+        print(result)
         result = get_medicaid_plan('pulmicort', "Caresource")
-        result = get_medicaid_plan("Breo","Ohio State")
+        print(result)
+        result = get_medicaid_plan("Breo","OH State Medicaid")
+        print(result)
         result = get_medicaid_plan("Trulicity","OH State Medicaid")
+        print(result)
         result = get_medicaid_plan("Pamidronate Disodium", "Caresource") # CLASS_ID != NULL
-        result = get_medicaid_plan("Tresiba", "Paramount")
-        result = get_medicaid_plan("Advair", "Paramount")
-        result = get_medicaid_plan("epinephrine", "Paramount")
+        print(result)
+        result = get_medicaid_plan("Tresiba", "Paramount Advantage")
+        print(result)
+        result = get_medicaid_plan("Advair", "Paramount Advantage")
+        print(result)
+        result = get_medicaid_plan("epinephrine", "Paramount Advantage")
+        print(result)
         result = get_medicaid_plan("Potassium Citrate", "Caresource")
+        print(result)
         result = get_medicaid_plan("Zanaflex", "Caresource")
+        print(result)
         result = get_medicaid_plan("Trelegy", "Caresource")
+        print(result)
         result = get_medicaid_plan("Breo","Caresource")
-        result = get_medicaid_plan('Symbicort','Molina')
-        result = get_medicaid_plan('ARTHROTEC','Molina')
+        print(result)
+        result = get_medicaid_plan('Symbicort','Molina Healthcare')
+        print(result)
+        result = get_medicaid_plan('ARTHROTEC','Molina Healthcare')
+        print(result)
         result = get_medicaid_plan('Tresiba','Caresource')
-        result = get_medicaid_plan('Lantus', 'Ohio State')
+        print(result)
+        result = get_medicaid_plan('Lantus', 'OH State Medicaid')
         print(result)

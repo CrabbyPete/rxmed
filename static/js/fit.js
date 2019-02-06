@@ -146,7 +146,7 @@
 		  $.ajax
 		  ({
 			  url: "/medicare_options",
-			  async: false,
+			  async: true,
 			  dataType: "json",
 			  data: {zipcode: zipcode, drug_name: drug, plan_name: plan},
 			  beforeSend: function() {
@@ -174,19 +174,20 @@
 						  cls+resp[d]['ST']+'</td>' +
 						  cls+resp[d]['QL']+'</td>' +
 						  cls+resp[d]['PA']+'</td>' +
-						  cls+resp[d]['CopayP']+'</td>' +
 						  cls+resp[d]['CopayD']+'</td>' +
+						  cls+resp[d]['CTNP']+'</td>' +
 						  '</tr>'
 						  );
 					  $("#medicarebody").append(tr)
 				  }
-				  $('#table-header').show();
 				  $('#table-medicare').show();
-			  },
-			  error:function(resp)
-			  {
-				  console.log(resp);
-				  $('#loading-img').hide();
+				  $('#table-header').show();
+				  $('#table-medicare').DataTable({ destroy:true,
+				                                   paging:false,
+				                                   searching:false
+				                                });
+
+
 			  }
 		  });
 	  }

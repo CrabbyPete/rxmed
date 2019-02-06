@@ -7,8 +7,7 @@ from log        import log, log_msg
 from models.ndc import Basic_Drugs, Beneficiary_Costs
 from models.fta import FTA, NDC
 
-
-@lru_cache( 2048 )
+@lru_cache(8192)
 def beneficiary_costs(drug, plan):
     """
     Get the beneficary costs for a drug in plan
@@ -23,7 +22,15 @@ def beneficiary_costs(drug, plan):
 
         bd = bd[0]
     except IndexError:
-        log.info(f"No Basic Drug for NDC:{drug} FormularyID:{plan.FORMULARY_ID}")
+        ndc = NDC.get( drug )
+        bd = Basic_Drugs.get_close_to(ndc.PRODUCT_NDC)
+        if bd and len(bd) == 1:
+            bd = bd[0]
+        else:
+            log.info(f"No Basic Drug for {ndc.PROPRIETARY_NAME} NDC:{ndc.PRODUCT_NDC} FormularyID:{plan.FORMULARY_ID}")
+            return None, None
+
+    if not bd.NDC:
         return None, None
 
     try:
@@ -60,14 +67,14 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
         if fta.NDC_IDS:
             drug_list.update(fta.NDC_IDS)
         else:
-            ndcs = [ndc.id for ndc in NDC.find_by_name(fta.PROPRIETARY_NAME)]
+            ndcs = [ndc.id for ndc in NDC.find_by_name(fta.PROPRIETARY_NAME, fta.NONPROPRIETARY_NAME) ]
             fta.NDC_IDS = ndcs
             fta.save()
             drug_list.update(ndcs)
 
     for ndc_id in drug_list:
-        ndc = NDC.get(ndc_id)
-        bd, bc = beneficiary_costs(ndc.id, plan)
+        #ndc = NDC.get(ndc_id)
+        bd, bc = beneficiary_costs(ndc_id, plan)
 
         if not bd:
             """
@@ -98,27 +105,28 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
                 tier = bd.TIER_LEVEL_VALUE
 
         copay_d = ''
-        copay_p = ''
+        cover = ''
         if bc:
             for c in bc:
-                if c.COVERAGE_LEVEL == 0:
-                    copay_p = "${:.2f}".format(c.COST_AMT_PREF)
                 if c.COVERAGE_LEVEL == 1:
                     copay_d = "${:.2f}".format(c.COST_AMT_PREF)
+                    cover   = "${:.2f}".format(c.COST_AMT_NONPREF)
 
+        ndc = NDC.get(ndc_id)
         result = {'Brand': ndc.PROPRIETARY_NAME,
                   'Generic': ndc.NONPROPRIETARY_NAME,
                   'Tier': tier,
                   'ST': st,
                   'QL': ql,
                   'PA': pa,
-                  'CopayP': copay_p,
-                  'CopayD': copay_d
+                  'CopayD': copay_d,
+                  'CTNP': cover
                   }
         results.append(result)
 
-    #final_results = list({''.join(row[col] for col in results[0].keys()): row for row in results}.values())
-    results = pd.DataFrame(results).drop_duplicates().to_dict('records')
+    if results:
+        results = pd.DataFrame(results).drop_duplicates().to_dict('records')
+
     return results
 
 if __name__ == "__main__":
@@ -126,10 +134,14 @@ if __name__ == "__main__":
     from models.base   import Database
 
     with Database(DATABASE) as db:
-        result = get_from_medicare( "Victoza", "Anthem MediBlue Essential (HMO)", '43202')
+        result = get_medicare_plan( "Victoza", "Anthem MediBlue Essential (HMO)", '43202')
         print(result)
-        result = get_from_medicare('Levemir','SilverScript Plus (PDP)','07040')
+        result = get_medicare_plan('Levemir','SilverScript Plus (PDP)','07040')
         print(result)
-        result = get_from_medicare( "SYMBICORT","Silverscript choice (PDP)","07040")
+        result = get_medicare_plan( "SYMBICORT","Silverscript choice (PDP)","07040")
         print(result)
+        result = get_medicare_plan( "Novolog","WellCare Classic (PDP)",'43219')
+        print(result)
+        print( beneficiary_costs.cache_info() )
+
 

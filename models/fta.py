@@ -68,11 +68,11 @@ class NDC(Base):
         :return:
         """
         proprietary = f"%{proprietary.lower()}%"
-        if not nonproprietary:
+        if nonproprietary is None:
             flter = or_(cls.PROPRIETARY_NAME.ilike(proprietary), cls.NONPROPRIETARY_NAME.ilike(proprietary))
         else:
             nonpropietary = f"%{nonproprietary.lower()}%"
-            flter = and_(cls.PROPRIETARY_NAME.ilike(proprietary),cls.NONPROPRIETARY_NAME.ilike(nonproprietary))
+            flter = or_(cls.PROPRIETARY_NAME.ilike(proprietary),cls.NONPROPRIETARY_NAME.ilike(nonproprietary))
 
         qry = cls.session.query(cls).filter(flter)
         result = qry.all()
