@@ -16,7 +16,7 @@ OHSTATE      = 'https://druglookup.ohgov.changehealthcare.com/DrugSearch/applica
 
 def OhioState( name ):
     url = OHSTATE.format(name)
-    r = requests.get(url)
+    r = requests.get(url, verify=False)
 
     if r.ok:
         html=r.text
@@ -170,8 +170,9 @@ def open_fda_rxcui( rxcui ):
     return r.status_code, data['results']
 
 if __name__ == "__main__":
-    """
+
     r = OhioState('ADMEL')
+    """
     r = RxClass()
     data = r.byDrugName(drugName='morphine', relaSource='MEDRT',relas='may_treat')
     for d in data['rxclassDrugInfo']:
