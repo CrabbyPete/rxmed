@@ -134,11 +134,11 @@ def ndc_drugs():
     results = set()
     if 'qry' in request.args:
         look_for = request.args['qry']
-        drug_list = NDC.find_by_name( look_for )
+        drug_list = NDC.session.query(NDC).filter(NDC.PROPRIETARY_NAME.ilike(f'{look_for.lower()}%'))
         for d in drug_list:
-            s = d['PROPRIETARY_NAME'] 
-            if d['DOSE_STRENGTH'] and d['DOSE_UNIT']:
-                s += f" {d['DOSE_STRENGTH']} {d['DOSE_UNIT']}"
+            s = d.PROPRIETARY_NAME
+            if d.DOSE_STRENGTH and d.DOSE_UNIT:
+                s += f" {d.DOSE_STRENGTH} {d.DOSE_UNIT}"
             results.update([s])
     
     return jsonify(list(results))

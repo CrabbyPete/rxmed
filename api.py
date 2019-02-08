@@ -10,6 +10,7 @@ from log import log
 BASE_URL     = "https://rxnav.nlm.nih.gov/REST"
 HISTORIC_URL = "https://rxnav.nlm.nih.gov/REST/rxcuihistoryconcept?rxcui={}"
 OPENFDA_URL  = 'https://api.fda.gov/drug/ndc.json?search={}'
+#https://api.fda.gov/drug/ndc.json?search=openfda.rxcui:"1926069"
 OHSTATE      = 'https://druglookup.ohgov.changehealthcare.com/DrugSearch/application/search?searchBy=name&name={}'
 
 
@@ -155,11 +156,22 @@ def open_fda( brand_name, generic_name = None ):
     return data['results']
 
 
+def open_fda_rxcui( rxcui ):
+    search=f'openfda.rxcui:"{str(rxcui)}"'
 
+    url = OPENFDA_URL.format(search)
+    r = requests.get(url)
+
+    if r.ok:
+        data = json.loads(r.text)
+    else:
+        return r.status_code,[]
+
+    return r.status_code, data['results']
 
 if __name__ == "__main__":
-    r = OhioState('ADMEL')
     """
+    r = OhioState('ADMEL')
     r = RxClass()
     data = r.byDrugName(drugName='morphine', relaSource='MEDRT',relas='may_treat')
     for d in data['rxclassDrugInfo']:

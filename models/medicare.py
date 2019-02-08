@@ -10,12 +10,17 @@ from sqlalchemy         import ( Column,
                                 or_,
                                 and_
                               )
+
 from sqlalchemy.orm     import relationship
+from sqlalchemy.orm.exc import NoResultFound
+
+from sqlalchemy.schema  import UniqueConstraint
 
 from .base              import Base
 
 # Just return the results not the whole class
 row2dict = lambda r: {c.name: str(getattr(r, c.name)) for c in r.__table__.columns}
+
 
 class Basic_Drugs(Base):
     __tablename__ = 'basicdrugs'
@@ -50,12 +55,42 @@ class Basic_Drugs(Base):
             qry = cls.session.query(cls).filter(cls.NDC.ilike(ndc) )
 
         data = qry.all()
-        results = [row2dict(r) for r in data]
-        return results
+        return data
+
+
+    @classmethod
+    def get_by_ndc(cls, ndc_id, formulary_id):
+        qry = cls.session.query(cls).filter(cls.NDC_id == ndc_id, cls.FORMULARY_ID == formulary_id)
+        return qry.all()
+
 
     def __repr__(self):
         return "<{}>".format(self.FORMULARY_ID)
 
+
+class NDC_BD(Base):
+    __tablename__ = 'ndcbd'
+    __table_args__ = (UniqueConstraint('basicdrug', 'ndc'),)
+
+    id = Column(Integer, primary_key=True)
+
+    basicdrug    = Column(Integer, ForeignKey('basicdrugs.id'))
+    ndc          = Column(Integer, ForeignKey('ndc.id'))
+    formulary_id = Column(Integer)
+
+    drug = relationship(Basic_Drugs, backref='basicdrugs')
+
+    @classmethod
+    def get_basic_drug(cls, ndc, formulary_id):
+        try:
+            bd = cls.session.query(cls).filter(cls.ndc==ndc, cls.formulary_id == formulary_id).one()
+        except NoResultFound:
+            return None
+        return bd.drug
+
+
+    def __repr__(self):
+        return(f'<{self.ndc}>:<{self.basicdrug}>')
 
 class Beneficiary_Costs( Base ):
     __tablename__ = 'beneficiarycosts'
@@ -89,5 +124,3 @@ class Beneficiary_Costs( Base ):
 
     def __repr__(self):
         return "<{}-{}>".format(self.CONTRACT_ID, self.PLAN_ID)
-
-

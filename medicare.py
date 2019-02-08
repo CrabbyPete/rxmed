@@ -2,35 +2,24 @@ import pandas as pd
 
 from functools  import lru_cache
 
-from tools      import get_related_drugs, get_plan
-from log        import log, log_msg
-from models.ndc import Basic_Drugs, Beneficiary_Costs
-from models.fta import FTA, NDC
+from log              import log, log_msg
+from tools            import get_related_drugs, get_plan
+from models.fta       import FTA, NDC
+from models.medicare  import Basic_Drugs, Beneficiary_Costs, NDC_BD
+
 
 @lru_cache(8192)
 def beneficiary_costs(drug, plan):
     """
     Get the beneficary costs for a drug in plan
-    :param drugs:
+    :param drug: drug ndc id number
+    :param plan: dict: plan record
     :return:“COST_AMT_PREF” ONLY if “DAYS_SUPPLY” = 1 and “COST_TYPE_PREF” = 1, for each “COVERAGE_LEVEL” 0 AND 1
     """
-    # bd = Basic_Drugs.get_close_to(drug, plan.FORMULARY_ID)
-    bd = Basic_Drugs.get_by_ndc(drug, plan.FORMULARY_ID)
-    try:
-        if len(bd) > 1:
-            log.info(log_msg(f"{drug}-{plan.FORMULARY_ID} returned more than 1 value"))
-
-        bd = bd[0]
-    except IndexError:
-        ndc = NDC.get( drug )
-        bd = Basic_Drugs.get_close_to(ndc.PRODUCT_NDC)
-        if bd and len(bd) == 1:
-            bd = bd[0]
-        else:
-            log.info(f"No Basic Drug for {ndc.PROPRIETARY_NAME} NDC:{ndc.PRODUCT_NDC} FormularyID:{plan.FORMULARY_ID}")
-            return None, None
-
-    if not bd.NDC:
+    bd = NDC_BD.get_basic_drug( drug, plan.FORMULARY_ID)
+    if not bd:
+        #ndc = NDC.get(drug)
+        log.info(f"No Basic Drug for NDC:{drug} FormularyID:{plan.FORMULARY_ID}")
         return None, None
 
     try:
@@ -58,24 +47,26 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
     """
     plan = get_plan(plan_name, zipcode)
 
+    # Get all related drugs
     results = []
     drugs, exclude = get_related_drugs(drug_name)
 
-    drug_list = set()
+    # Get all the NDC numbers for each FTA
+    ndc_list = set()
     for drg in drugs:
         fta = FTA.get(drg)
         if fta.NDC_IDS:
-            drug_list.update(fta.NDC_IDS)
+            ndc_list.update(fta.NDC_IDS)
+
+        # If you don't have make sure and check again
         else:
             ndcs = [ndc.id for ndc in NDC.find_by_name(fta.PROPRIETARY_NAME, fta.NONPROPRIETARY_NAME) ]
             fta.NDC_IDS = ndcs
             fta.save()
-            drug_list.update(ndcs)
+            ndc_list.update(ndcs)
 
-    for ndc_id in drug_list:
-        #ndc = NDC.get(ndc_id)
+    for ndc_id in ndc_list:
         bd, bc = beneficiary_costs(ndc_id, plan)
-
         if not bd:
             """
             pa = 'Yes'
@@ -85,17 +76,17 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
             """
             continue
         else:
-            if bd.PRIOR_AUTHORIZATION_YN == 'False':
-                pa = 'No'
-            else:
+            if bd.PRIOR_AUTHORIZATION_YN:
                 pa = 'Yes'
-
-            if bd.STEP_THERAPY_YN == 'False':
-                st = 'No'
             else:
-                st = 'Yes'
+                pa = 'No'
 
-            if bd.QUANTITY_LIMIT_YN == 'True':
+            if bd.STEP_THERAPY_YN:
+                st = 'Yes'
+            else:
+                st = 'No'
+
+            if bd.QUANTITY_LIMIT_YN:
                 ql = f"Yes {bd.QUANTITY_LIMIT_AMOUNT}:{bd.QUANTITY_LIMIT_DAYS}"
             else:
                 ql = f"No"
@@ -113,7 +104,7 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
                     cover   = "${:.2f}".format(c.COST_AMT_NONPREF)
 
         ndc = NDC.get(ndc_id)
-        result = {'Brand': ndc.PROPRIETARY_NAME,
+        result = {'Brand': f"{ndc.PROPRIETARY_NAME} {ndc.DOSE_STRENGTH} {ndc.DOSE_UNIT}",
                   'Generic': ndc.NONPROPRIETARY_NAME,
                   'Tier': tier,
                   'ST': st,

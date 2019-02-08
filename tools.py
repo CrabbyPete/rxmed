@@ -1,9 +1,10 @@
 import re
 
-from functools  import lru_cache
-from log        import log, log_msg
-from models     import Zipcode, Plans, Basic_Drugs,Beneficiary_Costs, NDC, FTA
-from api        import RxClass
+from functools       import lru_cache
+from log             import log, log_msg
+from models          import Zipcode, Plans,NDC, FTA
+from models.medicare import Basic_Drugs,Beneficiary_Costs
+from api             import RxClass
 
 
 def walk(seq, look_for):
@@ -31,6 +32,7 @@ def walk(seq, look_for):
     return None
 
 
+@lru_cache(4096)
 def get_location( zipcode ):
     """
     Get the geo location infor from a given zipcode
@@ -45,7 +47,7 @@ def get_location( zipcode ):
 
     return zipcode
 
-
+@lru_cache(4096)
 def get_plan( plan_name, zipcode ):
     """
     Get the formulary_id for a plan
@@ -65,7 +67,7 @@ def get_plan( plan_name, zipcode ):
 
 REGEX = '\[(.*?)\]'
 
-@lru_cache( 1024 )
+@lru_cache( 4096 )
 def get_related_drugs(name):
     """
     Step one is search from the FTA DB and get from the xxx APIs for name
@@ -113,8 +115,7 @@ def get_related_drugs(name):
             if not data:
                 log.error( "No data found for {} or {}".format( fta.PROPRIETARY_NAME, fta.NONPROPRIETARY_NAME) )
                 return [], None
-            
-            
+
         if fta.CLASS_ID:
             class_ids = [ fta.CLASS_ID ]
         else:
