@@ -37,7 +37,6 @@ class Basic_Drugs(Base):
     QUANTITY_LIMIT_DAYS     = Column( Integer, nullable=True )
     PRIOR_AUTHORIZATION_YN  = Column( Boolean )
     STEP_THERAPY_YN         = Column( Boolean )
-    NDC_id                  = Column(Integer, ForeignKey('ndc.id'))
 
 
     @classmethod

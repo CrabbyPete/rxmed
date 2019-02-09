@@ -60,7 +60,7 @@ def get_drug_list( drug_name ):
     """
     fta_list, excluded = get_related_drugs(drug_name)
     drug_list = [FTA.get(fta).PROPRIETARY_NAME for fta in fta_list]
-    drug_list.append(drug_name.lower())
+    drug_list = [ d.replace(' ','') for d in drug_list]
 
     return set(drug_list), excluded
 

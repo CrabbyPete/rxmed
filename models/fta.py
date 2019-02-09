@@ -5,6 +5,7 @@ from sqlalchemy         import ( Column,
                                  ForeignKey,
                                  Date,
                                  ARRAY,
+                                 Boolean,
                                  or_,
                                  and_
                                )
