@@ -167,7 +167,7 @@ def molina( drug_name ):
 
 
 def uhc_community( drug_name ):
-    heading = ['Brand', 'Generic', 'Formulary Restrictions']
+    heading = ['Brand', 'Generic','Tier','Formulary Restrictions']
 
     pa = False
     included = False
