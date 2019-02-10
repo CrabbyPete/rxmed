@@ -14,8 +14,8 @@
 	  var zipcode = '';
 	  var plan = '';
 	  var drug = '';
-	  var medicare_table = $('#table-medicare').DataTable({paging:false, searching:false});
-	  var medicare_table = $('#table-medicare').DataTable();
+	  var medicaid_table = $('#table-medicaid').DataTable({paging:false, searching:false, info:false});
+	  var medicare_table = $('#table-medicare').DataTable({paging:false, searching:false, info:false});
 	  var drugHasPA = true;
 
 	  $.fn.toggleButtonOn = function()
@@ -158,8 +158,8 @@
 			  {
 				  $('#loading-img').hide();
 				  $("#medicarebody").empty();
-
 				  medicare_table.destroy();
+
 				  for( d=0; d < resp.length; d++)
 				  {
 					  if( resp[d]['PA'].search('Yes') )
@@ -186,7 +186,7 @@
 
 				  $('#table-header').show();
 				  $('#table-medicare').show();
-				  medicare_table = $('#table-medicare').DataTable({paging:false, searching:false});
+				  medicare_table = $('#table-medicare').DataTable({paging:false, searching:false, info:false});
 			  }
 		  });
 	  }
@@ -218,6 +218,7 @@
 				  header += '</tr>';
 				  $('#medicaidhead').append(header);
 				  $('#medicaidbody').empty();
+				  medicaid_table.destroy();
 
 				  if (resp['pa'] == true)
 				    drugHasPA = true;
@@ -263,8 +264,7 @@
                   }
 				  $('#color-codes').show();
 
-                  medicaid.destroy();
-				  medicaid_table = $('#table-medicaid').DataTable({paging:false, searching:false});
+				  medicaid_table = $('#table-medicaid').DataTable({paging:false, searching:false, info:false});
 			  }
 		  });
 	  }
