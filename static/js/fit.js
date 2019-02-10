@@ -148,7 +148,7 @@
 		  $.ajax
 		  ({
 			  url: "/medicare_options",
-			  async: false,
+			  async: true,
 			  dataType: "json",
 			  data: {zipcode: zipcode, drug_name: drug, plan_name: plan},
 			  beforeSend: function() {
@@ -157,9 +157,9 @@
 			  success: function( resp )
 			  {
 				  $('#loading-img').hide();
-				  $("#medicarebody").empty();
 				  medicare_table.destroy();
 
+				  $("#medicarebody").empty();
 				  for( d=0; d < resp.length; d++)
 				  {
 					  if( resp[d]['PA'].search('Yes') )
@@ -206,7 +206,10 @@
 			  success: function( resp )
 			  {
 			  	  $('#loading-img').hide();
+			  	  medicaid_table.destroy();
+
 				  $('#medicaidhead').empty();
+				  $('#medicaidbody').empty();
 
 				  var heading = resp['heading'];
 				  var header = "<tr>";
@@ -217,8 +220,6 @@
 
 				  header += '</tr>';
 				  $('#medicaidhead').append(header);
-				  $('#medicaidbody').empty();
-				  medicaid_table.destroy();
 
 				  if (resp['pa'] == true)
 				    drugHasPA = true;

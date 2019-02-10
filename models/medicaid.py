@@ -56,8 +56,8 @@ class Paramount(Base): # Formulary_restriction,Generic_name,Brand_name
         qry = cls.session.query(cls).filter( or_( cls.Generic_name.ilike(name),
                                                   cls.Brand_name.ilike(name)
                                                 )
-                                           ).all()
-        return qry
+                                           )
+        return qry.all()
 
     def __repr__(self):
         return "<{}>".format(self.Generic_name )
