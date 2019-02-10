@@ -293,29 +293,30 @@
 	  /***** Clear buttons *****/
 	  $.fn.clearAllInput = function ()
 	  {
-		  $('#table-header').hide(),
-		  $('#table-medicare').hide(),
-		  $('#table-medicaid').hide(),
-		  $('#input-zipcode').val(''),
-		  $('#input-plan-medicare').val(''),
-		  $('#input-plan-medicaid').val(''),
-		  $('#input-med').val(''),
-		  zipcode = '',
-		  plan = '',
-		  drug = '',
-		  $('#selected-zipcode').html(''),
-		  $('#selected-plan').html(''),
-		  $('#selected-med').html('')
-		  $('#infobox-pa-false').hide(),
-		  $('#infobox-pa-true').hide(),
-	      $('#color-codes').hide()
+		  $('#table-header').hide();
+		  $('#table-medicare').hide();
+		  $('#table-medicaid').hide();
+		  $('#input-zipcode').val('');
+		  $('#input-plan-medicare').val('');
+		  $('#input-plan-medicaid').val('');
+		  $('#input-med').val('');
+		  zipcode = '';
+		  plan = '';
+		  drug = '';
+		  $('#selected-zipcode').html('');
+		  $('#selected-plan').html('');
+		  $('#selected-med').html('');
+		  $('#infobox-pa-false').hide();
+		  $('#infobox-pa-true').hide();
+	      $('#color-codes').hide();
 	  }
 	  $('#button-clear-med').click(function ()
       {
-		  $('#input-med').val(''),
+		  $('#input-med').val('')
 		  drug = '',
-		  $('#display_results').hide()
+		  $('#display_results').hide();
 	  })
+	  /*
 	  $('#button-clear-all').click(function ()
       {
 		  $('main').hide();
@@ -330,4 +331,5 @@
 			  medicaidSelected = false
 		  }
 	  })
+	  */
   });
