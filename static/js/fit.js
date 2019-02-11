@@ -316,20 +316,4 @@
 		  drug = '',
 		  $('#display_results').hide();
 	  })
-	  /*
-	  $('#button-clear-all').click(function ()
-      {
-		  $('main').hide();
-		  $('html').clearAllInput();
-		  if (medicareSelected)
-		  {
-			  $('#button-medicare').toggleButtonOff(),
-			  medicareSelected = false
-		  } else
-		  {
-			  $('#button-medicaid').toggleButtonOff()
-			  medicaidSelected = false
-		  }
-	  })
-	  */
   });

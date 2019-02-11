@@ -1,4 +1,4 @@
-
+import os
 import tools
 
 from flask              import Flask, request, render_template, jsonify, abort
@@ -18,6 +18,7 @@ from settings           import DATABASE
 from user               import init_user
 
 application = Flask(__name__, static_url_path='/static')
+application.config['SECRET_KEY'] = os.urandom(12)
 application.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
 
 db = Database( DATABASE )

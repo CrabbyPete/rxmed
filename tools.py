@@ -158,10 +158,14 @@ def get_related_drugs(name):
                     fta_members = fta.find_by_name(look_for)
                     if not fta_members:
                         log.error( log_msg("{} not found in FTA".format(look_for)) )
+                        inactive = FTA(**{'PROPRIETARY_NAME':look_for,"ACTIVE":False})
+                        inactive.save()
                         continue
 
                     for fta_member in fta_members:
                         #(f"{fta_member.id} = {fta_member.PROPRIETARY_NAME}")
+                        if not fta_member.ACTIVE:
+                            continue
 
                         if not fta_member.PROPRIETARY_NAME in excluded_back and \
                            not fta_member.NONPROPRIETARY_NAME in excluded_back:

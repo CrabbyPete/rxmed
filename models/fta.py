@@ -100,9 +100,10 @@ class FTA(Base):
     EXCLUDED_DRUGS_BACK  = Column( String )
     EXCLUDED_DRUGS_FRONT = Column( String )
 
-    #ACTIVE               = Column( Boolean, default=True)
+
     RELATED_DRUGS        = Column( ARRAY(Integer, ForeignKey('fta.id')))
     NDC_IDS              = Column( ARRAY(Integer, ForeignKey('ndc.id')))
+    ACTIVE               = Column( Boolean, default=True)
 
     @classmethod
     def find_by_name(cls, name, nonproprietary=True ):

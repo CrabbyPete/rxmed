@@ -18,8 +18,7 @@ def beneficiary_costs(drug, plan):
     """
     bd = NDC_BD.get_basic_drug( drug, plan.FORMULARY_ID)
     if not bd:
-        #ndc = NDC.get(drug)
-        log.info(f"No Basic Drug for NDC:{drug} FormularyID:{plan.FORMULARY_ID}")
+        #log.info(f"No Basic Drug for NDC:{drug} FormularyID:{plan.FORMULARY_ID}")
         return None, None
 
     try:
