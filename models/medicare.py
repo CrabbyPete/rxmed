@@ -1,3 +1,7 @@
+import logging
+
+
+log = logging.getLogger(__name__)
 from sqlalchemy         import ( Column,
                                 ARRAY,
                                 Integer,
@@ -82,10 +86,20 @@ class NDC_BD(Base):
     @classmethod
     def get_basic_drug(cls, ndc, formulary_id):
         try:
-            bd = cls.session.query(cls).filter(cls.ndc==ndc, cls.formulary_id == formulary_id).one()
+            bd = cls.session.query(cls).filter(cls.ndc==ndc, cls.formulary_id == formulary_id).all()
         except NoResultFound:
             return None
+
+        if len( bd ) > 1:
+            log.error(f"More than one found BD_NDC NDC:{ndc} Formulary{formulary_id}")
+
+        try:
+            bd = bd[0]
+        except Exception as e:
+            return None
+
         return bd.drug
+
 
 
     def __repr__(self):
