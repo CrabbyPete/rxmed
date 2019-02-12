@@ -143,7 +143,6 @@ def get_related_drugs(name):
                 continue
 
             for dm in drug_members['drugMember']:
-
                     look_for = dm['minConcept']['name']
                     if ttys == 'SBD+BPCK+GPCK':
                         try:
@@ -174,38 +173,12 @@ def get_related_drugs(name):
     return results, excluded_front
 
 
-def get_ndc( proprietary_name, dose_strength = None, dose_unit = None ):
-    """
-
-    :param self:
-    :param proprietary_name:
-    :param dose_strength:
-    :param dose_unit:
-    :return:
-    """
-    qry = dict( PROPRIETARY_NAME=proprietary_name )
-    if dose_strength:
-        qry.update( dict(PROPRIETARY_NAME=proprietary_name) )
-    if dose_unit:
-        qry.update( dict(DOSE_UNIT=dose_unit) )
-
-    drugs = NDC.get_all(**qry )
-    return drugs 
-
-
 if __name__ == "__main__":
     from settings      import DATABASE
     from models.base   import Database
 
     with Database(DATABASE) as db:
-        # get_location('07481')
-        # get_from_medicare( "Victoza", "Anthem MediBlue Essential (HMO)", '43202')
-        result = get_from_medicare('Levemir','SilverScript Plus (PDP)','07040')
-        #result = get_from_medicaid('Levemir','UHC Community')
-        #result = get_from_medicare( "SYMBICORT","Silverscript choice (PDP)","07040")
-
-
-        print(result)
+        pass
 
 
 

@@ -132,6 +132,8 @@ if __name__ == "__main__":
         print(result)
         result = get_medicare_plan( "Novolog","WellCare Classic (PDP)",'43219')
         print(result)
+        result = get_medicare_plan("Pulmicort", 'SilverScript Plus (PDP)', '07481')
+        print(result)
         print( beneficiary_costs.cache_info() )
 
 
