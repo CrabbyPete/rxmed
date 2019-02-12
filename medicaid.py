@@ -3,11 +3,11 @@ import pandas as pd
 
 from functools       import lru_cache
 
-from api             import OhioState
+from api             import OhioStateAPI
 from tools           import get_related_drugs
 
 from models          import FTA
-from models.medicaid import Caresource, Molina, Molina_Healthcare, Paramount, Buckeye, UHC
+from models.medicaid import Caresource, Molina, Molina_Healthcare, Paramount, Buckeye, UHC, OhioState
 
 """ Select in the HTML
         <option>Buckeye Health Plan</option>
@@ -274,8 +274,18 @@ def ohio_state( drug_name ):
 
     data = []
     for drug in drug_list:
-        records = OhioState(drug)
+        records = OhioState.find_product(drug)
+
+        if not records:
+            records = OhioStateAPI(drug)
+            save = True
+        else:
+            save = False
+
         for record in records:
+            if save:
+                ohio = OhioState.get_or_create(**record)
+                ohio.save()
 
             if front_end_excluded(record['Product_Description'], excluded):
                 continue
@@ -293,6 +303,7 @@ def ohio_state( drug_name ):
                     pa = True
 
             data.append(reform_data(record))
+
 
     if not included:
         pa = True
@@ -378,6 +389,8 @@ if __name__ == "__main__":
     with Database(DATABASE) as db:
 
         # Medicaid
+        result = get_medicaid_plan("Trulicity", "OH State Medicaid")
+        print(result)
         result = get_medicaid_plan("Admelog", "Caresource" )
         print( result )
         result = get_medicaid_plan("Admelog", "Buckeye Health Plan" )

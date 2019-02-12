@@ -14,7 +14,7 @@ OPENFDA_URL  = 'https://api.fda.gov/drug/ndc.json?search={}'
 OHSTATE      = 'https://druglookup.ohgov.changehealthcare.com/DrugSearch/application/search?searchBy=name&name={}'
 
 
-def OhioState( name ):
+def OhioStateAPI( name ):
     url = OHSTATE.format(name)
     r = requests.get(url, verify=False)
 

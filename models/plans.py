@@ -11,7 +11,6 @@ from sqlalchemy import ( or_,
                        )
 
 from sqlalchemy.orm     import relationship
-from sqlalchemy.orm.exc import NoResultFound
 from .base              import Base
 
 class Geolocate(Base):
@@ -129,18 +128,3 @@ class Plans(Base):
         return "<{}>".format(self.PLAN_NAME)
 
 
-def OhioState(Base):
-    Product_Description         = Column(String)
-    Formulary_Restrictions      = Column(String)
-    Copay                       = Column(DECIMAL(precision=8,asdecimal=True,scale=2), nullable=True)
-    Package                     = Column(String)
-    Route_Of_Administration     = Column(String)
-    Covered_For_Dual_Eligible   = Column(Boolean)
-
-    @classmethod
-    def find_product(cls, name ):
-        qry = cls.session.query(cls).filter(cls.Product_Description.like(name))
-        try:
-            return qry.one()
-        except NoResultFound:
-            return None

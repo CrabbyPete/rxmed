@@ -1,13 +1,7 @@
-from sqlalchemy import ( Column,
-                         Integer,
-                         Integer,
-                         String,
-                         Text,
-                         or_
-                       )
+from sqlalchemy         import Column, Integer, String, Boolean, DECIMAL, or_
+from sqlalchemy.orm.exc import NoResultFound
 
-from .base import Base
-
+from .base              import Base
 
 # Just return the results not the whole class
 row2dict = lambda r: {c.name: str(getattr(r, c.name)) for c in r.__table__.columns}
@@ -130,9 +124,8 @@ class UHC(Base): # Generic,Brand,Tier,Formulary_Restrictions
         qry = cls.session.query(cls).filter( or_(cls.Generic.ilike(name),
                                                  cls.Brand.ilike(name)
                                                 )
-                                           ).all()
-
-        return qry
+                                           )
+        return qry.all()
 
 
     def __repr__(self):
@@ -160,3 +153,22 @@ class Buckeye(Base): # Drug_Name,Preferred_Agent,Fomulary_Restrictions
 
     def __repr__(self):
         return "<{}>".format(self.Drug_Name )
+
+
+class OhioState(Base):
+    __tablename__ = 'ohiostate'
+
+    id                              = Column(Integer, primary_key=True)
+    Product_Description             = Column(String)
+    Prior_Authorization_Required    = Column(String)
+    Copay                           = Column(String)
+    Package                         = Column(String)
+    Covered_for_Dual_Eligible       = Column(String)
+    Route_of_Administration         = Column(String)
+
+    @classmethod
+    def find_product(cls, name):
+        name = f'{name.lower()}%'
+        qry = cls.session.query(cls).filter(cls.Product_Description.ilike(name))
+        results = qry.all()
+        return [ row2dict(r) for r in results]
