@@ -159,10 +159,15 @@
 				  $('#loading-img').hide();
 				  medicare_table.destroy();
 
+				  if (resp['pa'] == true)
+				    drugHasPA = true;
+				  else
+				    drugHasPA = false;
+
 				  $("#medicarebody").empty();
-				  for( d=0; d < resp.length; d++)
+				  for( d=0; d < resp['data'].length; d++)
 				  {
-					  if( resp[d]['PA'].search('Yes') )
+					  if( resp['data'][d]['PA'].search('Yes') )
 						    cls = '<td class="table-success">';
 						  else
 						    cls = '<td class="table-danger">';
@@ -171,18 +176,31 @@
 					  var tr =
 						  (
 						  '<tr>' +
-						  cls+resp[d]['Brand']+'</td>' +
-						  cls+resp[d]['Generic']+'</td>' +
-						  cls+resp[d]['Tier']+'</td>' +
-						  cls+resp[d]['ST']+'</td>' +
-						  cls+resp[d]['QL']+'</td>' +
-						  cls+resp[d]['PA']+'</td>' +
-						  cls+resp[d]['CopayD']+'</td>' +
-						  cls+resp[d]['CTNP']+'</td>' +
+						  cls+resp['data'][d]['Brand']+'</td>' +
+						  cls+resp['data'][d]['Generic']+'</td>' +
+						  cls+resp['data'][d]['Tier']+'</td>' +
+						  cls+resp['data'][d]['ST']+'</td>' +
+						  cls+resp['data'][d]['QL']+'</td>' +
+						  cls+resp['data'][d]['PA']+'</td>' +
+						  cls+resp['data'][d]['CopayD']+'</td>' +
+						  cls+resp['data'][d]['CTNP']+'</td>' +
 						  '</tr>'
 						  );
 					  $("#medicarebody").append(tr)
 				  }
+
+				  if (drugHasPA)
+				  {
+				    $('#infobox-pa-true').show();
+				    $('#infobox-pa-false').hide();
+				  }
+				  else
+				  {
+				    $('#infobox-pa-false').show();
+				    $('#infobox-pa-true').hide();
+                  }
+				  $('#color-codes').show();
+
 
 				  $('#table-header').show();
 				  $('#table-medicare').show();
@@ -290,26 +308,6 @@
 		  }
 	  })
 
-	  /***** Clear buttons *****/
-	  $.fn.clearAllInput = function ()
-	  {
-		  $('#table-header').hide();
-		  $('#table-medicare').hide();
-		  $('#table-medicaid').hide();
-		  $('#input-zipcode').val('');
-		  $('#input-plan-medicare').val('');
-		  $('#input-plan-medicaid').val('');
-		  $('#input-med').val('');
-		  zipcode = '';
-		  plan = '';
-		  drug = '';
-		  $('#selected-zipcode').html('');
-		  $('#selected-plan').html('');
-		  $('#selected-med').html('');
-		  $('#infobox-pa-false').hide();
-		  $('#infobox-pa-true').hide();
-	      $('#color-codes').hide();
-	  }
 	  $('#button-clear-med').click(function ()
       {
 		  $('#input-med').val('')

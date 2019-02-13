@@ -100,7 +100,13 @@ class NDC_BD(Base):
 
         return bd.drug
 
-
+    @classmethod
+    def get_by_basicdrug(cls, ndc, basicdrug ):
+        try:
+            bd = cls.session.query(cls).filter(cls.ndc==ndc, cls.basicdrug == basicdrug).one()
+        except NoResultFound:
+            return None
+        return bd
 
     def __repr__(self):
         return(f'<{self.ndc}>:<{self.basicdrug}>')

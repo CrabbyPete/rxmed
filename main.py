@@ -24,17 +24,13 @@ application.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
 db = Database( DATABASE )
 db.open()
 
+# Build the admin pages
 admin = Admin(application, name='RxMedAccess', template_mode='bootstrap3')
-admin.add_view( FTAModelView(FTA, db.session))
-"""
-admin.add_view( CaresourceView(Caresource, db.session))
-admin.add_view( MolinaView(Molina,db.session))
-admin.add_view( ParamountView(Paramount,db.session))
-admin.add_view( BuckeyeView(Buckeye,db.session))
-admin.add_view( UHCView(UHC,db.session))
-"""
+build_admin( admin, db.session )
 
+# Initialize all users
 init_user( application )
+
 
 @application.errorhandler(500)
 def internal_error(error):
@@ -44,6 +40,10 @@ def internal_error(error):
 
 @application.route('/')
 def home():
+    """
+    Render the home page
+    :return:
+    """
     return render_template('home.html')
 
 

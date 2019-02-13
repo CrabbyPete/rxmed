@@ -74,75 +74,75 @@ def get_related_drugs(name):
     :param proprietaryName: the proprietary name to look for
     :return: drugs that are the same class
     """
-    results = set()
-    excluded_front = []
-
     rx = RxClass()
 
     # There should only be one
     fta_list = FTA.find_by_name(name)
+
+    excluded_front = set()
+    drug_list = set()
+
     for fta in fta_list:
-        try:
-            excluded = []
-            if not fta.RELATED_DRUGS is None:
-                if fta.EXCLUDED_DRUGS_FRONT:
-                    excluded = [ f.trim() for f in fta.EXCLUDED_DRUGS_FRONT.lower().split("|")]
 
-                return fta.RELATED_DRUGS, excluded
-        except:
-            pass
+        # Skip the whole back end if it was already done
+        if not fta.RELATED_DRUGS is None:
+            drug_list.update([f for f in fta.RELATED_DRUGS])
+            if fta.EXCLUDED_DRUGS_FRONT:
+                excluded_front.update([s.strip() for s in fta.EXCLUDED_DRUGS_BACK.lower().split("|") if s.strip()])
 
-
-        if fta.EXCLUDED_DRUGS_FRONT:
-            excluded_front = [s.strip() for s in fta.EXCLUDED_DRUGS_FRONT.lower().split("|") if len(s) > 1]
         else:
-            excluded_front = []
+            if fta.EXCLUDED_DRUGS_FRONT:
+                excluded_front.update([s.strip() for s in fta.EXCLUDED_DRUGS_BACK.lower().split("|") if s.strip()])
 
-        if fta.EXCLUDED_DRUGS_BACK:
-            excluded_back = [s.strip() for s in fta.EXCLUDED_DRUGS_BACK.lower().split("|")]
-        else:
-            excluded_back = []
 
-        data = rx.byDrugName(drugName=fta.PROPRIETARY_NAME,
-                             relaSource=fta.DRUG_RELASOURCE,
-                             relas=fta.DRUG_RELA
-                            )
-        if not data:
-            data = rx.byDrugName(drugName=fta.NONPROPRIETARY_NAME,
+            if fta.EXCLUDED_DRUGS_BACK:
+                excluded_back = [s.strip() for s in fta.EXCLUDED_DRUGS_BACK.lower().split("|") if s.strip()]
+            else:
+                excluded_back = []
+
+            # Look by the proprietary name
+            data = rx.byDrugName(drugName=fta.PROPRIETARY_NAME,
                                  relaSource=fta.DRUG_RELASOURCE,
                                  relas=fta.DRUG_RELA
                                 )
+            # If nothing found look by non-proprietary name
+            if not data:
+                data = rx.byDrugName(drugName=fta.NONPROPRIETARY_NAME,
+                                     relaSource=fta.DRUG_RELASOURCE,
+                                     relas=fta.DRUG_RELA
+                                    )
+            # Still nothing skip it
             if not data:
                 log.error( "No data found for {} or {}".format( fta.PROPRIETARY_NAME, fta.NONPROPRIETARY_NAME) )
-                return [], None
-
-        if fta.CLASS_ID:
-            class_ids = [ fta.CLASS_ID ]
-        else:
-            try:
-                class_ids = [ d['rxclassMinConceptItem']['classId'] for d in data['rxclassDrugInfo'] ]
-            except:
-                class_ids = []
-
-        for class_id  in set(class_ids):
-
-            if fta.DRUG_RELASOURCE == 'VA' and fta.DRUG_RELA in ['has_VAClass_extended', 'has_VAClass']:
-                ttys = 'SBD+BPCK+GPCK'
-            else:
-                ttys = 'IN+MIN+PIN+BN'
-
-            members = rx.classMembers(classId=class_id,
-                                      relaSource=fta.DRUG_RELASOURCE,
-                                      rela=fta.DRUG_RELA,
-                                      ttys=ttys
-                                      )
-
-            drug_members = walk( members,'drugMemberGroup' )
-            if not drug_members:
-                log.error( log_msg(f"No members of class {class_id}") )
                 continue
 
-            for dm in drug_members['drugMember']:
+            if fta.CLASS_ID:
+                class_ids = [ fta.CLASS_ID ]
+            else:
+                try:
+                    class_ids = [ d['rxclassMinConceptItem']['classId'] for d in data['rxclassDrugInfo'] ]
+                except KeyError:
+                    class_ids = []
+
+            for class_id  in set(class_ids):
+
+                if fta.DRUG_RELASOURCE == 'VA' and fta.DRUG_RELA in ['has_VAClass_extended', 'has_VAClass']:
+                    ttys = 'SBD+BPCK+GPCK'
+                else:
+                    ttys = 'IN+MIN+PIN+BN'
+
+                members = rx.classMembers(classId=class_id,
+                                          relaSource=fta.DRUG_RELASOURCE,
+                                          rela=fta.DRUG_RELA,
+                                          ttys=ttys
+                                         )
+
+                drug_members = walk( members,'drugMemberGroup' )
+                if not drug_members:
+                    log.error( log_msg(f"No members of class {class_id}") )
+                    continue
+
+                for dm in drug_members['drugMember']:
                     look_for = dm['minConcept']['name']
                     if ttys == 'SBD+BPCK+GPCK':
                         try:
@@ -168,9 +168,9 @@ def get_related_drugs(name):
 
                         if not fta_member.PROPRIETARY_NAME in excluded_back and \
                            not fta_member.NONPROPRIETARY_NAME in excluded_back:
-                            results.update([fta_member.id])
+                            drug_list.update([fta_member.id])
 
-    return results, excluded_front
+    return drug_list, excluded_front
 
 
 if __name__ == "__main__":

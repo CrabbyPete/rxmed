@@ -5,7 +5,7 @@ from functools  import lru_cache
 from log              import log, log_msg
 from tools            import get_related_drugs, get_plan
 from models.fta       import FTA, NDC
-from models.medicare  import Basic_Drugs, Beneficiary_Costs, NDC_BD
+from models.medicare  import Beneficiary_Costs, NDC_BD
 
 
 @lru_cache(8192)
@@ -37,6 +37,20 @@ def beneficiary_costs(drug, plan):
     return bd, bc
 
 
+def front_end_excluded( ndc, excluded:list)->bool:
+    """
+    Check if this record should be excluded
+    :param ndc:
+    :param excluded: list: names to exclude
+    :return:
+    """
+    drug = ndc.PROPRIETARY_NAME + ' '+ ndc.NONPROPRIETARY_NAME
+    for ex in excluded:
+        if len(ex) and ex in drug.lower():
+            return True
+    return False
+
+
 def get_medicare_plan(drug_name, plan_name, zipcode=None):
     """
     Get alternative drugs for medicare for a plane and drug
@@ -48,23 +62,31 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
 
     # Get all related drugs
     results = []
-    drugs, exclude = get_related_drugs(drug_name)
+    drugs, excluded = get_related_drugs(drug_name)
 
     # Get all the NDC numbers for each FTA
     ndc_list = set()
-    for drg in drugs:
-        fta = FTA.get(drg)
+    excluded = set()
+    for fta_id in drugs:
+        fta = FTA.get(fta_id)
         if fta.NDC_IDS:
             ndc_list.update(fta.NDC_IDS)
+            excluded.update([x.strip().lower() for x in fta.EXCLUDED_DRUGS_FRONT.split('|') if x.strip()])
 
+        """
         # If you don't have make sure and check again
         else:
             ndcs = [ndc.id for ndc in NDC.find_by_name(fta.PROPRIETARY_NAME, fta.NONPROPRIETARY_NAME) ]
             fta.NDC_IDS = ndcs
             fta.save()
             ndc_list.update(ndcs)
-
+        """
+    prior_authorize = False
     for ndc_id in ndc_list:
+        ndc = NDC.get(ndc_id)
+        if front_end_excluded( ndc, excluded):
+            continue
+
         bd, bc = beneficiary_costs(ndc_id, plan)
         if not bd:
             """
@@ -76,6 +98,9 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
             continue
         else:
             if bd.PRIOR_AUTHORIZATION_YN:
+                if drug_name in ndc.PROPRIETARY_NAME.lower() or \
+                        drug_name in ndc.NONPROPRIETARY_NAME:
+                    prior_authorize = True
                 pa = 'Yes'
             else:
                 pa = 'No'
@@ -102,7 +127,6 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
                     copay_d = "${:.2f}".format(c.COST_AMT_PREF)
                     cover   = "${:.2f}".format(c.COST_AMT_NONPREF)
 
-        ndc = NDC.get(ndc_id)
         result = {'Brand': f"{ndc.PROPRIETARY_NAME} {ndc.DOSE_STRENGTH} {ndc.DOSE_UNIT}",
                   'Generic': ndc.NONPROPRIETARY_NAME,
                   'Tier': tier,
@@ -117,13 +141,15 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
     if results:
         results = pd.DataFrame(results).drop_duplicates().to_dict('records')
 
-    return results
+    return {'data':results, 'pa': prior_authorize}
+
 
 if __name__ == "__main__":
     from settings      import DATABASE
     from models.base   import Database
 
     with Database(DATABASE) as db:
+        """
         result = get_medicare_plan( "Victoza", "Anthem MediBlue Essential (HMO)", '43202')
         print(result)
         result = get_medicare_plan('Levemir','SilverScript Plus (PDP)','07040')
@@ -132,6 +158,7 @@ if __name__ == "__main__":
         print(result)
         result = get_medicare_plan( "Novolog","WellCare Classic (PDP)",'43219')
         print(result)
+        """
         result = get_medicare_plan("Pulmicort", 'SilverScript Plus (PDP)', '07481')
         print(result)
         print( beneficiary_costs.cache_info() )
