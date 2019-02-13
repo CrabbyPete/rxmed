@@ -73,14 +73,6 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
             ndc_list.update(fta.NDC_IDS)
             excluded.update([x.strip().lower() for x in fta.EXCLUDED_DRUGS_FRONT.split('|') if x.strip()])
 
-        """
-        # If you don't have make sure and check again
-        else:
-            ndcs = [ndc.id for ndc in NDC.find_by_name(fta.PROPRIETARY_NAME, fta.NONPROPRIETARY_NAME) ]
-            fta.NDC_IDS = ndcs
-            fta.save()
-            ndc_list.update(ndcs)
-        """
     prior_authorize = False
     for ndc_id in ndc_list:
         ndc = NDC.get(ndc_id)
@@ -99,7 +91,7 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
         else:
             if bd.PRIOR_AUTHORIZATION_YN:
                 if drug_name in ndc.PROPRIETARY_NAME.lower() or \
-                        drug_name in ndc.NONPROPRIETARY_NAME:
+                        drug_name in ndc.NONPROPRIETARY_NAME.lower():
                     prior_authorize = True
                 pa = 'Yes'
             else:

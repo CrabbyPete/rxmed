@@ -68,7 +68,7 @@ def get_plan( plan_name, zipcode ):
 REGEX = '\[(.*?)\]'
 
 @lru_cache( 4096 )
-def get_related_drugs(name):
+def get_related_drugs(name, force = False ):
     """
     Step one is search from the FTA DB and get from the xxx APIs for name
     :param proprietaryName: the proprietary name to look for
@@ -85,14 +85,15 @@ def get_related_drugs(name):
     for fta in fta_list:
 
         # Skip the whole back end if it was already done
-        if not fta.RELATED_DRUGS is None:
-            drug_list.update([f for f in fta.RELATED_DRUGS])
+        if not fta.RELATED_DRUGS is None and force == False:
+            drug_list.update([f for f in fta.RELATED_DRUGS] )
             if fta.EXCLUDED_DRUGS_FRONT:
                 excluded_front.update([s.strip() for s in fta.EXCLUDED_DRUGS_BACK.lower().split("|") if s.strip()])
 
+        # Find the drug and related drugs using the API
         else:
             if fta.EXCLUDED_DRUGS_FRONT:
-                excluded_front.update([s.strip() for s in fta.EXCLUDED_DRUGS_BACK.lower().split("|") if s.strip()])
+                excluded_front.update([s.strip() for s in fta.EXCLUDED_DRUGS_FRONT.lower().split("|") if s.strip()])
 
 
             if fta.EXCLUDED_DRUGS_BACK:
@@ -162,12 +163,14 @@ def get_related_drugs(name):
                         continue
 
                     for fta_member in fta_members:
-                        #(f"{fta_member.id} = {fta_member.PROPRIETARY_NAME}")
                         if not fta_member.ACTIVE:
                             continue
 
-                        if not fta_member.PROPRIETARY_NAME in excluded_back and \
-                           not fta_member.NONPROPRIETARY_NAME in excluded_back:
+                        #print(f"{fta_member.id} = {fta_member.PROPRIETARY_NAME}")
+                        for xb in excluded_back:
+                            if xb in fta_member.PROPRIETARY_NAME  or  xb in fta_member.NONPROPRIETARY_NAME:
+                                break
+                        else:
                             drug_list.update([fta_member.id])
 
     return drug_list, excluded_front
@@ -178,7 +181,11 @@ if __name__ == "__main__":
     from models.base   import Database
 
     with Database(DATABASE) as db:
-        pass
+        results = get_related_drugs('pulmicort', force=True)
+        for result in results[0]:
+            fta = FTA.get(result)
+            print(f"{fta.id},{fta.PROPRIETARY_NAME},{fta.NONPROPRIETARY_NAME}")
+
 
 
 
