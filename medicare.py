@@ -93,8 +93,8 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
                 pa = 'Yes'
             else:
                 pa = 'No'
-                if drug_name in ndc.PROPRIETARY_NAME.lower() or \
-                   drug_name in ndc.NONPROPRIETARY_NAME.lower():
+                if drug_name.lower() in ndc.PROPRIETARY_NAME.lower() or \
+                   drug_name.lower() in ndc.NONPROPRIETARY_NAME.lower():
                     prior_authorize = False
 
             if bd.STEP_THERAPY_YN:
@@ -150,9 +150,11 @@ if __name__ == "__main__":
         print(result)
         result = get_medicare_plan( "Novolog","WellCare Classic (PDP)",'43219')
         print(result)
+        """
+
         result = get_medicare_plan("Pulmicort", 'SilverScript Plus (PDP)', '07481')
         print(result)
-        """
+
         result = get_medicare_plan("Biktary", 'SilverScript Plus (PDP)', '07481')
         print(result)
         print( beneficiary_costs.cache_info() )
