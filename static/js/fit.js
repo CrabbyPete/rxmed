@@ -171,7 +171,7 @@
 						    cls = '<td class="table-success">';
 						  else
 						    cls = '<td class="table-danger">';
-						 
+
 					  var tr =
 						  (
 						  '<tr>' +
