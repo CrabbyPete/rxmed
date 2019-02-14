@@ -171,8 +171,7 @@
 						    cls = '<td class="table-success">';
 						  else
 						    cls = '<td class="table-danger">';
-						  	drugHasPA = true
-
+						 
 					  var tr =
 						  (
 						  '<tr>' +
