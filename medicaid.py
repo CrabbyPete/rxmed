@@ -183,7 +183,7 @@ def uhc_community( drug_name ):
 
             look_at = record.Brand if record.Brand else ''
             if isinstance(record.Generic, str):
-                look_at += record.Generic
+                look_at += ' '+record.Generic
             if front_end_excluded(look_at, excluded):
                 continue
 
@@ -389,6 +389,9 @@ if __name__ == "__main__":
     with Database(DATABASE) as db:
 
         # Medicaid
+        result = get_medicaid_plan("Symbicort", "UHC Community Health Plan")
+        print(result)
+
         result = get_medicaid_plan("Trulicity", "OH State Medicaid")
         print(result)
         result = get_medicaid_plan("Admelog", "Caresource" )

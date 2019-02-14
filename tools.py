@@ -88,7 +88,7 @@ def get_related_drugs(name, force = False ):
         if not fta.RELATED_DRUGS is None and force == False:
             drug_list.update([f for f in fta.RELATED_DRUGS] )
             if fta.EXCLUDED_DRUGS_FRONT:
-                excluded_front.update([s.strip() for s in fta.EXCLUDED_DRUGS_BACK.lower().split("|") if s.strip()])
+                excluded_front.update([s.strip() for s in fta.EXCLUDED_DRUGS_FRONT.lower().split("|") if s.strip()])
 
         # Find the drug and related drugs using the API
         else:
