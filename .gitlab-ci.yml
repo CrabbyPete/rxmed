@@ -1,0 +1,11 @@
+before_script:
+  - python --version
+  - pip install virtualenv
+
+stages:
+  - test
+  
+ test:
+  stage: test
+  script: python -m pytest
+ 
