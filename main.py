@@ -1,16 +1,36 @@
-
+import os
 import tools
 
-from flask       import Flask, request, render_template, jsonify, url_for
+from flask              import Flask, request, render_template, jsonify, abort
+from flask_admin        import Admin
 
-from log         import log, rq_log
-from forms       import MedicaidForm
-from models.fta  import FTA
-from models.ndc  import Plans, NDC
+from log                import log, rq_log
 
+from models             import Plans, NDC, FTA
+from models.base        import Database
+from models.admin       import *
+
+from medicaid           import get_medicaid_plan
+from medicare           import get_medicare_plan
+
+from settings           import DATABASE
+
+from user               import init_user
 
 application = Flask(__name__, static_url_path='/static')
-#application.add_url_rule('/favicon.ico', redirect_to=url_for('static', filename='favicon.ico'))
+application.config['SECRET_KEY'] = os.urandom(12)
+application.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
+
+db = Database( DATABASE )
+db.open()
+
+# Build the admin pages
+admin = Admin(application, name='RxMedAccess', template_mode='bootstrap3')
+build_admin( admin, db.session )
+
+# Initialize all users
+init_user( application )
+
 
 @application.errorhandler(500)
 def internal_error(error):
@@ -20,6 +40,10 @@ def internal_error(error):
 
 @application.route('/')
 def home():
+    """
+    Render the home page
+    :return:
+    """
     return render_template('home.html')
 
 
@@ -29,15 +53,8 @@ def fit():
     Get medicaid results
     :return:
     """
-    form = MedicaidForm(request.form)
-    if request.method == 'POST' and form.validate():
-        alternatives, exclude = tools.get_from_medicaid(request.args['drug_name'],
-                                                        request.args['plan_name']
-                                                        )
-
     context = {}
     return render_template( 'fit.html', **context )
-
 
 
 # Ajax calls
@@ -95,7 +112,7 @@ def related_drugs():
 @application.route('/formulary_id')
 def formulary_id():
     """
-
+    API to get formulary id
     localhost:5000/formulary_id?zipcode=43081&plan_name=CareSource Advantage (HMO)
     Get the formulary_id for a plan in a zipcode
     :return:
@@ -118,11 +135,11 @@ def ndc_drugs():
     results = set()
     if 'qry' in request.args:
         look_for = request.args['qry']
-        drug_list = NDC.find_by_name( look_for )
+        drug_list = NDC.session.query(NDC).filter(NDC.PROPRIETARY_NAME.ilike(f'{look_for.lower()}%'))
         for d in drug_list:
-            s = d['PROPRIETARY_NAME'] 
-            if d['DOSE_STRENGTH'] and d['DOSE_UNIT']:
-                s += f" {d['DOSE_STRENGTH']} {d['DOSE_UNIT']}"
+            s = d.PROPRIETARY_NAME
+            if d.DOSE_STRENGTH and d.DOSE_UNIT:
+                s += f" {d.DOSE_STRENGTH} {d.DOSE_UNIT}"
             results.update([s])
     
     return jsonify(list(results))
@@ -131,6 +148,7 @@ def ndc_drugs():
 @application.route('/drug_names', methods=['GET'])
 def drug_names():
     """
+    Type ahead api for drugs
     Retrieve a list of drugs on spelling
     :return:
     """
@@ -138,12 +156,12 @@ def drug_names():
     if 'qry' in request.args and len(request.args['qry']) >= 3:
         look_for = f"{request.args['qry'].lower()}%"
         drug_list = FTA.find_by_name(look_for, False )
-        results = { d.PROPRIETARY_NAME for d in drug_list }
+        results = set([d.PROPRIETARY_NAME.capitalize() for d in drug_list ])
 
         drug_list = FTA.find_nonproprietary( look_for )
-        results.update( [ d.NONPROPRIETARY_NAME for d in drug_list ])
+        results.update([d.NONPROPRIETARY_NAME.capitalize() for d in drug_list])
 
-    results = sorted( list(results) )
+    results = sorted(list(results))
     return jsonify(results)
 
 
@@ -156,7 +174,7 @@ def medicaid_options():
     rq = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
     #request.headers.get('X-Forwarded-For', request.remote_addr)
 
-    results = []
+    data = []
     if 'drug_name' in request.args and 'plan_name' in request.args:
 
         drug_name = request.args['drug_name']
@@ -164,55 +182,12 @@ def medicaid_options():
 
         rq_log.info(f"{rq},{drug_name},{plan_name},medicaid")
 
-        alternatives, exclude = tools.get_from_medicaid(request.args['drug_name'], request.args['plan_name'])
+        results = get_medicaid_plan( drug_name, plan_name )
 
-        for alternative in alternatives:
+        reply = jsonify( results )
+        return reply
 
-            if plan_name.startswith("Caresource"): #Caresourse: Drug_Name,Drug_Tier,Formulary_Restrictions
-                look_in = alternative['Drug_Name']
-
-            elif plan_name.startswith("Paramount"):# Paramount: Formulary_restriction, Generic_name, Brand_name
-                look_in = alternative['Brand_name']+" "+alternative['Brand_name']
-
-            elif plan_name.startswith("Molina"): # Molina:Generic_name,Brand_name,Formulary_restriction
-                look_in = alternative['Brand_name']+" "+alternative['Generic_name']
-
-            elif plan_name.startswith("UHC"):# UHC: Generic,Brand,Tier,Formulary_Restriction
-                look_in = alternative['Brand']+" "+alternative['Generic']
-
-            elif plan_name.startswith("Buckeye"):# Buckeye: Drug_Name,Preferred_Agent,Fomulary_restriction
-                if alternative['Preferred_Agent'] == "***":
-                    alternative['Preferred_Agent'] = "Yes"
-                else:
-                    alternative['Preferred_Agent'] = "No"
-                    
-                look_in = alternative['Drug_Name']
-
-            elif plan_name.startswith("OH State"):
-                look_in = alternative['Product_Description']
-                pa = alternative.pop('Prior_Authorization_Required')
-                alternative['fo'] = 'PA' if 'Y' in pa else "None"
-            
-            fr = look_in.lower()
-            for ex in exclude:
-                if ex in fr:
-                    break
-            else:
-                # Reformat the headers
-                if 'id' in alternative:
-                    alternative.pop('id')
-                    
-                result = {}
-                for k,v in alternative.items():
-                    if k.lower().startswith('fo'):
-                        k = 'Formulary Restrictions'
-                    else:
-                        k = " ".join( [ k.capitalize() for k in k.split('_') ] )
-                    result[k] = v
-                    
-                results.append( result )
-
-    return jsonify(results)
+    abort(404)
 
 
 @application.route('/medicare_options', methods=['GET'])
@@ -231,11 +206,13 @@ def medicare_options():
         zipcode = request.args['zipcode']
 
         rq_log.info(f"{rq},{drug_name},{plan_name},'medicare")
+        results = get_medicare_plan(drug_name, plan_name, zipcode )
 
-        results = tools.get_from_medicare(drug_name, plan_name, zipcode )
+        return jsonify( results )
 
-    return jsonify( results )
+    abort(404)
 
 
 if __name__ == "__main__":
     application.run(host='0.0.0.0', port=5000, debug=False)
+

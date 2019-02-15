@@ -7,10 +7,12 @@
 <title>RXMedAccess, LLC</title>
 <!-- Bootstrap core CSS -->
 <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
-<!-- Custom styles for this template -->
+<!-- CSS -->
+<!--<link href="stylesheet.css" rel="stylesheet">-->
 <link href="{{ url_for('static',filename='css/stylesheet.css') }}" rel="stylesheet">
 </head>
 <body>
+	
 <!-- Navigation bar -->
 <nav class="navbar navbar-expand-md navbar-light bg-light"> <a class="navbar-brand" href="/"><img src="{{url_for('static',filename='img/logo transparent(1000x682).png') }}" width="90vw" alt="RXMedAccess, LLC"></a>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="navbar-toggler-icon"></span> </button>
@@ -22,16 +24,18 @@
     </ul>
   </div>
 </nav>
+	
 <!-- Header -->
-<div class="jumbotron-fluid p-5" id="home-header">
-  <div id="home-header-text">
-    <h1 id="home-header-main">Spend <font color="#f88428">less</font> time filling paperwork, and <font color="#f88428">more</font> time seeing patients.</h1>
-    <hr class="my-3">
-    <h2 id="home-header-sub">Physicians spend hours weekly just filling prior authorization requests.</h2>
-    <a href="https://youtu.be/WlitmHHpXhw" class="btn btn-info my-2 mx-2" role="button"><span id="button-text">Learn More</span></a>
-    <h2 id="home-header-tagline">We can help ease the burden.</h2>
-  </div>
+<div class="jumbotron-fluid" id="home-header">
+    <div class="col-md-8 p-5" id="home-header-text">
+      <h1 class="display-4" id="home-header-main">Spend <font color="#f88428">less</font> time filling paperwork, and <font color="#f88428">more</font> time seeing patients.</h1>
+      <h2 id="home-header-sub">Physicians spend hours weekly just filling prior authorization requests.</h2>
+      <a href="https://youtu.be/WlitmHHpXhw" class="btn btn-info my-3" role="button"><span id="button-text">Learn More</span></a>
+      <h2 id="home-header-tagline">We can help ease the burden.</h2>
+    </div>
+    <div class="col-md-4"></div>
 </div>
+	
 <!-- Main body -->
 <main class="container-fluid" role="main">
   <div class="row p-5">
@@ -63,12 +67,12 @@
     </div>
     <div class="container col-6" id="provider-container">
       <div class="row justify-content-center"><img src="{{url_for('static',filename='img/physician (150x150).png')}}" alt="Providers" class="img" id="provider" href="{{url_for('fit')}}">&nbsp;</div>
-      <div class="row justify-content-center"> <a href="{{url_for('fit')}}"id="providers-img-link">Providers</a> </div>
+      <div class="row justify-content-center"> <a href="{{url_for('fit')}}"id="providers-img-link">Providers</a> </div> 
     </div>
   </div>
 </main>
 <!-- Footer -->
-<div class="card-footer">© 2017 - 2019 RxMedAccess, LLC</div>
+<footer class="footer card-footer mt-5">© 2017 - 2019 RxMedAccess, LLC</footer>
 <!-- /.container --> 
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script> 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script> 

@@ -1,7 +1,8 @@
   $(function () {
 	  /***** Initialization, variables, and helper functions *****/
+
 	  $('main').hide();
-	  $('#loading').hide();
+	  $('#loading-img').hide();
 	  $('#table-header').hide();
 	  $('#table-medicare').hide();
 	  $('#table-medicaid').hide();
@@ -13,6 +14,8 @@
 	  var zipcode = '';
 	  var plan = '';
 	  var drug = '';
+	  var medicaid_table = $('#table-medicaid').DataTable({paging:false, searching:false, info:false});
+	  var medicare_table = $('#table-medicare').DataTable({paging:false, searching:false, info:false});
 	  var drugHasPA = true;
 
 	  $.fn.toggleButtonOn = function()
@@ -37,22 +40,6 @@
 					  url: "/plans",
 					  dataType: "json",
 					  data: {qry: request.term, zipcode: zipcode},
-					  success: function( data )
-					  {
-						  response( data )
-					  }
-				  });
-		  }
-	  });
-      
-      $( "#input-ndc" ).autocomplete({
-		  source: function( request, response )
-		  {
-			  $.ajax(
-				  {
-					  url: "/ndc_drugs",
-					  dataType: "json",
-					  data: {qry: request.term },
 					  success: function( data )
 					  {
 						  response( data )
@@ -161,49 +148,62 @@
 		  $.ajax
 		  ({
 			  url: "/medicare_options",
-			  async: false,
+			  async: true,
 			  dataType: "json",
 			  data: {zipcode: zipcode, drug_name: drug, plan_name: plan},
 			  beforeSend: function() {
-				  $('#loading').show();
-				  $('#loading')[0].scrollIntoView();
+				  $('#loading-img').show();
 			  },
 			  success: function( resp )
 			  {
-				  $('#loading').hide();
-				  
+				  $('#loading-img').hide();
+				  medicare_table.destroy();
+
+				  if (resp['pa'] == true)
+				    drugHasPA = true;
+				  else
+				    drugHasPA = false;
+
 				  $("#medicarebody").empty();
-				  for( d=0; d < resp.length; d++)
+				  for( d=0; d < resp['data'].length; d++)
 				  {
-					  if( resp[d]['PA'].search('Yes') )
+					  if( resp['data'][d]['PA'].search('Yes') )
 						    cls = '<td class="table-success">';
 						  else
 						    cls = '<td class="table-danger">';
-						  	drugHasPA = true
-					  
-					  
+
 					  var tr =
 						  (
 						  '<tr>' +
-						  cls+resp[d]['Brand']+'</td>' +
-						  cls+resp[d]['Generic']+'</td>' +
-						  cls+resp[d]['Tier']+'</td>' +
-						  cls+resp[d]['ST']+'</td>' +
-						  cls+resp[d]['QL']+'</td>' +
-						  cls+resp[d]['PA']+'</td>' +
-						  cls+resp[d]['CopayP']+'</td>' +
-						  cls+resp[d]['CopayD']+'</td>' +
+						  cls+resp['data'][d]['Brand']+'</td>' +
+						  cls+resp['data'][d]['Generic']+'</td>' +
+						  cls+resp['data'][d]['Tier']+'</td>' +
+						  cls+resp['data'][d]['ST']+'</td>' +
+						  cls+resp['data'][d]['QL']+'</td>' +
+						  cls+resp['data'][d]['PA']+'</td>' +
+						  cls+resp['data'][d]['CopayD']+'</td>' +
+						  cls+resp['data'][d]['CTNP']+'</td>' +
 						  '</tr>'
 						  );
 					  $("#medicarebody").append(tr)
 				  }
+
+				  if (drugHasPA)
+				  {
+				    $('#infobox-pa-true').show();
+				    $('#infobox-pa-false').hide();
+				  }
+				  else
+				  {
+				    $('#infobox-pa-false').show();
+				    $('#infobox-pa-true').hide();
+                  }
+				  $('#color-codes').show();
+
+
 				  $('#table-header').show();
 				  $('#table-medicare').show();
-			  },
-			  error:function(resp)
-			  {
-				  console.log(resp);
-				  $('#loading').hide();
+				  medicare_table = $('#table-medicare').DataTable({paging:false, searching:false, info:false});
 			  }
 		  });
 	  }
@@ -213,56 +213,76 @@
 		  $.ajax
 		  ({
 			  url: "/medicaid_options",
-			  async: false,
+			  async: true,
 			  dataType: "json",
 			  data: {drug_name: drug, plan_name: plan},
 			  beforeSend: function() {
-				  $('#loading').show();
-				  $('#loading')[0].scrollIntoView();
+				  $('#loading-img').show();
+				  $('#loading-img')[0].scrollIntoView();
 			  },
 			  success: function( resp )
 			  {
-			  	  $('#loading').hide();
-			  
+			  	  $('#loading-img').hide();
+			  	  medicaid_table.destroy();
+
 				  $('#medicaidhead').empty();
-				  var headings = Object.keys(resp[0]);
+				  $('#medicaidbody').empty();
+
+				  var heading = resp['heading'];
 				  var header = "<tr>";
-				  
-				  for( h=0; h<headings.length; h++)
+				  for( h=0; h < heading.length; h++)
 				  {
-					  header += '<th scope="col">'+headings[h]+'</th>';
+					  header += '<th scope="col">'+heading[h]+'</th>';
 				  }
+
 				  header += '</tr>';
 				  $('#medicaidhead').append(header);
-				  
-				  $('#medicaidbody').empty();
-				  drugHasPA = false
-				  
-				  for( d=0; d < resp.length; d++)
-				  {
-					  if( resp[d]['Formulary Restrictions'].search('PA') )
-					    cls = '<td class="table-success">';
-					  else
-					    cls = '<td class="table-danger">';
-					  	drugHasPA = true
 
-					  var tr = '<tr id="medicaid-success">' 
-					  for ( h=0; h<headings.length; h++)
-					  {
-						  tr += cls + resp[d][headings[h]]+ '</td>' 
-					  }
-					  $('#medicaidbody').append(tr);
+				  if (resp['pa'] == true)
+				    drugHasPA = true;
+				  else
+				    drugHasPA = false;
+
+                  var data = resp['data']
+                  var cls;
+                  var tr;
+				  for(var d=0; d < data.length; d++)
+				  {
+				    if( data[d]['Formulary Restrictions'].includes('PA') )
+				    {
+					    cls = '<td class="table-danger">';
+					    tr  = '<tr class="table-danger">';
+					}
+					else
+					{
+					    cls = '<td class="table-success">';
+					    tr  = '<tr class="table-success">';
+                    }
+
+					for ( h=0; h<heading.length; h++)
+					{
+				        tr += cls + data[d][heading[h]]+ '</td>'
+					}
+                    tr += '</tr>'
+					$('#medicaidbody').append(tr);
 				  }
 
 				  $('#table-medicaid').show();
 				  $('#table-header').show();
 
 				  if (drugHasPA)
-				    $('#infobox-pa-false').show();
-				  else
+				  {
 				    $('#infobox-pa-true').show();
-
+				    $('#infobox-pa-false').hide();
+				  }
+				  else
+				  {
+				    $('#infobox-pa-false').show();
+				    $('#infobox-pa-true').hide();
+                  }
 				  $('#color-codes').show();
+
+				  medicaid_table = $('#table-medicaid').DataTable({paging:false, searching:false, info:false});
 			  }
 		  });
 	  }
@@ -283,47 +303,14 @@
 				  generateMedicaidResults();
 			  }
 			  $('#table-header').show();
+			  $('#display_results').show()
 		  }
 	  })
 
-	  /***** Clear buttons *****/
-	  $.fn.clearAllInput = function ()
-	  {
-		  $('#table-header').hide(),
-		  $('#table-medicare').hide(),
-		  $('#table-medicaid').hide(),
-		  $('#input-zipcode').val(''),
-		  $('#input-plan-medicare').val(''),
-		  $('#input-plan-medicaid').val(''),
-		  $('#input-med').val(''),
-		  zipcode = '',
-		  plan = '',
-		  drug = '',
-		  $('#selected-zipcode').html(''),
-		  $('#selected-plan').html(''),
-		  $('#selected-med').html('')
-		  $('#infobox-pa-false').hide(),
-		  $('#infobox-pa-true').hide(),
-	      $('#color-codes').hide()
-	  }
 	  $('#button-clear-med').click(function ()
       {
-		  $('#input-med').val(''),
+		  $('#input-med').val('')
 		  drug = '',
-		  $('#selected-med').html('')
-	  })
-	  $('#button-clear-all').click(function ()
-      {
-		  $('main').hide(),
-		  $('html').clearAllInput();
-		  if (medicareSelected)
-		  {
-			  $('#button-medicare').toggleButtonOff(),
-			  medicareSelected = false
-		  } else
-		  {
-			  $('#button-medicaid').toggleButtonOff()
-			  medicaidSelected = false
-		  }
+		  $('#display_results').hide();
 	  })
   });

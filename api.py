@@ -9,13 +9,14 @@ from log import log
 
 BASE_URL     = "https://rxnav.nlm.nih.gov/REST"
 HISTORIC_URL = "https://rxnav.nlm.nih.gov/REST/rxcuihistoryconcept?rxcui={}"
-OPENFDA_URL  = 'https://api.fda.gov/drug/event.json?search='
+OPENFDA_URL  = 'https://api.fda.gov/drug/ndc.json?search={}'
+#https://api.fda.gov/drug/ndc.json?search=openfda.rxcui:"1926069"
 OHSTATE      = 'https://druglookup.ohgov.changehealthcare.com/DrugSearch/application/search?searchBy=name&name={}'
 
 
-def OhioState( name ):
+def OhioStateAPI( name ):
     url = OHSTATE.format(name)
-    r = requests.get(url)
+    r = requests.get(url, verify=False)
 
     if r.ok:
         html=r.text
@@ -93,10 +94,6 @@ class RxNorm():
 
 
 class RxClass():
-    """
-
-    """
-
     def __init__(self):
         self.base_url = BASE_URL + '/rxclass'
         pass
@@ -124,7 +121,7 @@ class RxClass():
             kwargs = "&".join("%s=%s" % (k,v) for k,v in kwargs.items())
 
         data = self.api( url, kwargs )
-        if 'rxclassDrugInfoList' in data:
+        if data and 'rxclassDrugInfoList' in data:
             return data['rxclassDrugInfoList']
         else:
             return None
@@ -144,10 +141,36 @@ class RxClass():
         return data
 
 
+def open_fda( brand_name, generic_name = None ):
+    search = f'brand_name:"{brand_name}"'
+    if generic_name:
+        search += f'+AND+generic_name:"{generic_name}"'
+    url = OPENFDA_URL.format(search)
+    r = requests.get(url)
+
+    if r.ok:
+        data = json.loads(r.text)
+    else:
+        return r.status_code
+
+    return data['results']
 
 
+def open_fda_rxcui( rxcui ):
+    search=f'openfda.rxcui:"{str(rxcui)}"'
+
+    url = OPENFDA_URL.format(search)
+    r = requests.get(url)
+
+    if r.ok:
+        data = json.loads(r.text)
+    else:
+        return r.status_code,[]
+
+    return r.status_code, data['results']
 
 if __name__ == "__main__":
+
     r = OhioState('ADMEL')
     """
     r = RxClass()
