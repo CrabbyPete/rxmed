@@ -47,6 +47,11 @@ def OhioStateAPI( name ):
 
 
 def get_historic_rxcui( rxcui ):
+    """
+    Get the history of a rxcui
+    :param rxcui:
+    :return:
+    """
     url = HISTORIC_URL.format(rxcui)
     r = requests.get(url)
     if r.ok:
@@ -59,7 +64,6 @@ def get_historic_rxcui( rxcui ):
 
 class RxNorm():
     """
-
     """
     def __init__(self):
         self.base_url = BASE_URL
