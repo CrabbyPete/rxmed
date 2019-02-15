@@ -1,0 +1,6 @@
+image: ubuntu
+
+main:
+    script: 
+        - apt-get update && apt-get install pylint3
+        - pylint3 helloworld.py
