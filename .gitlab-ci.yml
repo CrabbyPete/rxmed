@@ -1,5 +1,6 @@
-image: ubuntu
+stages
+  - test
 
-main:
-  script: 
-    - echo "Hello World"
+test:
+  stage: test
+  script: python -m pytest
