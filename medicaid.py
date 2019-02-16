@@ -60,8 +60,6 @@ def get_drug_list( drug_name ):
     """
     fta_list, excluded = get_related_drugs(drug_name)
     drug_list = [FTA.get(fta).PROPRIETARY_NAME for fta in fta_list]
-    drug_list = [ d.replace(' ','') for d in drug_list]
-
     return set(drug_list), excluded
 
 
@@ -277,7 +275,7 @@ def ohio_state( drug_name ):
         records = OhioState.find_product(drug)
 
         if not records:
-            records = OhioStateAPI(drug)
+            records, not_found = OhioStateAPI(drug)
             save = True
         else:
             save = False
@@ -286,6 +284,13 @@ def ohio_state( drug_name ):
             if save:
                 ohio = OhioState.get_or_create(**record)
                 ohio.save()
+
+                if not_found:
+                    for nf in not_found:
+                        print(nf)
+
+            if hasattr( record, 'active' ) and not record['active']:
+                continue
 
             if front_end_excluded(record['Product_Description'], excluded):
                 continue
@@ -389,10 +394,14 @@ if __name__ == "__main__":
     with Database(DATABASE) as db:
 
         # Medicaid
-        result = get_medicaid_plan("Symbicort", "UHC Community Health Plan")
-        print(result)
-
         result = get_medicaid_plan("Trulicity", "OH State Medicaid")
+        print(result)
+        result = get_medicaid_plan("Admelog", "OH State Medicaid")
+        print(result)
+        result = get_medicaid_plan('Lantus', 'OH State Medicaid')
+        print(result)
+        """
+        result = get_medicaid_plan("Symbicort", "UHC Community Health Plan")
         print(result)
         result = get_medicaid_plan("Admelog", "Caresource" )
         print( result )
@@ -434,5 +443,5 @@ if __name__ == "__main__":
         print(result)
         result = get_medicaid_plan('Tresiba','Caresource')
         print(result)
-        result = get_medicaid_plan('Lantus', 'OH State Medicaid')
-        print(result)
+        
+        """

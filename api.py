@@ -18,6 +18,7 @@ def OhioStateAPI( name ):
     url = OHSTATE.format(name)
     r = requests.get(url, verify=False)
 
+    not_found = set()
     if r.ok:
         html=r.text
     else:
@@ -39,11 +40,12 @@ def OhioStateAPI( name ):
                               )
         except:
             log.error(f"Ohio State scrape error {name}")
+            not_found.update([name])
             continue
         
         rows.append(data)
     
-    return rows
+    return rows, not_found
 
 
 def get_historic_rxcui( rxcui ):

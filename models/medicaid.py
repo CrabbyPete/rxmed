@@ -1,5 +1,6 @@
-from sqlalchemy         import Column, Integer, String, Boolean, DECIMAL, or_
-from sqlalchemy.orm.exc import NoResultFound
+from datetime           import date
+
+from sqlalchemy         import Column, Integer, String, Date, Boolean, DECIMAL, or_
 
 from .base              import Base
 
@@ -138,6 +139,7 @@ class Buckeye(Base): # Drug_Name,Preferred_Agent,Fomulary_Restrictions
     Drug_Name             = Column(String, nullable=False)
     Preferred_Agent       = Column(String, nullable=False)
     Fomulary_Restrictions = Column(String)
+    date                  = Column(Date, default=date.today)
 
     @classmethod
     def find_by_name(cls, name ):
@@ -165,10 +167,12 @@ class OhioState(Base):
     Package                         = Column(String)
     Covered_for_Dual_Eligible       = Column(String)
     Route_of_Administration         = Column(String)
+    active                          = Column(Boolean, default=True)
+    date                            = Column(Date, default=date.today)
 
     @classmethod
     def find_product(cls, name):
         name = f'{name.lower()}%'
         qry = cls.session.query(cls).filter(cls.Product_Description.ilike(name))
         results = qry.all()
-        return [ row2dict(r) for r in results]
+        return [row2dict(r) for r in results]
