@@ -34,7 +34,7 @@ def front_end_excluded( drug, excluded:list)->bool:
     return False
 
 
-def reform_data( data ):
+def reform_data( data, heading ):
     """
     Reformat the data to ensure there is a Formulary Restrictions, and capitalize drugs
     :param data:
@@ -46,7 +46,9 @@ def reform_data( data ):
             k = 'Formulary Restrictions'
         else:
             k = " ".join([k.capitalize() for k in k.split('_')])
-        result[k] = v
+
+        if k in heading:
+            result[k] = v
 
     # Get rid of duplicate dicts
     return result
@@ -59,7 +61,9 @@ def get_drug_list( drug_name ):
     :return: set of drugs and excluded front end
     """
     fta_list, excluded = get_related_drugs(drug_name)
-    drug_list = [FTA.get(fta).PROPRIETARY_NAME for fta in fta_list]
+    drug_list = set([FTA.get(fta).PROPRIETARY_NAME for fta in fta_list])
+    drug_list.update([drug_name])
+
     return set(drug_list), excluded
 
 
@@ -92,7 +96,7 @@ def caresource(drug_name):
                 if 'PA' in record['Formulary_Restrictions']:
                     pa = True
 
-            data.append(reform_data(record))
+            data.append(reform_data(record, heading))
 
     if not included:
         pa = True
@@ -154,7 +158,7 @@ def molina( drug_name ):
                     if 'PA' in record['Formulary_Restrictions']:
                         pa = True
 
-            data.append(reform_data(record))
+            data.append(reform_data(record, heading))
 
     if not included:
         pa = True
@@ -194,7 +198,7 @@ def uhc_community( drug_name ):
                     if 'PA' in record['Formulary_Restrictions']:
                         pa = True
 
-            data.append(reform_data(record))
+            data.append(reform_data(record,heading))
 
     if not included:
         pa = True
@@ -239,7 +243,7 @@ def paramount( drug_name ):
                 if 'PA' in record['Formulary_restriction']:
                     pa = True
 
-            data.append(reform_data(record))
+            data.append(reform_data(record, heading))
 
     if not included:
         pa = True
@@ -275,23 +279,22 @@ def ohio_state( drug_name ):
         records = OhioState.find_product(drug)
 
         if not records:
-            records, not_found = OhioStateAPI(drug)
+            records = OhioStateAPI(drug)
             save = True
         else:
             save = False
 
         for record in records:
             if save:
+                record['drug_name'] = drug
                 ohio = OhioState.get_or_create(**record)
                 ohio.save()
 
-                if not_found:
-                    for nf in not_found:
-                        print(nf)
-
-            if hasattr( record, 'active' ) and not record['active']:
+            # Ignore records not active
+            if not record['active']:
                 continue
 
+            # Exclude the front end
             if front_end_excluded(record['Product_Description'], excluded):
                 continue
 
@@ -307,8 +310,7 @@ def ohio_state( drug_name ):
                 if 'PA' in record['Formulary_Restrictions']:
                     pa = True
 
-            data.append(reform_data(record))
-
+            data.append(reform_data(record, heading))
 
     if not included:
         pa = True
@@ -349,7 +351,7 @@ def buckeye( drug_name ):
                 if 'PA' in record['Fomulary_Restrictions']:
                     pa = True
 
-            data.append(reform_data(record))
+            data.append(reform_data(record, heading))
 
     if not included:
         pa = True
@@ -394,13 +396,15 @@ if __name__ == "__main__":
     with Database(DATABASE) as db:
 
         # Medicaid
+        result = get_medicaid_plan('Qvar', 'OH State Medicaid')
+        print(result)
+        """
         result = get_medicaid_plan("Trulicity", "OH State Medicaid")
         print(result)
         result = get_medicaid_plan("Admelog", "OH State Medicaid")
         print(result)
         result = get_medicaid_plan('Lantus', 'OH State Medicaid')
         print(result)
-        """
         result = get_medicaid_plan("Symbicort", "UHC Community Health Plan")
         print(result)
         result = get_medicaid_plan("Admelog", "Caresource" )
@@ -443,5 +447,4 @@ if __name__ == "__main__":
         print(result)
         result = get_medicaid_plan('Tresiba','Caresource')
         print(result)
-        
         """

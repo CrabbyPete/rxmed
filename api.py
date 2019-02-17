@@ -31,21 +31,21 @@ def OhioStateAPI( name ):
         row = [t.text for t in tr.find_all('td')]
         try:
 
-            data = OrderedDict( [('Product_Description'         ,row[2]),
-                                 ('Route_of_Administration'     ,row[3] ),
-                                 ('Package'                     ,re.sub('\r|\n|\t','',row[4])),
-                                 ('Prior_Authorization_Required',re.sub('\r|\n|\t','',row[5])),
-                                 ('Covered_for_Dual_Eligible'   ,re.sub('\r|\n|\t','',row[6])),
-                                 ('Copay'                       ,re.sub('\r|\n|\t','',row[8]))]
-                              )
+            data = dict( Product_Description          = row[2],
+                         Route_of_Administration      = row[3],
+                         Package                      = re.sub('\r|\n|\t','',row[4]),
+                         Prior_Authorization_Required = re.sub('\r|\n|\t','',row[5]),
+                         Covered_for_Dual_Eligible    = re.sub('\r|\n|\t','',row[6]),
+                         Copay                        = re.sub('\r|\n|\t','',row[8]),
+                         active                       = True
+                        )
         except:
             log.error(f"Ohio State scrape error {name}")
-            not_found.update([name])
-            continue
+            data = dict(Product_Description=name, active = False)
         
         rows.append(data)
     
-    return rows, not_found
+    return rows
 
 
 def get_historic_rxcui( rxcui ):

@@ -78,7 +78,6 @@
 		  $('#container-selected-zipcode').show();
 		  $('#input-plan-medicare').show();
 		  $('#input-plan-medicaid').hide();
-		  $('html').clearAllInput();
 	  });
 
 	  $('#button-medicaid').click(function ()
@@ -92,7 +91,6 @@
 		  $('#container-selected-zipcode').hide();
 		  $('#input-plan-medicare').hide();
 		  $('#input-plan-medicaid').show();
-		  $('html').clearAllInput();
 	  });
 
 	  /***** Go buttons *****/
@@ -148,7 +146,6 @@
 		  $.ajax
 		  ({
 			  url: "/medicare_options",
-			  async: true,
 			  dataType: "json",
 			  data: {zipcode: zipcode, drug_name: drug, plan_name: plan},
 			  beforeSend: function() {
@@ -165,7 +162,7 @@
 				    drugHasPA = false;
 
 				  $("#medicarebody").empty();
-				  for( d=0; d < resp['data'].length; d++)
+				  for( var d=0; d < resp['data'].length; d++)
 				  {
 					  if( resp['data'][d]['PA'].search('Yes') )
 						    cls = '<td class="table-success">';
@@ -213,7 +210,6 @@
 		  $.ajax
 		  ({
 			  url: "/medicaid_options",
-			  async: true,
 			  dataType: "json",
 			  data: {drug_name: drug, plan_name: plan},
 			  beforeSend: function() {
@@ -230,7 +226,7 @@
 
 				  var heading = resp['heading'];
 				  var header = "<tr>";
-				  for( h=0; h < heading.length; h++)
+				  for( var h=0; h < heading.length; h++)
 				  {
 					  header += '<th scope="col">'+heading[h]+'</th>';
 				  }
@@ -259,7 +255,7 @@
 					    tr  = '<tr class="table-success">';
                     }
 
-					for ( h=0; h<heading.length; h++)
+					for ( var h=0; h<heading.length; h++)
 					{
 				        tr += cls + data[d][heading[h]]+ '</td>'
 					}

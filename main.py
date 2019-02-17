@@ -184,8 +184,7 @@ def medicaid_options():
 
         results = get_medicaid_plan( drug_name, plan_name )
 
-        reply = jsonify( results )
-        return reply
+        return jsonify(results)
 
     abort(404)
 
@@ -208,7 +207,7 @@ def medicare_options():
         rq_log.info(f"{rq},{drug_name},{plan_name},'medicare")
         results = get_medicare_plan(drug_name, plan_name, zipcode )
 
-        return jsonify( results )
+        return jsonify(results)
 
     abort(404)
 

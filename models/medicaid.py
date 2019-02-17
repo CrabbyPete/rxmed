@@ -5,7 +5,7 @@ from sqlalchemy         import Column, Integer, String, Date, Boolean, DECIMAL, 
 from .base              import Base
 
 # Just return the results not the whole class
-row2dict = lambda r: {c.name: str(getattr(r, c.name)) for c in r.__table__.columns}
+row2dict = lambda r: {c.name: getattr(r, c.name) for c in r.__table__.columns}
 
 
 class Caresource(Base): # Drug_Name,Drug_Tier,Formulary_Restrictions
@@ -161,6 +161,7 @@ class OhioState(Base):
     __tablename__ = 'ohiostate'
 
     id                              = Column(Integer, primary_key=True)
+    drug_name                       = Column(String)
     Product_Description             = Column(String)
     Prior_Authorization_Required    = Column(String)
     Copay                           = Column(String)
@@ -173,6 +174,6 @@ class OhioState(Base):
     @classmethod
     def find_product(cls, name):
         name = f'{name.lower()}%'
-        qry = cls.session.query(cls).filter(cls.Product_Description.ilike(name))
+        qry = cls.session.query(cls).filter(cls.drug_name.ilike(name))
         results = qry.all()
         return [row2dict(r) for r in results]
