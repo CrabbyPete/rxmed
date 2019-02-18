@@ -66,12 +66,10 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
 
     # Get all the NDC numbers for each FTA
     ndc_list = set()
-    excluded = set()
     for fta_id in drugs:
         fta = FTA.get(fta_id)
         if fta.NDC_IDS:
             ndc_list.update(fta.NDC_IDS)
-            excluded.update([x.strip().lower() for x in fta.EXCLUDED_DRUGS_FRONT.split('|') if x.strip()])
 
     prior_authorize = True
     for ndc_id in ndc_list:
@@ -151,6 +149,8 @@ if __name__ == "__main__":
         result = get_medicare_plan( "Novolog","WellCare Classic (PDP)",'43219')
         print(result)
         """
+        result = get_medicare_plan('pulmicort flexhaler', 'humana preferred rx','07040')
+        print( result )
 
         result = get_medicare_plan("Pulmicort", 'SilverScript Plus (PDP)', '07481')
         print(result)

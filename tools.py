@@ -75,6 +75,7 @@ def get_related_drugs(name, force = False ):
     rx = RxClass()
 
     # There should only be one
+    name = name.split()[0].lower()
     fta_list = FTA.find_by_name(name)
 
     excluded_front = set()
