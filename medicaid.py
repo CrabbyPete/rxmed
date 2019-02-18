@@ -78,7 +78,7 @@ def caresource(drug_name):
     pa = False
     included = False
 
-    drug_name = drug_name.lower()
+    drug_name = drug_name.split()[0].lower()
     drug_list, excluded = get_drug_list(drug_name)
 
     data = []
@@ -117,7 +117,7 @@ def molina( drug_name ):
     pa = False
     included = False
 
-    drug_name = drug_name.lower()
+    drug_name = drug_name.split()[0].lower()
     drug_list, excluded = get_drug_list(drug_name)
 
     data = []
@@ -174,7 +174,7 @@ def uhc_community( drug_name ):
     pa = False
     included = False
 
-    drug_name = drug_name.lower()
+    drug_name = drug_name.split()[0].lower()
     drug_list, excluded = get_drug_list(drug_name)
 
     data = []
@@ -190,8 +190,6 @@ def uhc_community( drug_name ):
                 continue
 
             record = row2dict(record)
-            record.pop('id')
-
             if drug_name in record['Brand'].lower() or \
                drug_name in record['Generic'].lower():
                     included = True
@@ -219,8 +217,7 @@ def paramount( drug_name ):
     pa = False
     included = False
 
-    drug_name = drug_name.lower()
-
+    drug_name = drug_name.split()[0].lower()
     drug_list, excluded = get_drug_list(drug_name)
 
     data = []
@@ -271,7 +268,7 @@ def ohio_state( drug_name ):
     pa = False
     included = False
 
-    drug_name = drug_name.lower()
+    drug_name = drug_name.split()[0].lower()
     drug_list, excluded = get_drug_list(drug_name)
 
     data = []
@@ -327,7 +324,7 @@ def buckeye( drug_name ):
     pa = False
     included = False
 
-    drug_name = drug_name.lower()
+    drug_name = drug_name.split()[0].lower()
     drug_list, excluded = get_drug_list(drug_name)
 
     data = []
@@ -398,7 +395,6 @@ if __name__ == "__main__":
         # Medicaid
         result = get_medicaid_plan('Qvar', 'OH State Medicaid')
         print(result)
-        """
         result = get_medicaid_plan("Trulicity", "OH State Medicaid")
         print(result)
         result = get_medicaid_plan("Admelog", "OH State Medicaid")
@@ -447,4 +443,4 @@ if __name__ == "__main__":
         print(result)
         result = get_medicaid_plan('Tresiba','Caresource')
         print(result)
-        """
+

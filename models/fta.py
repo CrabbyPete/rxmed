@@ -68,6 +68,9 @@ class NDC(Base):
         :param name:
         :return:
         """
+        if ' ' in proprietary:
+            proprietary = proprietary.split()[0]
+
         proprietary = f"{proprietary.lower()}%"
         if nonproprietary is None:
             flter = or_(cls.PROPRIETARY_NAME.ilike(proprietary), cls.NONPROPRIETARY_NAME.ilike(proprietary))

@@ -23,7 +23,7 @@ class Caresource(Base): # Drug_Name,Drug_Tier,Formulary_Restrictions
         :param name:
         :return:
         """
-        name = f"%{name.lower()}%"
+        name = f"{name.split()[0].lower()}%"
         qry = cls.session.query(cls).filter(cls.Drug_Name.ilike(name)).all()
         return qry
 
@@ -47,7 +47,7 @@ class Paramount(Base): # Formulary_restriction,Generic_name,Brand_name
         :param name: drug name
         :return: matches
         """
-        name = f"%{name.lower()}%"
+        name = f"{name.split()[0].lower()}%"
         qry = cls.session.query(cls).filter( or_( cls.Generic_name.ilike(name),
                                                   cls.Brand_name.ilike(name)
                                                 )
@@ -72,7 +72,7 @@ class Molina(Base): # Generic_name,Brand_name,Formulary_Restrictions
         :param name: drug name
         :return: matches
         """
-        name = f"%{name.lower()}%"
+        name = f"{name.split()[0].lower()}%"
         qry = cls.session.query(cls).filter( or_( cls.Generic_name.ilike(name),
                                                   cls.Brand_name.ilike(name)
                                                 )
@@ -96,7 +96,7 @@ class Molina_Healthcare( Base ): # DRUG_NAME,PA_CODE,ALTERNATIVE_DRUG_CRITERIA
 
     @classmethod
     def find_brand(cls, name ):
-        name = f"%{name.lower()}%"
+        name = f"%{name.split()[0].lower()}%"
         qry = cls.session.query(cls).filter( cls.DRUG_NAME.ilike(name) ).all()
 
         return qry
@@ -121,12 +121,13 @@ class UHC(Base): # Generic,Brand,Tier,Formulary_Restrictions
         :param name: drug name
         :return: matches
         """
-        name = f"%{name.lower()}%"
+        name = f"{name.split()[0].lower()}%"
         qry = cls.session.query(cls).filter( or_(cls.Generic.ilike(name),
                                                  cls.Brand.ilike(name)
                                                 )
                                            )
-        return qry.all()
+        results = qry.all()
+        return results
 
 
     def __repr__(self):
@@ -148,7 +149,7 @@ class Buckeye(Base): # Drug_Name,Preferred_Agent,Fomulary_Restrictions
         :param name: drug name
         :return: matches
         """
-        name = f"%{name.lower()}%"
+        name = f"{name.split()[0].lower()}%"
         qry = cls.session.query(cls).filter( cls.Drug_Name.ilike(name)).all()
         return qry
 
@@ -173,7 +174,7 @@ class OhioState(Base):
 
     @classmethod
     def find_product(cls, name):
-        name = f'{name.lower()}%'
+        name = f'{name.split()[0].lower()}%'
         qry = cls.session.query(cls).filter(cls.drug_name.ilike(name))
         results = qry.all()
         return [row2dict(r) for r in results]

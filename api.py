@@ -14,7 +14,8 @@ OPENFDA_URL  = 'https://api.fda.gov/drug/ndc.json?search={}'
 OHSTATE      = 'https://druglookup.ohgov.changehealthcare.com/DrugSearch/application/search?searchBy=name&name={}'
 
 
-def OhioStateAPI( name ):
+def OhioStateAPI( name )->list:
+    name = name.split()[0]
     url = OHSTATE.format(name)
     r = requests.get(url, verify=False)
 
@@ -26,6 +27,9 @@ def OhioStateAPI( name ):
 
     soup = BeautifulSoup(html,features="lxml")
     tbody = soup.tbody
+    if not tbody:
+        return []
+
     rows = []
     for tr in tbody.find_all('tr'):
         row = [t.text for t in tr.find_all('td')]
@@ -176,8 +180,25 @@ def open_fda_rxcui( rxcui ):
     return r.status_code, data['results']
 
 if __name__ == "__main__":
+    from models.base import Database
+    from models.fta import FTA
+    from models.medicaid import OhioState
+    from settings import DATABASE
 
-    r = OhioState('ADMEL')
+
+    with Database( DATABASE) as db:
+        for fta in FTA.session.query(FTA).filter(FTA.ACTIVE == True).order_by(FTA.id):
+            print(f"{fta.id},{fta.PROPRIETARY_NAME}")
+            name = fta.PROPRIETARY_NAME.split()[0]
+            if '/' in name:
+                name = name.split('/')[0]
+
+            data = OhioStateAPI(name)
+            for d in data:
+                ohio = OhioState.get_or_create( **d )
+                ohio.drug_name = name
+                ohio.save()
+
     """
     r = RxClass()
     data = r.byDrugName(drugName='morphine', relaSource='MEDRT',relas='may_treat')

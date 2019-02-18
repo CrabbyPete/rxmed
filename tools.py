@@ -2,8 +2,7 @@ import re
 
 from functools       import lru_cache
 from log             import log, log_msg
-from models          import Zipcode, Plans,NDC, FTA
-from models.medicare import Basic_Drugs,Beneficiary_Costs
+from models          import Zipcode, Plans, FTA
 from api             import RxClass
 
 
@@ -65,9 +64,8 @@ def get_plan( plan_name, zipcode ):
     else:
         return "More than one found"
 
-REGEX = '\[(.*?)\]'
+REGEX = '[\[\(](.*?)[\]\)]'
 
-@lru_cache( 4096 )
 def get_related_drugs(name, force = False ):
     """
     Step one is search from the FTA DB and get from the xxx APIs for name
@@ -118,60 +116,60 @@ def get_related_drugs(name, force = False ):
                 continue
 
             if fta.CLASS_ID:
-                class_ids = [ fta.CLASS_ID ]
+                class_id = fta.CLASS_ID 
             else:
-                try:
-                    class_ids = [ d['rxclassMinConceptItem']['classId'] for d in data['rxclassDrugInfo'] ]
-                except KeyError:
-                    class_ids = []
+                class_id = walk(data,'classId')
+                fta.CLASS_ID = class_id
+                fta.save()
+    
+            if fta.DRUG_RELASOURCE == 'VA' and fta.DRUG_RELA in ['has_VAClass_extended', 'has_VAClass']:
+                ttys = 'SCD+SBD+BPCK+GPCK'
+            else:
+                ttys = 'IN+MIN+PIN+BN'
 
-            for class_id  in set(class_ids):
+            members = rx.classMembers(classId=class_id,
+                                      relaSource=fta.DRUG_RELASOURCE,
+                                      rela=fta.DRUG_RELA,
+                                      ttys=ttys
+                                     )
 
-                if fta.DRUG_RELASOURCE == 'VA' and fta.DRUG_RELA in ['has_VAClass_extended', 'has_VAClass']:
-                    ttys = 'SBD+BPCK+GPCK'
-                else:
-                    ttys = 'IN+MIN+PIN+BN'
+            drug_members = walk( members,'drugMemberGroup' )
+            if not drug_members:
+                log.error( log_msg(f"No members of class {class_id}") )
+                continue
 
-                members = rx.classMembers(classId=class_id,
-                                          relaSource=fta.DRUG_RELASOURCE,
-                                          rela=fta.DRUG_RELA,
-                                          ttys=ttys
-                                         )
+            drug_names = []
+            for dm in drug_members['drugMember']:
+                look_for = dm['minConcept']['name']
+                if ttys == 'SCD+SBD+BPCK+GPCK':
+                    try:
+                        look_for =  re.findall(REGEX, look_for )[0]
+                    except IndexError:
+                        look_for = look_for.split()[0]
 
-                drug_members = walk( members,'drugMemberGroup' )
-                if not drug_members:
-                    log.error( log_msg(f"No members of class {class_id}") )
+                        #log.error( log_msg( f"No brackets in {origin} using {look_for}") )
+                drug_names.append( look_for )
+
+            for drug_name in set(drug_names):
+                drug = drug_name.lower()
+
+                fta_members = fta.find_by_name(drug)
+                if not fta_members:
+                    log.error( log_msg("{} not found in FTA".format(look_for)) )
+                    inactive = FTA(**{'PROPRIETARY_NAME':look_for,"ACTIVE":False})
+                    inactive.save()
                     continue
 
-                for dm in drug_members['drugMember']:
-                    look_for = dm['minConcept']['name']
-                    if ttys == 'SBD+BPCK+GPCK':
-                        try:
-                            look_for =  re.findall(REGEX, look_for )[0]
-                        except IndexError:
-                            log.error( log_msg( f"No brackets in {look_for}") )
-                            continue
-
-                    if look_for.lower() in excluded_back:
+                for fta_member in fta_members:
+                    if not fta_member.ACTIVE:
                         continue
 
-                    fta_members = fta.find_by_name(look_for)
-                    if not fta_members:
-                        log.error( log_msg("{} not found in FTA".format(look_for)) )
-                        inactive = FTA(**{'PROPRIETARY_NAME':look_for,"ACTIVE":False})
-                        inactive.save()
-                        continue
-
-                    for fta_member in fta_members:
-                        if not fta_member.ACTIVE:
-                            continue
-
-                        #print(f"{fta_member.id} = {fta_member.PROPRIETARY_NAME}")
-                        for xb in excluded_back:
-                            if xb in fta_member.PROPRIETARY_NAME  or  xb in fta_member.NONPROPRIETARY_NAME:
-                                break
-                        else:
-                            drug_list.update([fta_member.id])
+                    #print(f"{fta_member.id} = {fta_member.PROPRIETARY_NAME}")
+                    for xb in excluded_back:
+                        if xb in fta_member.PROPRIETARY_NAME or xb in fta_member.NONPROPRIETARY_NAME:
+                            break
+                    else:
+                        drug_list.update([fta_member.id])
 
     return drug_list, excluded_front
 
@@ -181,10 +179,11 @@ if __name__ == "__main__":
     from models.base   import Database
 
     with Database(DATABASE) as db:
-        results = get_related_drugs('pulmicort', force=True)
-        for result in results[0]:
-            fta = FTA.get(result)
-            print(f"{fta.id},{fta.PROPRIETARY_NAME},{fta.NONPROPRIETARY_NAME}")
+        for fta in FTA.get_all():
+            results = get_related_drugs(fta.PROPRIETARY_NAME, force=True)
+            for result in results[0]:
+                fta_related = FTA.get(result)
+                print(f"{fta.PROPRIETARY_NAME},{fta_related.PROPRIETARY_NAME},{fta_related.NONPROPRIETARY_NAME}")
 
 
 

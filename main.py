@@ -101,7 +101,7 @@ def related_drugs():
     results = []
 
     if 'drug_name' in request.args:
-        drugs, _ = tools.get_related_drugs(request.args['drug_name'])
+        drugs, _ = tools.get_related_drugs(request.args['drug_name'], force=True)
 
     for drug in drugs:
         results.append(drug)
