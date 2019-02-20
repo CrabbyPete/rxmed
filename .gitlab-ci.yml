@@ -3,4 +3,6 @@ stages:
 
 test:
   stage: test
-  script: python -m pytest
+  script:
+  - pip install -r requirements.txt
+  - python -m pytest
