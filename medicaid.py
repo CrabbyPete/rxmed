@@ -22,10 +22,9 @@ row2dict = lambda r: {c.name: str(getattr(r, c.name)) for c in r.__table__.colum
 
 
 def front_end_excluded( drug, excluded:list)->bool:
-    """
-    Check if this record should be excluded
-    :param exclude:
-    :param excluded:
+    """ Check if this record should be excluded
+    :param drug: name of drug
+    :param excluded: list: of exclude drugs
     :return:
     """
     for ex in excluded:
@@ -42,11 +41,7 @@ def reform_data( data, heading ):
     """
     result = {}
     for k, v in data.items():
-        if k.lower().startswith('fo'):
-            k = 'Formulary Restrictions'
-        else:
-            k = " ".join([k.capitalize() for k in k.split('_')])
-
+        k = " ".join([k.capitalize() for k in k.split('_')])
         if k in heading:
             result[k] = v
 
@@ -136,8 +131,6 @@ def molina( drug_name ):
                 continue
 
             record = row2dict(record)
-            record.pop('id')
-
             name = record['Generic_name']
             name = name.split(',')[0] if ',' in name else name
             if name.endswith("PA"):
@@ -207,8 +200,7 @@ def uhc_community( drug_name ):
 
 
 def paramount( drug_name ):
-    """
-    Return all results for Paramount
+    """ Return all results for Paramount
     :param drug_name:
     :return: dict:
     """
@@ -232,8 +224,6 @@ def paramount( drug_name ):
                 continue
 
             record = row2dict(record)
-            record.pop('id')
-
             if drug_name in record['Brand_name'].lower() or \
                drug_name in record['Generic_name'].lower():
                 included = True
@@ -300,8 +290,6 @@ def ohio_state( drug_name ):
                 record['Prior_Authorization_Required'] = 'PA'
 
             record['Formulary_Restrictions']=record['Prior_Authorization_Required']
-            del record['Prior_Authorization_Required']
-
             if drug_name in record['Product_Description'].lower():
                 included = True
                 if 'PA' in record['Formulary_Restrictions']:
@@ -336,16 +324,16 @@ def buckeye( drug_name ):
                 continue
 
             record = row2dict(record)
-            record.pop('id')
 
-            if record['Preferred_Agent'] == "***":
+            if record['DrugTier'] == "***":
                 record['Preferred_Agent'] = "No"
             else:
                 record['Preferred_Agent'] = "Yes"
 
+            record['Formulary_Restrictions'] = record['Requirements_Limits']
             if drug_name in record['Drug_Name'].lower():
                 included = True
-                if 'PA' in record['Fomulary_Restrictions']:
+                if 'PA' in record['Requirements_Limits']:
                     pa = True
 
             data.append(reform_data(record, heading))
@@ -359,8 +347,7 @@ def buckeye( drug_name ):
 
 
 def get_medicaid_plan( drug_name, plan_name ):
-    """
-    Get the plan by its name
+    """Get the plan by its name
     :param plan_name: plan name from the select option
     :param drug_name: drug name the user selected
     :return: dict:

@@ -1,4 +1,5 @@
 
+from datetime           import date
 from sqlalchemy         import ( Column,
                                  Integer, 
                                  String,
@@ -19,23 +20,23 @@ from .base               import Base
 class NDC(Base):
     __tablename__ = 'ndc'
 
-    id                      = Column( Integer, primary_key= True )
-    PRODUCTID               = Column( String )
-    PRODUCT_NDC             = Column( String )
-    PROPRIETARY_NAME        = Column( String )
-    DOSE_STRENGTH           = Column( String, nullable=True )
-    DOSE_UNIT               = Column( String, nullable=True )
-    NONPROPRIETARY_NAME     = Column( String, nullable=True )
-    STARTMARKETINGDATE      = Column( Date,   nullable=True )
-    ENDMARKETINGDATE        = Column( Date,   nullable=True )
-    MARKETINGCATEGORYNAME   = Column( String, nullable=True )
-    APPLICATIONNUMBER       = Column( String, nullable=True )
-    LABELERNAME             = Column( String, nullable=True )
-    SUBSTANCENAME           = Column( String, nullable=True )
-    PHARM_CLASSES           = Column( String, nullable=True )
-    DEASCHEDULE             = Column( String, nullable=True )
-    NDC_EXCLUDE_FLAG        = Column( String, nullable=True )
-    LISTING_RECORD_CERTIFIED_THROUGH = Column( String, nullable=True )
+    id                      = Column(Integer, primary_key= True)
+    PRODUCTID               = Column(String)
+    PRODUCT_NDC             = Column(String)
+    PROPRIETARY_NAME        = Column(String)
+    DOSE_STRENGTH           = Column(String, nullable=True)
+    DOSE_UNIT               = Column(String, nullable=True)
+    NONPROPRIETARY_NAME     = Column(String, nullable=True)
+    STARTMARKETINGDATE      = Column(Date,   nullable=True)
+    ENDMARKETINGDATE        = Column(Date,   nullable=True)
+    MARKETINGCATEGORYNAME   = Column(String, nullable=True)
+    APPLICATIONNUMBER       = Column(String, nullable=True)
+    LABELERNAME             = Column(String, nullable=True)
+    SUBSTANCENAME           = Column(String, nullable=True)
+    PHARM_CLASSES           = Column(String, nullable=True)
+    DEASCHEDULE             = Column(String, nullable=True)
+    NDC_EXCLUDE_FLAG        = Column(String, nullable=True)
+    LISTING_RECORD_CERTIFIED_THROUGH = Column(String, nullable=True)
 
 
     @classmethod
@@ -91,22 +92,23 @@ class FTA(Base):
     __tablename__ = 'fta'
     __table_args__ = (UniqueConstraint('PROPRIETARY_NAME','NONPROPRIETARY_NAME'),)
 
-    id                   = Column( Integer, primary_key= True )
-    PROPRIETARY_NAME     = Column( String )
-    NONPROPRIETARY_NAME  = Column( String )
-    PHARM_CLASSES        = Column( String )
-    DRUG_RELASOURCE      = Column( String )
-    DRUG_RELA            = Column( String )
-    DRUG_RELASOURCE_2    = Column( String )
-    DRUG_RELA_2          = Column( String )
-    CLASS_ID             = Column( String )
-    EXCLUDED_DRUGS_BACK  = Column( String )
-    EXCLUDED_DRUGS_FRONT = Column( String )
+    id                   = Column(Integer, primary_key= True)
+    PROPRIETARY_NAME     = Column(String)
+    NONPROPRIETARY_NAME  = Column(String)
+    PHARM_CLASSES        = Column(String)
+    DRUG_RELASOURCE      = Column(String)
+    DRUG_RELA            = Column(String)
+    DRUG_RELASOURCE_2    = Column(String)
+    DRUG_RELA_2          = Column(String)
+    CLASS_ID             = Column(String)
+    EXCLUDED_DRUGS_BACK  = Column(String)
+    EXCLUDED_DRUGS_FRONT = Column(String)
 
 
-    RELATED_DRUGS        = Column( ARRAY(Integer, ForeignKey('fta.id')))
-    NDC_IDS              = Column( ARRAY(Integer, ForeignKey('ndc.id')))
-    ACTIVE               = Column( Boolean, default=True)
+    RELATED_DRUGS        = Column(ARRAY(Integer, ForeignKey('fta.id')))
+    NDC_IDS              = Column(ARRAY(Integer, ForeignKey('ndc.id')))
+    ACTIVE               = Column(Boolean, default=True)
+    MODIFIED             = Column(Date, default=date.today)
 
     @classmethod
     def find_by_name(cls, name, nonproprietary=True ):

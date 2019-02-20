@@ -180,12 +180,14 @@ if __name__ == "__main__":
     from models.base   import Database
 
     with Database(DATABASE) as db:
+        results = get_related_drugs('flovent', force=True)
+        """
         for fta in FTA.get_all():
             results = get_related_drugs(fta.PROPRIETARY_NAME, force=True)
             for result in results[0]:
                 fta_related = FTA.get(result)
                 print(f"{fta.PROPRIETARY_NAME},{fta_related.PROPRIETARY_NAME},{fta_related.NONPROPRIETARY_NAME}")
-
+        """
 
 
 

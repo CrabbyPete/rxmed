@@ -1,4 +1,5 @@
 import os
+import json
 import tools
 
 from flask              import Flask, request, render_template, jsonify, abort
@@ -60,10 +61,8 @@ def fit():
 # Ajax calls
 @application.route('/plans', methods=['GET'])
 def plans():
-    """
-    Retrieve plans similar to spelling
+    """ Plan name API find similar to spelling
     http://localhost:5000/plans?zipcode=36117&qry=Hum
-    :param spelling:
     :return: json list of plan names
     """
     results = []
@@ -93,10 +92,10 @@ def plans():
 
 @application.route('/related_drugs')
 def related_drugs():
-    """
+    """ Related drug API
     http://localhost:5000/related_drugs?drug_name=Admelog
     Get related drugs by name
-    :return: drugs
+    :return: json
     """
     results = []
 
@@ -111,8 +110,7 @@ def related_drugs():
 
 @application.route('/formulary_id')
 def formulary_id():
-    """
-    API to get formulary id
+    """ API to get formulary id
     localhost:5000/formulary_id?zipcode=43081&plan_name=CareSource Advantage (HMO)
     Get the formulary_id for a plan in a zipcode
     :return:
@@ -128,9 +126,9 @@ def formulary_id():
 
 @application.route('/ndc_drugs', methods=['GET'])
 def ndc_drugs():
-    """
+    """ NDC lookup API
     Type ahead for ncd drugs
-    :return a list of drugs from ncd 
+    :return json: a list of drugs from ncd
     """
     results = set()
     if 'qry' in request.args:
@@ -147,10 +145,10 @@ def ndc_drugs():
 
 @application.route('/drug_names', methods=['GET'])
 def drug_names():
-    """
+    """ Live search drug name API
     Type ahead api for drugs
     Retrieve a list of drugs on spelling
-    :return:
+    :return: json:
     """
     results = set()
     if 'qry' in request.args and len(request.args['qry']) >= 3:
@@ -167,7 +165,7 @@ def drug_names():
 
 @application.route('/medicaid_options', methods=['GET'])
 def medicaid_options():
-    """
+    """ Medicaid API
     Get all the options for a drug for a plan
     :return: json:
     """
@@ -181,9 +179,7 @@ def medicaid_options():
         plan_name = request.args['plan_name']
 
         rq_log.info(f"{rq},{drug_name},{plan_name},medicaid")
-
         results = get_medicaid_plan( drug_name, plan_name )
-
         return jsonify(results)
 
     abort(404)
@@ -191,9 +187,9 @@ def medicaid_options():
 
 @application.route('/medicare_options', methods=['GET'])
 def medicare_options():
-    """
+    """ Medicare API interface
     drug_name, dose_strength, dose_unit, plan_name
-    :return:
+    :return: json: data
     """
     rq = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
 
@@ -206,7 +202,10 @@ def medicare_options():
 
         rq_log.info(f"{rq},{drug_name},{plan_name},'medicare")
         results = get_medicare_plan(drug_name, plan_name, zipcode )
-
+        """
+        dbug = json.dumps( results['data'],indent=2, sort_keys=True )
+        print(dbug)
+        """
         return jsonify(results)
 
     abort(404)

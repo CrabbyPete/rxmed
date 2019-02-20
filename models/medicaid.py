@@ -136,11 +136,12 @@ class UHC(Base): # Generic,Brand,Tier,Formulary_Restrictions
 
 class Buckeye(Base): # Drug_Name,Preferred_Agent,Fomulary_Restrictions
     __tablename__ = 'buckeye'
-    id                    = Column(Integer,   primary_key=True)
-    Drug_Name             = Column(String, nullable=False)
-    Preferred_Agent       = Column(String, nullable=False)
-    Fomulary_Restrictions = Column(String)
-    date                  = Column(Date, default=date.today)
+    #Drug Name,DrugTier,Requirements/Limits
+    id                    = Column(Integer, primary_key=True)
+    Drug_Name             = Column(String,  nullable=False)
+    DrugTier              = Column(String,  nullable=False)
+    Requirements_Limits   = Column(String)
+    date                  = Column(Date,    default=date.today)
 
     @classmethod
     def find_by_name(cls, name ):
