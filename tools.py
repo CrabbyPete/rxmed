@@ -64,7 +64,8 @@ def get_plan( plan_name, zipcode ):
     else:
         return "More than one found"
 
-REGEX = '[\[\(](.*?)[\]\)]'
+#REGEX = '[\[\(](.*?)[\]\)]' Brackets and parenthesis
+REGEX = '\[(.*?)\]'
 
 def get_related_drugs(name, force = False ):
     """
