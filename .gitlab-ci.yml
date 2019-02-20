@@ -3,6 +3,7 @@ stages:
 
 test:
   stage: test
+  image: python:3.6
   script:
   - pip install -r requirements.txt
   - python -m pytest
