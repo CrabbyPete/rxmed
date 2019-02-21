@@ -263,7 +263,7 @@
 
 				        if ( h==0 && data[d]['PA Reference'])
 				        {
-				            tr += cls + '<a href="'+ data[d]['PA Reference']+'">';
+				            tr += cls + '<a target="_blank" href="'+ data[d]['PA Reference']+'">';
 				            tr += data[d][heading[h]];
 				            tr += '</a></td>';
 				        }
