@@ -228,7 +228,8 @@
 				  var header = "<tr>";
 				  for( var h=0; h < heading.length; h++)
 				  {
-					  header += '<th scope="col">'+heading[h]+'</th>';
+					  if ( heading[h] != 'PA Reference')
+					    header += '<th scope="col">'+heading[h]+'</th>';
 				  }
 
 				  header += '</tr>';
@@ -257,7 +258,17 @@
 
 					for ( var h=0; h<heading.length; h++)
 					{
-				        tr += cls + data[d][heading[h]]+ '</td>'
+				        if ( heading[h] == 'PA Reference')
+				            continue
+
+				        if ( h==0 && data[d]['PA Reference'])
+				        {
+				            tr += cls + '<a href="'+ data[d]['PA Reference']+'">';
+				            tr += data[d][heading[h]];
+				            tr += '</a></td>';
+				        }
+				        else
+				            tr += cls + data[d][heading[h]]+ '</td>';
 					}
                     tr += '</tr>'
 					$('#medicaidbody').append(tr);

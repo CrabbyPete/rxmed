@@ -41,7 +41,7 @@ def reform_data( data, heading ):
     """
     result = {}
     for k, v in data.items():
-        k = " ".join([k.capitalize() for k in k.split('_')])
+        k = " ".join([k for k in k.split('_')])
         if k in heading:
             result[k] = v
 
@@ -68,7 +68,7 @@ def caresource(drug_name):
     :param drug_name:
     :return:
     """
-    heading = ['Drug Name', 'Drug Tier', 'Formulary Restrictions']
+    heading = ['Drug Name', 'Drug Tier', 'Formulary Restrictions', 'PA Reference']
 
     pa = False
     included = False
@@ -84,8 +84,6 @@ def caresource(drug_name):
                 continue
 
             record = row2dict(record)
-            record.pop('id')
-
             if drug_name in record['Drug_Name'].lower():
                 included = True
                 if 'PA' in record['Formulary_Restrictions']:
