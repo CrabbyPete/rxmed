@@ -224,6 +224,7 @@ def paramount( drug_name ):
                 continue
 
             record = row2dict(record)
+            record['Formulary_Restrictions'] = record['Formulary_restriction']
             if drug_name in record['Brand_name'].lower() or \
                drug_name in record['Generic_name'].lower():
                 included = True
