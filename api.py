@@ -3,15 +3,13 @@ import json
 import requests
 
 from bs4            import BeautifulSoup
-from collections    import OrderedDict
 
 from log import log
 
-BASE_URL     = "https://rxnav.nlm.nih.gov/REST"
-HISTORIC_URL = "https://rxnav.nlm.nih.gov/REST/rxcuihistoryconcept?rxcui={}"
-OPENFDA_URL  = 'https://api.fda.gov/drug/ndc.json?search={}'
-#https://api.fda.gov/drug/ndc.json?search=openfda.rxcui:"1926069"
-OHSTATE      = 'https://druglookup.ohgov.changehealthcare.com/DrugSearch/application/search?searchBy=name&name={}'
+BASE_URL      = "https://rxnav.nlm.nih.gov/REST"
+HISTORIC_URL  = "https://rxnav.nlm.nih.gov/REST/rxcuihistoryconcept?rxcui={}"
+OPENFDA_URL   = 'https://api.fda.gov/drug/ndc.json?search={}'
+OHSTATE       = 'https://druglookup.ohgov.changehealthcare.com/DrugSearch/application/search?searchBy=name&name={}'
 
 
 def OhioStateAPI( name )->list:
@@ -67,6 +65,50 @@ def get_historic_rxcui( rxcui ):
 
     return data
     
+
+def class_by_drugname( **kwargs ):
+        """
+        https://rxnav.nlm.nih.gov/RxClassAPIs.html#uLink=RxClass_REST_getClassByRxNormDrugName
+        :param kwargs:
+        :return:
+        """
+        url = BASE_URL + '/class/byDrugName.json'
+
+        # Because they use a + sign in argument you have to make a string
+        if 'ttys' in kwargs:
+            kwargs = "&".join("%s=%s" % (k,v) for k,v in kwargs.items())
+
+        r = requests.get(url, params=kwargs)
+        if r.ok:
+            data = json.loads(r.text)
+        else:
+            return None
+
+        if data and 'rxclassDrugInfoList' in data:
+            return data['rxclassDrugInfoList']
+        else:
+            return None
+
+
+def class_members(**kwargs):
+        """
+        Return class members of a drug
+        :param kwargs:
+        :return:
+        """
+        url = BASE_URL + '/classMembers.json'
+
+        # You have to do this because of the + in ttys outwise its uuencoded
+        kwargs = "&".join("%s=%s" % (k,v) for k,v in kwargs.items())
+
+        r = requests.get(url, params=kwargs)
+        if r.ok:
+            data = json.loads(r.text)
+        else:
+            return r.status_code
+
+        return data
+
 
 class RxNorm():
     """
@@ -171,13 +213,13 @@ def open_fda_rxcui( rxcui ):
 
     url = OPENFDA_URL.format(search)
     r = requests.get(url)
-
     if r.ok:
         data = json.loads(r.text)
     else:
         return r.status_code,[]
 
     return r.status_code, data['results']
+
 
 if __name__ == "__main__":
     from models.base import Database

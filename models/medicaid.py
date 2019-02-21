@@ -1,6 +1,7 @@
 from datetime           import date
 
 from sqlalchemy         import Column, Integer, String, Date, Boolean, DECIMAL, or_
+from sqlalchemy_utils   import URLType
 
 from .base              import Base
 
@@ -15,6 +16,7 @@ class Caresource(Base): # Drug_Name,Drug_Tier,Formulary_Restrictions
     Drug_Name              = Column(String, nullable=False )
     Drug_Tier              = Column(String)
     Formulary_Restrictions = Column(String)
+    PA_Reference           = Column(URLType)
 
     @classmethod
     def find_by_name(cls, name ):
@@ -38,7 +40,7 @@ class Paramount(Base): # Formulary_restriction,Generic_name,Brand_name
     Brand_name              = Column(String, nullable=False )
     Generic_name            = Column(String, nullable=False )
     Formulary_restriction   = Column(String)
-
+    PA_Reference            = Column(URLType)
 
     @classmethod
     def find_by_name(cls, name ):

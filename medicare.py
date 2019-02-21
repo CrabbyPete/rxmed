@@ -7,8 +7,6 @@ from tools            import get_related_drugs, get_plan
 from models.fta       import FTA, NDC
 from models.medicare  import Beneficiary_Costs, NDC_BD
 
-
-@lru_cache(8192)
 def beneficiary_costs(drug, plan):
     """
     Get the beneficary costs for a drug in plan

@@ -95,40 +95,46 @@ def get_related_drugs(name, force = False ):
             if fta.EXCLUDED_DRUGS_FRONT:
                 excluded_front.update([s.strip() for s in fta.EXCLUDED_DRUGS_FRONT.lower().split("|") if s.strip()])
 
-
             if fta.EXCLUDED_DRUGS_BACK:
                 excluded_back = [s.strip() for s in fta.EXCLUDED_DRUGS_BACK.lower().split("|") if s.strip()]
             else:
                 excluded_back = []
 
-            # Look by the proprietary name
-            data = rx.byDrugName(drugName=fta.PROPRIETARY_NAME,
-                                 relaSource=fta.DRUG_RELASOURCE,
-                                 relas=fta.DRUG_RELA
-                                )
-            # If nothing found look by non-proprietary name
-            if not data:
-                data = rx.byDrugName(drugName=fta.NONPROPRIETARY_NAME,
+            if fta.CLASS_ID:
+                class_id = fta.CLASS_ID
+            else:
+                # Look by the proprietary name
+                data = rx.byDrugName(drugName=fta.PROPRIETARY_NAME,
                                      relaSource=fta.DRUG_RELASOURCE,
                                      relas=fta.DRUG_RELA
                                     )
-            # Still nothing skip it
-            if not data:
-                log.error( "No data found for {} or {}".format( fta.PROPRIETARY_NAME, fta.NONPROPRIETARY_NAME) )
-                continue
 
-            if fta.CLASS_ID:
-                class_id = fta.CLASS_ID 
-            else:
+                # If nothing found look by non-proprietary name
+                if not data:
+                    data = rx.byDrugName(drugName=fta.NONPROPRIETARY_NAME,
+                                         relaSource=fta.DRUG_RELASOURCE,
+                                         relas=fta.DRUG_RELA
+                                        )
+                # Still nothing skip it
+                if not data:
+                    log.error( "No data found for {} or {}".format( fta.PROPRIETARY_NAME, fta.NONPROPRIETARY_NAME) )
+                    continue
+
                 class_id = walk(data,'classId')
-                fta.CLASS_ID = class_id
-                fta.save()
+                if class_id:
+                    fta.CLASS_ID = class_id
+                    fta.save()
+                else:
+                    log.info("No CLASS_ID for {}".format( fta.PROPRIETARY_NAME, fta.NONPROPRIETARY_NAME))
+                    continue
     
+            # Check the relaSource and relas
             if fta.DRUG_RELASOURCE == 'VA' and fta.DRUG_RELA in ['has_VAClass_extended', 'has_VAClass']:
                 ttys = 'SCD+SBD+BPCK+GPCK'
             else:
                 ttys = 'IN+MIN+PIN+BN'
 
+            # Get the class members
             members = rx.classMembers(classId=class_id,
                                       relaSource=fta.DRUG_RELASOURCE,
                                       rela=fta.DRUG_RELA,
@@ -145,28 +151,27 @@ def get_related_drugs(name, force = False ):
                 look_for = dm['minConcept']['name']
                 if ttys == 'SCD+SBD+BPCK+GPCK':
                     try:
-                        look_for =  re.findall(REGEX, look_for )[0]
+                        look_for =  re.findall(REGEX, look_for)[0]
                     except IndexError:
-                        look_for = look_for.split()[0]
+                        log.info(f"No brackets in {fta.PROPRIETARY_NAME}:{look_for}")
+                        continue
 
-                        #log.error( log_msg( f"No brackets in {origin} using {look_for}") )
-                drug_names.append( look_for )
+                drug_names.append(look_for)
 
             for drug_name in set(drug_names):
                 drug = drug_name.lower()
 
                 fta_members = fta.find_by_name(drug)
                 if not fta_members:
-                    log.error( log_msg("{} not found in FTA".format(look_for)) )
-                    inactive = FTA(**{'PROPRIETARY_NAME':look_for,"ACTIVE":False})
-                    inactive.save()
+                    log.info("{} not found in FTA".format(look_for))
+                    #inactive = FTA.get_or_create(**{'PROPRIETARY_NAME':look_for,"ACTIVE":False})
+                    #inactive.save()
                     continue
 
                 for fta_member in fta_members:
                     if not fta_member.ACTIVE:
                         continue
 
-                    #print(f"{fta_member.id} = {fta_member.PROPRIETARY_NAME}")
                     for xb in excluded_back:
                         if xb in fta_member.PROPRIETARY_NAME or xb in fta_member.NONPROPRIETARY_NAME:
                             break
