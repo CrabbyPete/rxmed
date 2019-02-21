@@ -25,7 +25,7 @@ def init_user( app ):
     """ Used by flask to initialize a user
     @param app: Application id set up by flask
     """
-    login_manager.setup_app(app)
+    login_manager.init_app(app)
     app.register_blueprint(user)
     pass
 
