@@ -42,8 +42,12 @@ def reform_data( data, heading ):
     result = {}
     for k, v in data.items():
         k = " ".join([k for k in k.split('_')])
-        if k in heading:
-            result[k] = v
+        try:
+            n = [h.lower() for h in heading].index(k.lower())
+        except ValueError:
+            pass
+        else:
+            result[heading[n]] = v
 
     # Get rid of duplicate dicts
     return result

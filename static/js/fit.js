@@ -256,14 +256,15 @@
 					    tr  = '<tr class="table-success">';
                     }
 
-					for ( var h=0; h<heading.length; h++)
+					for (var h=0; h<heading.length; h++)
 					{
 				        if ( heading[h] == 'PA Reference')
 				            continue
 
-				        if ( h==0 && data[d]['PA Reference'])
+
+				        if (h==0 && 'PA Reference' in data[d] && data[d]['PA Reference'].length > 5)
 				        {
-				            tr += cls + '<a target="_blank" href="'+ data[d]['PA Reference']+'">';
+				            tr += cls + '<a href="'+ data[d]['PA Reference']+'">';
 				            tr += data[d][heading[h]];
 				            tr += '</a></td>';
 				        }

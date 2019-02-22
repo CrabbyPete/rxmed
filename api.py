@@ -66,50 +66,6 @@ def get_historic_rxcui( rxcui ):
     return data
     
 
-def class_by_drugname( **kwargs ):
-        """
-        https://rxnav.nlm.nih.gov/RxClassAPIs.html#uLink=RxClass_REST_getClassByRxNormDrugName
-        :param kwargs:
-        :return:
-        """
-        url = BASE_URL + '/class/byDrugName.json'
-
-        # Because they use a + sign in argument you have to make a string
-        if 'ttys' in kwargs:
-            kwargs = "&".join("%s=%s" % (k,v) for k,v in kwargs.items())
-
-        r = requests.get(url, params=kwargs)
-        if r.ok:
-            data = json.loads(r.text)
-        else:
-            return None
-
-        if data and 'rxclassDrugInfoList' in data:
-            return data['rxclassDrugInfoList']
-        else:
-            return None
-
-
-def class_members(**kwargs):
-        """
-        Return class members of a drug
-        :param kwargs:
-        :return:
-        """
-        url = BASE_URL + '/classMembers.json'
-
-        # You have to do this because of the + in ttys outwise its uuencoded
-        kwargs = "&".join("%s=%s" % (k,v) for k,v in kwargs.items())
-
-        r = requests.get(url, params=kwargs)
-        if r.ok:
-            data = json.loads(r.text)
-        else:
-            return r.status_code
-
-        return data
-
-
 class RxNorm():
     """
     """

@@ -153,8 +153,17 @@ def get_related_drugs(name, force = False ):
                     try:
                         look_for =  re.findall(REGEX, look_for)[0]
                     except IndexError:
-                        log.info(f"No brackets in {fta.PROPRIETARY_NAME}:{look_for}")
-                        continue
+                        look_for = dm['nodeAttr'][1]['attrValue']
+                        for node in dm['nodeAttr']:
+                            if node['attrName'] == 'SourceName':
+                                if node['attrValue']:
+                                    look_for = node['attrValue'].split()[0]
+                                    break
+                        else:
+                            continue
+
+                        #log.info(f"No brackets in {fta.PROPRIETARY_NAME}:{look_for}")
+                        #continue
 
                 drug_names.append(look_for)
 
