@@ -103,7 +103,8 @@ def related_drugs():
         drugs, _ = tools.get_related_drugs(request.args['drug_name'], force=True)
 
     for drug in drugs:
-        results.append(drug)
+        r = FTA.get(drug)
+        results.append(f"{r.PROPRIETARY_NAME}-{r.NONPROPRIETARY_NAME}")
 
     return jsonify(results)
 

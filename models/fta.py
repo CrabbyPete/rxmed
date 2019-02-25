@@ -103,19 +103,18 @@ class FTA(Base):
     CLASS_ID             = Column(String)
     EXCLUDED_DRUGS_BACK  = Column(String)
     EXCLUDED_DRUGS_FRONT = Column(String)
-
-
     RELATED_DRUGS        = Column(ARRAY(Integer, ForeignKey('fta.id')))
     NDC_IDS              = Column(ARRAY(Integer, ForeignKey('ndc.id')))
     ACTIVE               = Column(Boolean, default=True)
     MODIFIED             = Column(Date, default=date.today)
+    RXCUI                = Column(String)
 
     @classmethod
     def find_by_name(cls, name, nonproprietary=True ):
         """ Return an atoms by property
         """
         if not '%' in name:
-            name = f"%{name.lower()}%"
+            name = f"{name.lower().split()[0]}%"
 
         if nonproprietary:
             flter = or_(cls.PROPRIETARY_NAME.ilike(name), cls.NONPROPRIETARY_NAME.ilike(name) )

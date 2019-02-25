@@ -130,9 +130,11 @@ def get_related_drugs(name, force = False ):
     
             # Check the relaSource and relas
             if fta.DRUG_RELASOURCE == 'VA' and fta.DRUG_RELA in ['has_VAClass_extended', 'has_VAClass']:
-                ttys = 'SCD+SBD+BPCK+GPCK'
+                va = True
+                ttys = ['SCD','SBD','BPCK','GPCK'] #'SCD+SBD+BPCK+GPCK'
             else:
-                ttys = 'IN+MIN+PIN+BN'
+                va = False
+                ttys = ['IN','MIN','PIN','BN'] #'IN+MIN+PIN+BN'
 
             # Get the class members
             members = rx.classMembers(classId=class_id,
@@ -140,16 +142,13 @@ def get_related_drugs(name, force = False ):
                                       rela=fta.DRUG_RELA,
                                       ttys=ttys
                                      )
-
-            drug_members = walk( members,'drugMemberGroup' )
-            if not drug_members:
-                log.error( log_msg(f"No members of class {class_id}") )
-                continue
+            if not members:
+                return None
 
             drug_names = []
-            for dm in drug_members['drugMember']:
+            for dm in members:
                 look_for = dm['minConcept']['name']
-                if ttys == 'SCD+SBD+BPCK+GPCK':
+                if va:
                     try:
                         look_for =  re.findall(REGEX, look_for)[0]
                     except IndexError:
