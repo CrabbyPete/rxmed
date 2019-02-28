@@ -59,7 +59,7 @@ def get_drug_list( drug_name ):
     :param drug_name:
     :return: set of drugs and excluded front end
     """
-    fta_list, excluded = get_related_drugs(drug_name)
+    fta_list, excluded = get_related_drugs(drug_name, True)
     drug_list = set([FTA.get(fta).PROPRIETARY_NAME for fta in fta_list])
     drug_list.update([drug_name])
 
@@ -383,6 +383,11 @@ if __name__ == "__main__":
     with Database(DATABASE) as db:
 
         # Medicaid
+        result = get_medicaid_plan("Symbicort", "UHC Community Health Plan")
+        print(result)
+
+        result = get_medicaid_plan('pulmicort', "Caresource")
+        print(result)
         result = get_medicaid_plan('Qvar', 'OH State Medicaid')
         print(result)
         result = get_medicaid_plan("Trulicity", "OH State Medicaid")

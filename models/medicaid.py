@@ -18,6 +18,7 @@ class Caresource(Base): # Drug_Name,Drug_Tier,Formulary_Restrictions
     Formulary_Restrictions = Column(String)
     PA_Reference           = Column(URLType)
     modified               = Column(Date, nullable=False, default=date.today)
+    RXCUI                  = Column(Integer)
 
     @classmethod
     def find_by_name(cls, name ):
@@ -43,6 +44,7 @@ class Paramount(Base): # Formulary_restriction,Generic_name,Brand_name
     Formulary_restriction   = Column(String)
     PA_Reference            = Column(URLType)
     modified                = Column(Date, nullable=False, default=date.today)
+    RXCUI                   = Column(Integer)
 
     @classmethod
     def find_by_name(cls, name ):
@@ -68,8 +70,8 @@ class Molina(Base): # Generic_name,Brand_name,Formulary_Restrictions
     Generic_name                = Column(String, nullable=False)
     Brand_name                  = Column(String)
     Formulary_Restrictions      = Column(String)
-    PA_Reference                = Column(URLType)
-    modified                    = Column(Date, nullable=False, default=date.today)
+    #PA_Reference                = Column(URLType)
+    #modified                    = Column(Date, nullable=False, default=date.today)
 
     @classmethod
     def find_by_name(cls, name ):
@@ -99,7 +101,7 @@ class Molina_Healthcare( Base ): # DRUG_NAME,PA_CODE,ALTERNATIVE_DRUG_CRITERIA
     DRUG_NAME                 = Column(String, nullable=False )
     PA_CODE                   = Column(String, nullable=False )
     ALTERNATIVE_DRUG_CRITERIA = Column(String)
-    modified                  = Column(Date, nullable=False, default=date.today)
+    #modified                  = Column(Date, nullable=False, default=date.today)
 
     @classmethod
     def find_brand(cls, name ):
@@ -149,8 +151,8 @@ class Buckeye(Base): # Drug_Name,Preferred_Agent,Fomulary_Restrictions
     Drug_Name             = Column(String,  nullable=False)
     DrugTier              = Column(String,  nullable=False)
     Requirements_Limits   = Column(String)
-    PA_Reference          = Column(URLType)
-    modified = Column(Date, nullable=False, default=date.today)
+    #PA_Reference         = Column(URLType)
+    date                  = Column(Date, nullable=False, default=date.today)
 
     @classmethod
     def find_by_name(cls, name ):
@@ -180,8 +182,8 @@ class OhioState(Base):
     Covered_for_Dual_Eligible       = Column(String)
     Route_of_Administration         = Column(String)
     PA_Reference                    = Column(URLType)
-    modified                        = Column(Date, default=date.today)
     active                          = Column(Boolean, default=True)
+    data                            = Column(Date, default=date.today)
 
     @classmethod
     def find_product(cls, name):

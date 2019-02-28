@@ -267,7 +267,7 @@ class RxClass():
         return walk(data,'rxclassDrugInfo')
 
 
-    def classMembers(self, classId, relaSource=None, rela=None, trans=0, ttys=None):
+    def classMembers(self, **kwargs):
         """ Return class members of a drug
         :param:classId - the class identifier. Note that this is NOT an RxNorm identifier, but an identifier from the source vocabulary. See examples below.
         :param:relaSource - the source asserting the relationships between the drug members and the drug class. See table below for the valid sources.
@@ -277,16 +277,11 @@ class RxClass():
         :return:
         """
         url = self.base_url + '/classMembers.json'
-        kwargs = {'classId':classId, 'trans':trans}
-        if relaSource:
-            kwargs['relaSource'] = relaSource
-        if rela:
-            kwargs['rela']=rela
-        if ttys:
-            kwargs['ttys']=ttys
+        if 'ttys' in kwargs:
+            kwargs['ttys'] = "+".join(kwargs['ttys'])
 
         # You have to do this because of the + in ttys outwise its uuencoded
-        #kwargs = "&".join("%s=%s" % (k,v) for k,v in kwargs.items())
+        kwargs = "&".join("%s=%s" % (k,v) for k,v in kwargs.items())
         data = self.api( url, kwargs )
         return walk(data,'drugMember')
 
