@@ -2,9 +2,9 @@ import re
 import json
 import requests
 
-from bs4            import BeautifulSoup
-
+from bs4 import BeautifulSoup
 from log import log
+
 
 BASE_URL      = "https://rxnav.nlm.nih.gov/REST"
 HISTORIC_URL  = "https://rxnav.nlm.nih.gov/REST/rxcuihistoryconcept?rxcui={}"
@@ -87,46 +87,11 @@ def get_historic_rxcui( rxcui ):
         return r.status_code
 
     return data
-    
-"""
-rxcui/{rxcui}/filter 	Filter by property
-def findRxcuiById 	/rxcui?idtype 	Search by identifier to find RxNorm concepts
-def getAllConceptsByTTY 	/allconcepts 	Return the RxNorm concepts for the specified term types
-def getAllHistoricalNDCs 	/rxcui/{rxcui}/allhistoricalndcs 	Return all National Drug Codes (NDC) for a concept
-def getAllNDCs 	/rxcui/{rxcui}/allndcs 	TO BE DEPRECATED. Use getAllHistoricalNDCs or /rxcui/{rxcui}/allhistoricalndcs instead.
-def getAllProperties 	/rxcui/{rxcui}/allProperties 	Return all properties for a concept
-def getAllRelatedInfo 	/rxcui/{rxcui}/allrelated 	Return all related concept information
-def getApproximateMatch 	/approximateTerm 	Approximate match search to find closest strings
-def getDisplayTerms 	/displaynames 	Return the auto suggestion names
-def getDrugs 	/drugs 	Return the related drugs
-def getIdTypes 	/idtypes 	Return the available identifier types
-def getMultiIngredBrand 	/brands 	Return the brands containing the specified ingredients
-def getNDCs 	/rxcui/{rxcui}/ndcs 	Return all National Drug Codes (NDC) for a concept
-def getNDCProperties 	/ndcproperties 	Return National Drug Code (NDC) properties
-def getNDCStatus 	/ndcstatus 	Return the status of a National Drug Code (NDC)
-def getPropCategories 	/propCategories 	Return the property categories.
-def getPropNames 	/propnames 	Return the property names.
-def getProprietaryInformation 	/rxcui/{rxcui}/proprietary 	Return the proprietary information for a concept
-def getRelatedByRelationship 	/rxcui/{rxcui}/related?rela 	Return the related concepts of specified relationship types
-def getRelatedByType 	/rxcui/{rxcui}/related?tty 	Return the related concepts of specified term types
-def getRelaTypes 	/relatypes 	Return the available relationship types
-def getRxConceptProperties 	/rxcui/{rxcui}/properties 	Return the concepts properties
-def getRxcuiStatus 	/rxcui/{rxcui}/status 	Return the status of the concept
-def getRxNormVersion 	/version 	Return the RxNorm data set version
-def getRxProperty 	/rxcui/{rxcui}/property 	Return the value of a concept property
-def getSourceTypes 	/sourcetypes 	Return the available vocabulary abbreviated source types
-def getSpellingSuggestions 	/spellingsuggestions 	Return spelling suggestions for a name
-def getTermTypes 	/termtypes 	Return the available term types
-"""
-class RxNorm():
-    """
-    """
-    def __init__(self):
-        self.base_url = BASE_URL
-        return
 
-    def api(self, url, kwargs ):
-        r = requests.get( url, params = kwargs )
+
+class RxBase:
+    def api(self, url, kwargs):
+        r = requests.get(url, params=kwargs)
 
         if r.ok:
             data = json.loads(r.text)
@@ -135,15 +100,80 @@ class RxNorm():
 
         return data
 
-    def findRxcuiByString(self,name):
+
+class RxTerm(RxBase):
+    base_url = BASE_URL+'/RxTerms/'
+
+    def getAllRxTermInfo(self, rxcui):
+        """Retrieve RxTerms information for a specified RxNorm concept
+
+        :param rxcui:
+        :return:
+        """
+        url = self.base_url + f'rxcui/{rxcui}/allinfo.json'
+        data = self.api(url, {})
+        return walk(data,'rxtermsProperties')
+
+
+    def getRxTermDisplayName(self,rxcui):
+        """ Retrieve the RxTerms display name for a specified RxNorm concept
+        :param rxcui:
+        :return:
+        """
+        url = self.base_url+f'rxcui/{rxcui}/name.json'
+        data = self.api(url,{})
+        return walk(data,'displayName')
+
+
+class RxNorm(RxBase):
+    """
+    """
+    def __init__(self):
+        self.base_url = BASE_URL
+        return
+
+
+    def getApproximateMatch(self, term):
+        """ Approximate match search to find closest strings
+        :param term:
+        :return:
+        """
+        url = self.base_url + '/approximateTerm.json'
+        kwargs = {'term':term}
+        data = self.api(url, kwargs)
+        return  walk(data,'approximateGroup')
+
+
+    def getAllProperties(self, rxcui):
+        """ Return all properties for a concept
+        :param rxcui: rxcui
+        :return:
+        """
+        url = self.base_url +f"/rxcui/{rxcui}/allProperties.json"
+        kwargs = {}
+        data = self.api(url, kwargs)
+        return walk(data, "propConcept")
+
+
+    def findRxcuiByString(self,name, search=0):
         """ Search by name to find RxNorm concepts
         :param name: name to look for
         :return:
         """
         url = self.base_url + f'/rxcui.json?'
-        kwargs = {'name':name,'search':2}
+        kwargs = {'name':name,'search':search}
         data = self.api(url, kwargs)
         return walk(data,'rxnormId')
+
+
+    def getRxConceptProperties(self, rxcui):
+        """Return the concepts properties
+        :param rxcui:
+        :return:
+        """
+        url = self.base_url + f'/rxcui/{rxcui}/properties.json'
+        data = self.api(url, {})
+        return walk(data,'properties')
 
 
     def getAllRelatedInfo(self, rxcui):
@@ -187,38 +217,11 @@ class RxNorm():
         data = self.api(url, kwargs)
         return data
 
-"""
-def findClassesById 	/class/byId 	newFind the drug classes from a class identifier
-def findClassByName 	/class/byName 	Find drug classes from a class name
-def findSimilarClassesByClass 	/similar 	Find similar class membership
-def findSimilarClassesByDrugList 	/similarByRxcuis 	Find similar classes from a list of RxNorm drug identifiers
-def getAllClasses 	/allClasses 	Get all drug classes
-def getClassByRxNormDrugId 	/class/byRxcui 	Get the classes of a specified drug identifier
-def getClassByRxNormDrugName 	/class/byDrugName 	Get the classes of a specified drug name
-def getClassContexts 	/classContext 	Get the class context
-def getClassGraph 	/classGraph 	SOAP FUNCTION TO BE DEPRECATED. Use getClassGraphBySource instead
-def getClassGraphBySource 	/classGraph 	newGet the class graph of ancestors
-def getClassMembers 	/classMembers 	Get the drug members of a specified class
-def getClassTree 	/classTree 	Get the descendents of a class
-def getClassTypes 	/classTypes 	Get the class types
-def getRelas 	/relas 	Get the relationships for a source of drug relations
-def getSimilarityInformation 	/similarInfo 	Get the similarity information between members of two classes
-def getSourcesOfDrugClassRelations 	/relaSources 	Get the sources of drug-class relations
-def getSpellingSuggestions 	/spellingsuggestions 	Get spelling suggestions for a drug or class name
-"""
-class RxClass():
+
+class RxClass(RxBase):
+
     def __init__(self):
         self.base_url = BASE_URL + '/rxclass'
-        pass
-
-
-    def api(self, url, kwargs ):
-        r = requests.get( url, params = kwargs )
-        data = None
-        if r.ok:
-            data = json.loads(r.text)
-
-        return data
 
 
     def findSimilarClassesByDrugList(self,rxcui):
@@ -232,13 +235,12 @@ class RxClass():
 
 
     def byDrugName(self, drugName, relaSource=None, relas=None ):
-        """
+        """ Get drug by name
         :param drugName:
         :param relaSource:
         :param relas:
         :return:
         """
-
         url = self.base_url + '/class/byDrugName.json'
         kwargs = {'drugName':drugName}
         if relaSource:
@@ -285,8 +287,6 @@ class RxClass():
         if ttys:
             kwargs['ttys']=ttys
 
-        # You have to do this because of the + in ttys outwise its uuencoded
-        #kwargs = "&".join("%s=%s" % (k,v) for k,v in kwargs.items())
         data = self.api( url, kwargs )
         return walk(data,'drugMember')
 
@@ -294,73 +294,42 @@ class RxClass():
 """
 Open FDA API
 """
-def open_fda( brand_name, generic_name = None ):
-    search = f'brand_name:"{brand_name}"'
-    if generic_name:
-        search += f'+AND+generic_name:"{generic_name}"'
-    url = OPENFDA_URL.format(search)
-    r = requests.get(url)
+class FDA(RxBase):
+    base_url = OPENFDA_URL
 
-    if r.ok:
-        data = json.loads(r.text)
-    else:
-        return r.status_code
+    def open_fda(self, brand_name, generic_name = None, look_for = None ):
+        """ Use Open FDA to find a drug
+        :param brand_name:
+        :param generic_name:
+        :return:
+        """
+        search = f'brand_name:"{brand_name}"'
+        if generic_name:
+            search += f'+AND+generic_name:"{generic_name}"'
 
-    return data['results']
+        url = OPENFDA_URL.format(search)
+        data = self.api( url, {})
 
+        if look_for:
+            return walk(data, look_for)
 
-def open_fda_rxcui( rxcui ):
-    search=f'openfda.rxcui:"{str(rxcui)}"'
-
-    url = OPENFDA_URL.format(search)
-    r = requests.get(url)
-    if r.ok:
-        data = json.loads(r.text)
-    else:
-        return r.status_code,[]
-
-    return r.status_code, data['results']
+        try:
+            return data['results']
+        except:
+            return None
 
 
-if __name__ == "__main__":
-    from models.base import Database
-    from models.fta import FTA
-    from models.medicaid import OhioState
-    from settings import DATABASE
+    def open_fda_rxcui(self,rxcui):
+        """ Use rxcui with open fda
+        :param rxcui:
+        :return:
+        """
+        search=f'openfda.rxcui:"{str(rxcui)}"'
 
-    with Database( DATABASE) as db:
-        rxnorm = RxNorm()
-        rxclass = RxClass()
+        url = OPENFDA_URL.format(search)
+        data = self.api(url,{})
+        try:
+            return data['results']
+        except:
+            return None
 
-        with open('related.csv','+w') as fyle:
-            for fta in FTA.session.query(FTA).filter(FTA.ACTIVE == True).order_by(FTA.id):
-                name = fta.PROPRIETARY_NAME
-                result = rxnorm.findRxcuiByString(name)
-                if result and len( result ) == 1:
-                    drug_class = rxclass.getClassByRxNormDrugId(result[0])
-                    fta.RXCUI = result[0]
-                    result = result[0]
-                    fta.save()
-
-                print( f"{fta.id},{name},{result}")
-
-            """
-            data = OhioStateAPI(name)
-            for d in data:
-                ohio = OhioState.get_or_create( **d )
-                ohio.drug_name = name
-                ohio.save()
-            """
-
-    """
-    r = RxClass()
-    data = r.byDrugName(drugName='morphine', relaSource='MEDRT',relas='may_treat')
-    for d in data['rxclassDrugInfo']:
-        classId = d['rxclassMinConceptItem']['classId']
-        drug  = r.classMembers( classId=classId,
-                                relas='may_treat',
-                                relaSource='MEDRT'
-                                )
-
-        print( drug )
-    """

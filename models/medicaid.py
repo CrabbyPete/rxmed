@@ -4,10 +4,19 @@ from sqlalchemy         import Column, Integer, String, Date, DateTime, Boolean,
 from sqlalchemy_utils   import URLType
 
 from .base              import Base
+from .fta               import Drugs
 
 # Just return the results not the whole class
 row2dict = lambda r: {c.name: getattr(r, c.name) for c in r.__table__.columns}
 
+"""
+class MedicaidModel(Base):
+    id = Column(Integer, primary_key=True)
+    Formulary_Restrictions = Column(String)
+    PA_Reference           = Column(URLType)
+    RXCUI                  = Column(Integer)
+    modified               = Column(Date, nullable=False, default=date.today)
+"""
 
 class Caresource(Base): # Drug_Name,Drug_Tier,Formulary_Restrictions
     __tablename__ = 'caresource'
@@ -17,6 +26,7 @@ class Caresource(Base): # Drug_Name,Drug_Tier,Formulary_Restrictions
     Drug_Tier              = Column(String)
     Formulary_Restrictions = Column(String)
     PA_Reference           = Column(URLType)
+    RXCUI                  = Column(Integer)
     modified               = Column(Date, nullable=False, default=date.today)
 
     @classmethod
@@ -30,6 +40,12 @@ class Caresource(Base): # Drug_Name,Drug_Tier,Formulary_Restrictions
         qry = cls.session.query(cls).filter(cls.Drug_Name.ilike(name)).all()
         return qry
 
+    @classmethod
+    def find_by_rxcui(cls, rxcui):
+        qry = cls.session.query(cls).filter(cls.RXCUI == rxcui)
+        return qry.all()
+
+
     def __repr__(self):
         return "<{}>".format(self.Drug_Name )
 
@@ -42,6 +58,7 @@ class Paramount(Base): # Formulary_restriction,Generic_name,Brand_name
     Generic_name            = Column(String)
     Formulary_restriction   = Column(String)
     PA_Reference            = Column(URLType)
+    RXCUI                   = Column(Integer)
     modified                = Column(Date, nullable=False, default=date.today)
 
     @classmethod
@@ -69,6 +86,7 @@ class Molina(Base): # Generic_name,Brand_name,Formulary_Restrictions
     Brand_name                  = Column(String)
     Formulary_Restrictions      = Column(String)
     PA_Reference                = Column(URLType)
+    RXCUI                       = Column(Integer)
     modified                    = Column(Date, nullable=False, default=date.today)
 
     @classmethod
@@ -99,6 +117,7 @@ class Molina_Healthcare( Base ): # DRUG_NAME,PA_CODE,ALTERNATIVE_DRUG_CRITERIA
     DRUG_NAME                 = Column(String, nullable=False )
     PA_CODE                   = Column(String, nullable=False )
     ALTERNATIVE_DRUG_CRITERIA = Column(String)
+    RXCUI                     = Column(Integer)
     modified                  = Column(Date, nullable=False, default=date.today)
 
     @classmethod
@@ -120,6 +139,7 @@ class UHC(Base): # Generic,Brand,Tier,Formulary_Restrictions
     Tier                    = Column(String)
     Formulary_Restrictions  = Column(String)
     PA_Reference            = Column(URLType)
+    RXCUI                   = Column(Integer)
     modified                = Column(Date, nullable=False, default=date.today)
 
     @classmethod
@@ -150,6 +170,7 @@ class Buckeye(Base): # Drug_Name,Preferred_Agent,Fomulary_Restrictions
     DrugTier              = Column(String,  nullable=False)
     Requirements_Limits   = Column(String)
     PA_Reference          = Column(URLType)
+    RXCUI                 = Column(Integer)
     modified = Column(Date, nullable=False, default=date.today)
 
     @classmethod
@@ -180,6 +201,7 @@ class OhioState(Base):
     Covered_for_Dual_Eligible       = Column(String)
     Route_of_Administration         = Column(String)
     PA_Reference                    = Column(URLType)
+    RXCUI                           = Column(Integer)
     modified                        = Column(Date, default=date.today)
     active                          = Column(Boolean, default=True)
 

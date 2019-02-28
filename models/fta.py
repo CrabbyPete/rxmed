@@ -88,6 +88,19 @@ class NDC(Base):
         return "<{}>".format(self.PROPRIETARY_NAME)
 
 
+class Drugs(Base):
+    __tablename__ = 'drugs'
+
+    id                   = Column(Integer, primary_key=True)
+    RXCUI                = Column(Integer)
+    TTY                  = Column(String)
+    PROPRIETARY_NAME     = Column(String)
+    RELASOURCE           = Column(String)
+    RELA                 = Column(String)
+    CLASS_ID             = Column(String)
+    CLASS_NAME           = Column(String)
+
+
 class FTA(Base):
     __tablename__ = 'fta'
     __table_args__ = (UniqueConstraint('PROPRIETARY_NAME','NONPROPRIETARY_NAME'),)
@@ -98,16 +111,17 @@ class FTA(Base):
     PHARM_CLASSES        = Column(String)
     DRUG_RELASOURCE      = Column(String)
     DRUG_RELA            = Column(String)
-    DRUG_RELASOURCE_2    = Column(String)
-    DRUG_RELA_2          = Column(String)
-    CLASS_ID             = Column(String)
     EXCLUDED_DRUGS_BACK  = Column(String)
     EXCLUDED_DRUGS_FRONT = Column(String)
     RELATED_DRUGS        = Column(ARRAY(Integer, ForeignKey('fta.id')))
     NDC_IDS              = Column(ARRAY(Integer, ForeignKey('ndc.id')))
     ACTIVE               = Column(Boolean, default=True)
     MODIFIED             = Column(Date, default=date.today)
-    RXCUI                = Column(String)
+    RXCUI                = Column(Integer)
+    TTY                  = Column(String)
+    CLASS_ID             = Column(String)
+    CLASS_NAME           = Column(String)
+
 
     @classmethod
     def find_by_name(cls, name, nonproprietary=True ):
@@ -135,3 +149,9 @@ class FTA(Base):
 
     def __repr__(self):
         return "<{}:{}>".format(self.id, self.PROPRIETARY_NAME )
+
+
+
+
+
+
