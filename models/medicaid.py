@@ -27,6 +27,7 @@ class Caresource(Base): # Drug_Name,Drug_Tier,Formulary_Restrictions
     Formulary_Restrictions = Column(String)
     PA_Reference           = Column(URLType)
     RXCUI                  = Column(Integer)
+    TTY                    = Column(String)
     modified               = Column(Date, nullable=False, default=date.today)
 
     @classmethod
@@ -87,6 +88,7 @@ class Molina(Base): # Generic_name,Brand_name,Formulary_Restrictions
     Formulary_Restrictions      = Column(String)
     PA_Reference                = Column(URLType)
     RXCUI                       = Column(Integer)
+    TTY                         = Column(String)
     modified                    = Column(Date, nullable=False, default=date.today)
 
     @classmethod
@@ -118,6 +120,7 @@ class Molina_Healthcare( Base ): # DRUG_NAME,PA_CODE,ALTERNATIVE_DRUG_CRITERIA
     PA_CODE                   = Column(String, nullable=False )
     ALTERNATIVE_DRUG_CRITERIA = Column(String)
     RXCUI                     = Column(Integer)
+    TTY                       = Column(String)
     modified                  = Column(Date, nullable=False, default=date.today)
 
     @classmethod

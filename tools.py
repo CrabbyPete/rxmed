@@ -144,6 +144,10 @@ def one_rxcui(name, relaSource=None, rela=None):
     :param rela:
     :return:
     """
+    if redis;
+        if name in redis:
+            return redis
+
     rxclass = RxClass()
 
     tty = 'IN'
@@ -155,6 +159,12 @@ def one_rxcui(name, relaSource=None, rela=None):
             return None
 
     result = results[0]
+    try:
+        result['RXCUI'] = int(result['RXCUI'])
+    except Exception as e:
+        result['RXCUI'] = None
+
+
     return result
 
 
@@ -195,9 +205,6 @@ def get_related_class(rxcui, class_id = None, relaSource = None, rela = None):
             related.append(fta.id)
 
     return related
-
-
-
 
 
 def get_related_drugs(name, force = False ):
