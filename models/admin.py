@@ -13,8 +13,6 @@ class FTAModelView(ModelView):
                               'PHARM_CLASSES',
                               'DRUG_RELASOURCE',
                               'DRUG_RELA',
-                              'DRUG_RELASOURCE_2',
-                              'DRUG_RELA_2',
                               'CLASS_ID',
                               'EXCLUDED_DRUGS_BACK',
                               'EXCLUDED_DRUGS_FRONT'

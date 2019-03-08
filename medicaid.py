@@ -57,10 +57,9 @@ def get_drug_list( drug_name ):
     :param drug_name:
     :return: set of drugs and excluded front end
     """
-    fta_list, excluded = get_related_drugs(drug_name,True)
-    drug_list = set([FTA.get(fta).PROPRIETARY_NAME for fta in fta_list])
-    drug_list.update([drug_name])
-    return set(drug_list), excluded
+
+    rxcui_list, excluded = get_related_drugs(drug_name, False)
+    return rxcui_list, excluded
 
 
 def caresource(drug_name):
@@ -74,13 +73,11 @@ def caresource(drug_name):
     pa = False
     included = False
 
-    #drug_name = drug_name.split()[0].lower()
-    drug_list, excluded = get_drug_list(drug_name)
+    rxcui_list, excluded = get_drug_list(drug_name)
 
     data = []
-    for drug in drug_list:
-        #records = Caresource.find_by_name(drug)
-        records = Caresource.find_by_rxcui(int(drug))
+    for rxcui in rxcui_list:
+        records = Caresource.find_by_rxcui(rxcui)
         for record in records:
             if front_end_excluded( record.Drug_Name, excluded ):
                 continue
@@ -113,11 +110,11 @@ def molina( drug_name ):
     included = False
 
     drug_name = drug_name.split()[0].lower()
-    drug_list, excluded = get_drug_list(drug_name)
+    rxcui_list, excluded = get_drug_list(drug_name)
 
     data = []
-    for drug in drug_list:
-        records = Molina.find_by_name(drug)
+    for rxcui in rxcui_list:
+        records = Molina.find_by_rxcui(rxcui)
         """
             if (Generic_name) has a capital word “PA”, 
             then retrieve its respective column B (Brand_name) [2018 Molina PDL 10_9_18]. 
@@ -168,12 +165,12 @@ def uhc_community( drug_name ):
     included = False
 
     drug_name = drug_name.split()[0].lower()
-    drug_list, excluded = get_drug_list(drug_name)
+    rxcui_list, excluded = get_drug_list(drug_name)
 
     data = []
-    for drug in drug_list:
+    for rxcui in rxcui_list:
 
-        records  = UHC.find_by_name(drug)
+        records  = UHC.find_by_rxcui(rxcui)
         for record in records:
 
             look_at = record.Brand if record.Brand else ''
@@ -210,11 +207,11 @@ def paramount( drug_name ):
     included = False
 
     drug_name = drug_name.split()[0].lower()
-    drug_list, excluded = get_drug_list(drug_name)
+    rxcui_list, excluded = get_drug_list(drug_name)
 
     data = []
-    for drug in drug_list:
-        records = Paramount.find_by_name(drug)
+    for rxcui in rxcui_list:
+        records = Paramount.find_by_rxcui(rxcui)
         for record in records:
 
             look_at = record.Brand_name if record.Brand_name else ''
@@ -260,23 +257,26 @@ def ohio_state( drug_name ):
     included = False
 
     drug_name = drug_name.split()[0].lower()
-    drug_list, excluded = get_drug_list(drug_name)
+    rxcui_list, excluded = get_drug_list(drug_name)
 
     data = []
-    for drug in drug_list:
-        records = OhioState.find_product(drug)
+    for rxcui in rxcui_list:
+        records = OhioState.find_by_rxcui(rxcui)
 
         if not records:
-            records = OhioStateAPI(drug)
+            records = OhioStateAPI(drug_name)
             save = True
         else:
             save = False
 
         for record in records:
+
             if save:
-                record['drug_name'] = drug
+                record['drug_name'] = drug_name
                 ohio = OhioState.get_or_create(**record)
                 ohio.save()
+            else:
+                record = row2dict(record)
 
             # Ignore records not active
             if not record['active']:
@@ -314,11 +314,11 @@ def buckeye( drug_name ):
     included = False
 
     drug_name = drug_name.split()[0].lower()
-    drug_list, excluded = get_drug_list(drug_name)
+    rxcui_list, excluded = get_drug_list(drug_name)
 
     data = []
-    for drug in drug_list:
-        records = Buckeye.find_by_name(drug)
+    for rxcui in rxcui_list:
+        records = Buckeye.find_by_rxcui(rxcui)
         for record in records:
 
             if front_end_excluded(record.Drug_Name, excluded):
@@ -381,7 +381,14 @@ if __name__ == "__main__":
     with Database(DATABASE) as db:
 
         # Medicaid
-        result = get_medicaid_plan("Admelog", "Caresource" )
+        #result = get_medicaid_plan("flovent", "Caresource")
+
+        result = get_medicaid_plan('Symbicort', 'Caresource')
+        #print(result)
+        #result = get_medicaid_plan("Admelog", "Caresource")
+        #result = get_medicaid_plan('fluticasone','Caresource')
+
+
         print( result )
         result = get_medicaid_plan('Qvar', 'OH State Medicaid')
         print(result)

@@ -116,7 +116,7 @@ class Database(object):
     """
     bulk_buffer = []
 
-    def __new__(cls,val):
+    def __new__(cls,*args, **kwargs):
         """
         Create a singleton
         :param val: the parameters passed in for __init__, ignore it

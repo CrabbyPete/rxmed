@@ -3,7 +3,7 @@ import json
 import requests
 
 from bs4 import BeautifulSoup
-from log import log
+from log import log,log_msg
 
 
 BASE_URL      = "https://rxnav.nlm.nih.gov/REST"
@@ -91,7 +91,11 @@ def get_historic_rxcui( rxcui ):
 
 class RxBase:
     def api(self, url, kwargs):
-        r = requests.get(url, params=kwargs)
+        try:
+            r = requests.get(url, params=kwargs)
+        except Exception as e:
+            log.exception(log_msg(f"Exception in api:{str(e)}"))
+            return None
 
         if r.ok:
             data = json.loads(r.text)
@@ -132,25 +136,22 @@ class RxNorm(RxBase):
         self.base_url = BASE_URL
         return
 
-
-    def getApproximateMatch(self, term):
+    def getApproximateMatch(self, **kwargs):
         """ Approximate match search to find closest strings
         :param term:
         :return:
         """
         url = self.base_url + '/approximateTerm.json'
-        kwargs = {'term':term}
         data = self.api(url, kwargs)
         return  walk(data,'approximateGroup')
 
 
-    def getAllProperties(self, rxcui):
+    def getAllProperties(self, rxcui, **kwargs):
         """ Return all properties for a concept
         :param rxcui: rxcui
         :return:
         """
         url = self.base_url +f"/rxcui/{rxcui}/allProperties.json"
-        kwargs = {}
         data = self.api(url, kwargs)
         return walk(data, "propConcept")
 
@@ -209,19 +210,21 @@ class RxNorm(RxBase):
         :return:
         """
         url = self.base_url + f'/rxcui/{rxcui}/related.json'
-
-        # You need to keep the + signs and not uuencode them
         if 'tty' in kwargs:
-            kwargs = "tty={}".format( kwargs['tty'] )
-
+            kwargs = f"tty={'+'.join(kwargs['tty'])}"
         data = self.api(url, kwargs)
-        return data
-
+        return walk(data,'relatedGroup')
 
 class RxClass(RxBase):
 
     def __init__(self):
         self.base_url = BASE_URL + '/rxclass'
+
+    def findClassById(self,class_id):
+        url = self.base_url + '/class/byId.json'
+        kwargs = {'classId': class_id}
+        data = self.api(url, kwargs)
+        return walk(data,'rxclassMinConcept')
 
 
     def findSimilarClassesByDrugList(self,rxcui):
@@ -269,7 +272,7 @@ class RxClass(RxBase):
         return walk(data,'rxclassDrugInfo')
 
 
-    def classMembers(self, classId, relaSource=None, rela=None, trans=0, ttys=None):
+    def classMembers(self, classId, **kwargs):
         """ Return class members of a drug
         :param:classId - the class identifier. Note that this is NOT an RxNorm identifier, but an identifier from the source vocabulary. See examples below.
         :param:relaSource - the source asserting the relationships between the drug members and the drug class. See table below for the valid sources.
@@ -279,13 +282,11 @@ class RxClass(RxBase):
         :return:
         """
         url = self.base_url + '/classMembers.json'
-        kwargs = {'classId':classId, 'trans':trans}
-        if relaSource:
-            kwargs['relaSource'] = relaSource
-        if rela:
-            kwargs['rela']=rela
-        if ttys:
-            kwargs['ttys']=ttys
+        kwargs['classId'] = classId
+        if 'ttys' in kwargs:
+            kwargs['ttys']= f"{'+'.join(kwargs['ttys'])}"
+
+        kwargs = "&".join("%s=%s" % (k, v) for k, v in kwargs.items())
 
         data = self.api( url, kwargs )
         return walk(data,'drugMember')

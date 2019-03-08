@@ -22,7 +22,7 @@ application = Flask(__name__, static_url_path='/static')
 application.config['SECRET_KEY'] = os.urandom(12)
 application.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
 
-db = Database( DATABASE )
+db = Database( DATABASE, schema='rxmed')
 db.open()
 
 # Build the admin pages

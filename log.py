@@ -29,5 +29,5 @@ rq_log.addHandler( file_handler )
 def log_msg( msg ):
     stack = inspect.stack()[1]
     file = os.path.basename( stack[1] ) 
-    msg =  '{} @ {}:{}'.format (msg, file, stack[2] )
+    msg =  '{} in {} line:{}'.format (msg, file, stack[2] )
     return msg 

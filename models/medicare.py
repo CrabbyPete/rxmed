@@ -3,16 +3,12 @@ import logging
 
 log = logging.getLogger(__name__)
 from sqlalchemy         import ( Column,
-                                ARRAY,
-                                Integer,
-                                DECIMAL,
-                                String,
-                                Text,
-                                Date,
-                                Boolean,
-                                ForeignKey,
-                                or_,
-                                and_
+                                 Integer,
+                                 DECIMAL,
+                                 String,
+                                 Date,
+                                 Boolean,
+                                 ForeignKey,
                               )
 
 from sqlalchemy.orm     import relationship
