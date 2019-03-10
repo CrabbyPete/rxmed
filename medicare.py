@@ -38,14 +38,13 @@ def beneficiary_costs(rxcui_list, plan):
     return bdbc_list
 
 
-def front_end_excluded( ndc, excluded:list)->bool:
+def front_end_excluded( drug, excluded:list)->bool:
     """
     Check if this record should be excluded
     :param ndc:
     :param excluded: list: names to exclude
     :return:
     """
-    drug = ndc.brand_name + ' '+ ndc.generic_name
     for ex in excluded:
         if len(ex) and ex in drug.lower():
             return True
@@ -63,7 +62,7 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
 
     # Get all related drugs
     results = []
-    drug_parts = drug_name.split('-')
+    drug_parts = [dp.strip() for dp in drug_name.split('-')]
 
     # Get the right fta record
     excluded = set()
@@ -110,12 +109,15 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
             full_name = term.get('fullName','')
             generic_name = term.get('fullGenericName','')
 
+            if front_end_excluded(full_name, excluded):
+                continue
+
             if bd.PRIOR_AUTHORIZATION_YN:
                 pa = 'Yes'
             else:
                 pa = 'No'
-                if drug_name.lower() in full_name.lower() or \
-                   drug_name.lower() in generic_name.lower():
+                if drug_parts[0] in full_name.lower() or \
+                   drug_parts[0] in generic_name.lower():
                     prior_authorize = False
 
             if bd.STEP_THERAPY_YN:
