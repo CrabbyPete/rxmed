@@ -58,13 +58,21 @@ class Basic_Drugs(Base):
 
 
     @classmethod
+    def get_by_rxcui(cls, rxcui):
+        if not rxcui:
+            return None
+        qry = cls.session.query(cls).filter(cls.RXCUI == rxcui)
+        return qry.all()
+
+
+    @classmethod
     def get_by_ndc(cls, ndc_id, formulary_id):
         qry = cls.session.query(cls).filter(cls.NDC_id == ndc_id, cls.FORMULARY_ID == formulary_id)
         return qry.all()
 
 
     def __repr__(self):
-        return "<{}>".format(self.FORMULARY_ID)
+        return "<{}:{}>".format(self.FORMULARY_ID,self.RXCUI)
 
 
 class NDC_BD(Base):

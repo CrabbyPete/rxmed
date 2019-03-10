@@ -3,6 +3,7 @@ import pandas as pd
 from functools  import lru_cache
 
 from log              import log, log_msg
+from api              import RxTerm
 from tools            import get_related, get_plan
 from models.fta       import FTA, NDC, OpenNDC
 from models.medicare  import Beneficiary_Costs, Basic_Drugs
@@ -66,9 +67,14 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
 
     # Get the right fta record
     excluded = set()
+    rxcui_list = set()
     fta_list = FTA.find_by_name(drug_parts[0], drug_parts[1] if len(drug_parts)==2 else None)
-    fta_ids = set([fta.id for fta in fta_list])
+
+
     for fta in fta_list:
+
+        if fta.SBD_RXCUI:
+            rxcui_list.update(fta.SBD_RXCUI)
 
         # Get the excluded list
         if fta.EXCLUDED_DRUGS_FRONT:
@@ -81,29 +87,15 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
             related = get_related(fta)
 
         # Get all the FTA's for those related rxcui's
-        fta_ids.update( [fta.id for rxcui in related for fta in FTA.find_rxcui(rxcui)] )
-
-    # Match up all the NDCs
-    ndc_list = set()
-    for fta_id in fta_ids:
-        fta = FTA.get(fta_id)
-        if fta.NDC_IDS:
-            ndc_list.update(fta.NDC_IDS)
-        else:
-            ndc_list.update([ndc.id for ndc in OpenNDC.find_by_name(fta.PROPRIETARY_NAME,fta.NONPROPRIETARY_NAME)] )
-
-    # Get all the rxcuis in each NDC
-    rxcui_list = set()
-    for ndc_id in ndc_list:
-        ndc = OpenNDC.get(ndc_id)
-        if front_end_excluded( ndc, excluded):
-            continue
-        if ndc.rxcui:
-            rxcui_list.update([rxcui for rxcui in ndc.rxcui ])
+        for rxcui in related:
+            for related_fta in FTA.find_rxcui(rxcui):
+                if related_fta.SBD_RXCUI:
+                    rxcui_list.update(related_fta.SBD_RXCUI)
 
     # Match up the beneficiary file with the plan and the rxcui from the ndc
     prior_authorize = True
     bdbc_list = beneficiary_costs(rxcui_list, plan)
+    rxterm = RxTerm()
     for bd,bc in bdbc_list:
         if not bd:
             """
@@ -114,12 +106,16 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
             """
             continue
         else:
+            term = rxterm.getAllRxTermInfo(bd.RXCUI)
+            full_name = term.get('fullName','')
+            generic_name = term.get('fullGenericName','')
+
             if bd.PRIOR_AUTHORIZATION_YN:
                 pa = 'Yes'
             else:
                 pa = 'No'
-                if drug_name.lower() in ndc.brand_name.lower() or \
-                   drug_name.lower() in ndc.generic_name.lower():
+                if drug_name.lower() in full_name.lower() or \
+                   drug_name.lower() in generic_name.lower():
                     prior_authorize = False
 
             if bd.STEP_THERAPY_YN:
@@ -144,13 +140,8 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
                     copay_d = "${:.2f}".format(c.COST_AMT_PREF)
                     cover   = "${:.2f}".format(c.COST_AMT_NONPREF)
 
-        try:
-            dose = ndc.active_ingredients[0]['strength']
-        except:
-            dose = ''
-
-        result = {'Brand': f"{ndc.brand_name} {dose}",
-                  'Generic': ndc.generic_name,
+        result = {'Brand': full_name,
+                  'Generic': generic_name,
                   'Tier': tier,
                   'ST': st,
                   'QL': ql,
