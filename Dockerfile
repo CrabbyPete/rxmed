@@ -34,4 +34,5 @@ ADD . /app
 # the default command to run when running this container. This should
 # be the command to run the service as it will be what runs when the
 # operations platform deploys the service.
-CMD uwsgi -i wsgi.ini
+#CMD uwsgi -i wsgi.ini
+CMD python3 main.py 

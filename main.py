@@ -14,7 +14,11 @@ from models.admin       import *
 from medicaid           import get_medicaid_plan
 from medicare           import get_medicare_plan
 
-from settings           import DATABASE
+try:
+    from settings       import DATABASE
+except:
+    import testing.postgresql
+    DATABASE = testing.postgresql.Postgresql().url
 
 from user               import init_user
 

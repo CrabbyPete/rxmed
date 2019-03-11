@@ -9,6 +9,13 @@ class FTAModelView(ModelView):
     form_excluded_columns  = ['NDC_IDS']
     column_searchable_list = ['PROPRIETARY_NAME','NONPROPRIETARY_NAME']
 
+    def on_model_change(self, form, model, is_created):
+
+        model.RELATED_DRUGS = [int(d) for d in model.RELATED_DRUGS]
+        model.SBD_RXCUI = [int(d) for d in model.SBD_RXCUI]
+        pass
+
+
 
 class MolinaView(ModelView):
     can_delete = False
