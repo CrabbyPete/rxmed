@@ -8,7 +8,6 @@ from sqlalchemy.orm.exc import NoResultFound
 
 log = logging.getLogger('db.log')
 
-
 class BaseMixin(object):
     """ Base class mixin to handle everything for Session
     """
@@ -116,7 +115,7 @@ class Database(object):
     """
     bulk_buffer = []
 
-    def __new__(cls,*args, **kwargs):
+    def __new__(cls, *args, **kwargs):
         """
         Create a singleton
         :param val: the parameters passed in for __init__, ignore it

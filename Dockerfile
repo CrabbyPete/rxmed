@@ -23,7 +23,7 @@ ADD ./wsgi.ini /app/wsgi.ini
 
 # Run all commands from this folder. This is where the service will be
 # located after the last step copies the files in.
-
+EXPOSE 5000
 WORKDIR /app
 RUN mkdir files/
 RUN pip3 install -r requirements.txt

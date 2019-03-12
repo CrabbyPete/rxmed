@@ -1,7 +1,15 @@
 import pytest
-from main import application
+import testing.postgresql
 
+from models.base import Database
 
+DATABASE = testing.postgresql.Postgresql().url()
+
+def test_models():
+    with Database(DATABASE) as db:
+        pass
+
+'''
 @pytest.fixture
 def client(request):
     application.config['TESTING'] = True
@@ -19,3 +27,4 @@ def test_empty_db(client):
     """Start with a blank database."""
     rv = client.get('/')
     assert(True)
+'''

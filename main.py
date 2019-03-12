@@ -14,11 +14,7 @@ from models.admin       import *
 from medicaid           import get_medicaid_plan
 from medicare           import get_medicare_plan
 
-try:
-    from settings       import DATABASE
-except:
-    import testing.postgresql
-    DATABASE = testing.postgresql.Postgresql().url
+from settings       import DATABASE
 
 from user               import init_user
 
@@ -125,27 +121,7 @@ def formulary_id():
         results = tools.get_formulary_id(request.args['plan_name'],
                                          request.args['zipcode' ]
                                         )
-
     return jsonify( results )
-
-
-@application.route('/ndc_drugs', methods=['GET'])
-def ndc_drugs():
-    """ NDC lookup API
-    Type ahead for ncd drugs
-    :return json: a list of drugs from ncd
-    """
-    results = set()
-    if 'qry' in request.args:
-        look_for = request.args['qry']
-        drug_list = NDC.session.query(NDC).filter(NDC.PROPRIETARY_NAME.ilike(f'{look_for.lower()}%'))
-        for d in drug_list:
-            s = d.PROPRIETARY_NAME
-            if d.DOSE_STRENGTH and d.DOSE_UNIT:
-                s += f" {d.DOSE_STRENGTH} {d.DOSE_UNIT}"
-            results.update([s])
-    
-    return jsonify(list(results))
 
 
 @application.route('/drug_names', methods=['GET'])

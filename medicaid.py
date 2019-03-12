@@ -51,13 +51,12 @@ def reform_data( data, heading ):
     return result
 
 
-def get_drug_list( drug_name ):
+def get_drug_list(drug_name):
     """
     Get all the alternative drugs
     :param drug_name:
     :return: set of drugs and excluded front end
     """
-
     rxcui_list, excluded = get_related_drugs(drug_name, False)
     return rxcui_list, excluded
 
@@ -73,6 +72,7 @@ def caresource(drug_name):
     pa = False
     included = False
 
+    drug_name = drug_name.split()[0].lower()
     rxcui_list, excluded = get_drug_list(drug_name)
 
     data = []
@@ -111,6 +111,7 @@ def molina( drug_name ):
 
     drug_name = drug_name.split()[0].lower()
     rxcui_list, excluded = get_drug_list(drug_name)
+    brand_name = drug_name.split('-')[0]
 
     data = []
     for rxcui in rxcui_list:
@@ -166,6 +167,7 @@ def uhc_community( drug_name ):
 
     drug_name = drug_name.split()[0].lower()
     rxcui_list, excluded = get_drug_list(drug_name)
+    brand_name = drug_name.split('-')[0]
 
     data = []
     for rxcui in rxcui_list:
