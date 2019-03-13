@@ -11,6 +11,7 @@ from flask_login            import ( LoginManager,
                                      logout_user,
                                      current_user
                                    )
+
 from models.user            import User
 
 from forms                  import SignInForm, SignUpForm, ForgotForm

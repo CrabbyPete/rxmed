@@ -26,7 +26,7 @@ class User( Base ):
 
     @validates('email')
     def validate_email(self, key, address):
-        if re.match("^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", address):
+        if re.match(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$", address):
             return address
         return False
 
