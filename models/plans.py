@@ -16,14 +16,14 @@ from .base              import Base
 class Geolocate(Base):
     __tablename__ = 'geolocate'
 
-    id              = Column( Integer, primary_key= True )
-    COUNTY_CODE     = Column( Integer )
-    STATENAME       = Column( String )
-    COUNTY          = Column( String )
-    MA_REGION_CODE  = Column( String )
-    MA_REGION       = Column( String )
-    PDP_REGION_CODE = Column( Integer )
-    PDP_REGION      = Column( String )
+    id              = Column(Integer, primary_key= True )
+    COUNTY_CODE     = Column(Integer)
+    STATENAME       = Column(String)
+    COUNTY          = Column(String)
+    MA_REGION_CODE  = Column(Integer)
+    MA_REGION       = Column(String)
+    PDP_REGION_CODE = Column(Integer)
+    PDP_REGION      = Column(String)
 
     def __repr__(self):
         return "<{},{}>".format(self.STATENAME, self.COUNTY)
@@ -31,14 +31,14 @@ class Geolocate(Base):
 
 class Zipcode(Base):
     __tablename__ = 'zipcode'
-    id          = Column( Integer, primary_key= True )
-    ZIPCODE     = Column( String )
-    CITY        = Column( String )
-    STATE       = Column( String )
-    STATENAME   = Column( String )
-    COUNTY      = Column( String )
-    GEO_id      = Column( Integer, ForeignKey('geolocate.id') )
-    GEO         = relationship( Geolocate, primaryjoin = GEO_id == Geolocate.id )
+    id          = Column(Integer, primary_key= True )
+    ZIPCODE     = Column(String)
+    CITY        = Column(String)
+    STATE       = Column(String)
+    STATENAME   = Column(String)
+    COUNTY      = Column(String)
+    GEO_id      = Column(Integer, ForeignKey('geolocate.id'))
+    GEO         = relationship( Geolocate, primaryjoin = GEO_id == Geolocate.id)
 
     @classmethod
     def find_one(cls, zipcode ):
@@ -57,24 +57,23 @@ class Zipcode(Base):
 class Plans(Base):
     __tablename__ = 'plans'
 
-    id                  = Column( Integer, primary_key= True )
-    CONTRACT_ID         = Column( String )
-    PLAN_ID             = Column( Integer )
-    SEGMENT_ID          = Column( String )
-    CONTRACT_NAME       = Column( String )
-    PLAN_NAME           = Column( String )
-    FORMULARY_ID        = Column( Integer )
-    PREMIUM             = Column( DECIMAL(precision=8,asdecimal=True,scale=2), nullable=True)
-    DEDUCTIBLE          = Column( DECIMAL(precision=8,asdecimal=True,scale=2), nullable=True)
-    ICL                 = Column( Integer, nullable= True )
-    MA_REGION_CODE      = Column( String, nullable= True  )
-    PDP_REGION_CODE     = Column( String, nullable= True  )
-    STATE               = Column( String )
-    COUNTY_CODE         = Column( String )
-    SNP                 = Column( Integer, nullable=True)
-    PLAN_SUPPRESSED_YN  = Column( Boolean )
-    GEO_ids             = Column( ARRAY( Integer, ForeignKey('geolocate.id') ) )
-
+    id                  = Column(Integer, primary_key= True)
+    CONTRACT_ID         = Column(String)
+    PLAN_ID             = Column(Integer)
+    SEGMENT_ID          = Column(String)
+    CONTRACT_NAME       = Column(String)
+    PLAN_NAME           = Column(String)
+    FORMULARY_ID        = Column(Integer)
+    PREMIUM             = Column( DECIMAL(precision=8, asdecimal=True,scale=2), nullable=True)
+    DEDUCTIBLE          = Column(DECIMAL(precision=8, asdecimal=True,scale=2), nullable=True)
+    ICL                 = Column(Integer, nullable= True)
+    MA_REGION_CODE      = Column(Integer)
+    PDP_REGION_CODE     = Column(Integer)
+    STATE               = Column(String)
+    COUNTY_CODE         = Column(Integer)
+    SNP                 = Column(Integer, nullable=True)
+    PLAN_SUPPRESSED_YN  = Column( Boolean)
+    GEO_ids             = Column( ARRAY( Integer, ForeignKey('geolocate.id')))
 
     @classmethod
     def find_by_formulary_id(cls, fid):
@@ -111,10 +110,9 @@ class Plans(Base):
         """
         Query plans in a certain county
         """
-        county_code = f"%{county_code}%"
-        flter = or_(cls.COUNTY_CODE.ilike(county_code),
-                    cls.MA_REGION_CODE.ilike(ma_region),
-                    cls.PDP_REGION_CODE == str(pdp_region)
+        flter = or_(cls.COUNTY_CODE == county_code,
+                    cls.MA_REGION_CODE == ma_region,
+                    cls.PDP_REGION_CODE == pdp_region
                     )
         if not name == '*':
             look_for = f"{name.lower()}%"

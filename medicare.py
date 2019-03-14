@@ -165,6 +165,7 @@ if __name__ == "__main__":
 
     with Database(DATABASE) as db:
 
+        result = get_medicare_plan("tresiba - insulin degludec injection","Aetna Medicare NJ Silver Plan (Regional PPO)","07040")
         result = get_medicare_plan( "Victoza", "Anthem MediBlue Essential (HMO)", '43202')
         print(result)
         result = get_medicare_plan('Levemir','SilverScript Plus (PDP)','07040')

@@ -1,5 +1,6 @@
 import re
 import json
+import yaml
 import requests
 
 from bs4 import BeautifulSoup
@@ -295,24 +296,52 @@ class RxClass(RxBase):
 """
 Open FDA API
 """
+
+FIELDS = ('product_id',
+          'product_ndc',
+          'spl_id',
+          'product_type',
+          'finished',
+          'brand_name',
+          'brand_name_base',
+          'brand_name_suffix',
+          'generic_name',
+          'dosage_form',
+          'route',
+          'marketing_start_date',
+          'marketing_end_date',
+          'marketing_category',
+          'application_number',
+          'active_ingredients',
+          'pharm_class',
+          'dea_schedule',
+          'listing_expiration_date',
+          'packaging',
+          'openfda')
+
+
 class FDA(RxBase):
     base_url = OPENFDA_URL
 
-    def open_fda(self, brand_name, generic_name = None, look_for = None ):
+    def open_fda(self, kwargs:dict):
         """ Use Open FDA to find a drug
         :param brand_name:
         :param generic_name:
         :return:
         """
-        search = f'brand_name:"{brand_name}"'
-        if generic_name:
-            search += f'+AND+generic_name:"{generic_name}"'
+        search = None
+        for k,v in kwargs.items():
+            if k in FIELDS:
+                if not search:
+                    search = f'{k}:"{v}"'
+                else:
+                    search +=f'+AND+{k}:"{v}"'
 
         url = OPENFDA_URL.format(search)
         data = self.api( url, {})
 
-        if look_for:
-            return walk(data, look_for)
+        if 'look_for' in kwargs.keys():
+            return walk(data, kwargs['look_for'])
 
         try:
             return data['results']
