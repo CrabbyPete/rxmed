@@ -1,23 +1,16 @@
 import json
 import pandas as pd
 
-from api             import OhioStateAPI
+from api             import OhioStateAPI, RxNorm
+from log             import log
 from tools           import get_related_drugs
 
-from models          import FTA
-from models.medicaid import Caresource, Molina, Molina_Healthcare, Paramount, Buckeye, UHC, OhioState
-
-""" Select in the HTML
-        <option>Buckeye Health Plan</option>
-        <option>Caresource</option>
-        <option>OH State Medicaid</option>
-        <option>UHC Community Health Plan</option>
-        <option>Molina Healthcare</option>
-        <option>Paramount Advantage</option>
-"""
+from models          import FTA, OpenPlans
+from models.medicaid import OhioState
 
 row2dict = lambda r: {c.name: str(getattr(r, c.name)) for c in r.__table__.columns}
 
+rxnorm = RxNorm()
 
 def front_end_excluded( drug, excluded:list)->bool:
     """ Check if this record should be excluded
@@ -61,184 +54,84 @@ def get_drug_list(drug_name):
     return rxcui_list, excluded
 
 
-def caresource(drug_name):
-    """
-    Get all the alternatives for Caresource
-    :param drug_name:
+def get_sdb_scd( rxcui ):
+    """ Get the SBD/SCD for a rxcui
+
+    :param rxcui:
     :return:
     """
-    heading = ['Drug Name', 'Drug Tier', 'Formulary Restrictions', 'PA Reference']
+    scd = []
+    sbd = []
+
+    related = rxnorm.getRelatedByType(rxcui,tty=['SBD','SCD'])
+    if related:
+        if 'conceptGroup' in related:
+            for info in related['conceptGroup']:
+                if info['tty'] == 'SCD':
+                    scd = [ int(cp['rxcui']) for cp in info.get('conceptProperties','') ]
+
+                elif info['tty'] == 'SBD':
+                    sbd = [ int(cp['rxcui']) for cp in info.get('conceptProperties',[]) ]
+    return sbd, scd
+
+
+def all_plans(drug_name, plan_name, state):
+
+    heading = ['Drug Name', 'Drug Tier','Step Therapy', 'Quantity Limit','Prior Authorization']
 
     pa = False
     included = False
 
     drug_name = drug_name.split()[0].lower()
-    rxcui_list, excluded = get_drug_list(drug_name)
+    fta_list = FTA.find_by_name(drug_name)
+
+    # Get all the SCD and SBD rxcui for this and related
+    rxcui_list = set()
+    excluded = set()
+
+    if fta_list:
+        for fta in fta_list:
+            excluded.update([s.strip() for s in fta.EXCLUDED_DRUGS_FRONT.lower().split("|") if s.strip()])
+            if fta.SCD:
+                rxcui_list.update(fta.SCD)
+            if fta.SBD:
+                rxcui_list.update(fta.SBD)
+
+            if fta.RELATED_DRUGS:
+                rxcui_list.update(fta.RELATED_DRUGS)
+                for rxcui in fta.RELATED_DRUGS:
+                    sbd, scd = get_sdb_scd( rxcui )
+                    rxcui_list.update( sbd + scd )
+    try:
+        records = OpenPlans.session.query(OpenPlans).filter(OpenPlans.state == state,
+                                                            OpenPlans.plan_name == plan_name,
+                                                            OpenPlans.rxnorm_id.in_(rxcui_list)).all()
+    except Exception as e:
+        log.error(f"OpenPlans query exception {str(e)}")
+        records = []
 
     data = []
-    for rxcui in rxcui_list:
-        records = Caresource.find_by_rxcui(rxcui)
-        for record in records:
-            if front_end_excluded( record.Drug_Name, excluded ):
-                continue
-
-            record = row2dict(record)
-            if drug_name in record['Drug_Name'].lower():
-                included = True
-                if 'PA' in record['Formulary_Restrictions']:
-                    pa = True
-
-            data.append(reform_data(record, heading))
+    pa = False
+    included = False
+    for record in records:
+        name = record.drug.NAME
+        if front_end_excluded(name, excluded):
+            continue
+        new_record = row2dict(record)
+        new_record['Drug Name'] = name
+        if drug_name in name.lower():
+            included = True
+            if new_record['prior_authorization'] == 'True':
+                pa = True
+        data.append(reform_data(new_record, heading))
 
     if not included:
         pa = True
 
     if data:
         data = pd.DataFrame(data).drop_duplicates().to_dict('records')
+
     return {'data': data, 'pa':pa, 'heading':heading}
-
-
-def molina( drug_name ):
-    """
-    Return results from Molina
-    :param drug_name:
-    :return:
-    """
-    heading = ['Brand Name', 'Generic Name', 'Formulary Restrictions']
-
-    pa = False
-    included = False
-
-    drug_name = drug_name.split()[0].lower()
-    rxcui_list, excluded = get_drug_list(drug_name)
-    brand_name = drug_name.split('-')[0]
-
-    data = []
-    for rxcui in rxcui_list:
-        records = Molina.find_by_rxcui(rxcui)
-        """
-            if (Generic_name) has a capital word “PA”, 
-            then retrieve its respective column B (Brand_name) [2018 Molina PDL 10_9_18]. 
-            Match (first word match), to [Molina Healthcare PA criteria 10_1_18].DRUG_NAME). 
-        """
-        for record in records:
-            look_at = record.Brand_name if record.Brand_name else ''
-            if isinstance(record.Generic_name, str):
-                look_at += " "+record.Generic_name
-            if front_end_excluded(look_at, excluded):
-                continue
-
-            record = row2dict(record)
-            name = record['Generic_name']
-            name = name.split(',')[0] if ',' in name else name
-            if name.endswith("PA"):
-                try:
-                    adc = Molina_Healthcare.find_brand(record['Brand_name'])[0]
-                    record['Note'] = adc['ALTERNATIVE_DRUG_CRITERIA']
-                except:
-                    record['Note'] = ''
-            else:
-                record['Note'] = ''
-
-            if 'prior' in record['Formulary_Restrictions'] or 'PA' in record['Generic_name']:
-                record['Formulary_restriction'] = 'PA'
-
-            if drug_name in record['Brand_name'].lower() or \
-               drug_name in record['Generic_name'].lower():
-                    included = True
-                    if 'PA' in record['Formulary_Restrictions']:
-                        pa = True
-
-            data.append(reform_data(record, heading))
-
-    if not included:
-        pa = True
-
-    if data:
-        data = pd.DataFrame(data).drop_duplicates().to_dict('records')
-    return {'data':data, 'pa':pa, 'heading':heading}
-
-
-def uhc_community( drug_name ):
-    heading = ['Brand', 'Generic','Tier','Formulary Restrictions']
-
-    pa = False
-    included = False
-
-    drug_name = drug_name.split()[0].lower()
-    rxcui_list, excluded = get_drug_list(drug_name)
-    brand_name = drug_name.split('-')[0]
-
-    data = []
-    for rxcui in rxcui_list:
-
-        records  = UHC.find_by_rxcui(rxcui)
-        for record in records:
-
-            look_at = record.Brand if record.Brand else ''
-            if isinstance(record.Generic, str):
-                look_at += ' '+record.Generic
-            if front_end_excluded(look_at, excluded):
-                continue
-
-            record = row2dict(record)
-            if drug_name in record['Brand'].lower() or \
-               drug_name in record['Generic'].lower():
-                    included = True
-                    if 'PA' in record['Formulary_Restrictions']:
-                        pa = True
-
-            data.append(reform_data(record,heading))
-
-    if not included:
-        pa = True
-
-    if data:
-        data = pd.DataFrame(data).drop_duplicates().to_dict('records')
-    return {'data': data, 'pa': pa, 'heading':heading}
-
-
-def paramount( drug_name ):
-    """ Return all results for Paramount
-    :param drug_name:
-    :return: dict:
-    """
-    heading = ['Brand Name', 'Generic Name', 'Formulary Restrictions']
-
-    pa = False
-    included = False
-
-    drug_name = drug_name.split()[0].lower()
-    rxcui_list, excluded = get_drug_list(drug_name)
-
-    data = []
-    for rxcui in rxcui_list:
-        records = Paramount.find_by_rxcui(rxcui)
-        for record in records:
-
-            look_at = record.Brand_name if record.Brand_name else ''
-            if isinstance(record.Generic_name, str):
-                look_at += " "+record.Generic_name
-            if front_end_excluded(look_at, excluded ):
-                continue
-
-            record = row2dict(record)
-            record['Formulary_Restrictions'] = record['Formulary_restriction']
-            if drug_name in record['Brand_name'].lower() or \
-               drug_name in record['Generic_name'].lower():
-                included = True
-                if 'PA' in record['Formulary_restriction']:
-                    pa = True
-
-            data.append(reform_data(record, heading))
-
-    if not included:
-        pa = True
-
-    if data:
-        data = pd.DataFrame(data).drop_duplicates().to_dict('records')
-
-    return { 'data':data, 'pa':pa, 'heading':heading }
 
 
 def ohio_state( drug_name ):
@@ -309,72 +202,17 @@ def ohio_state( drug_name ):
     return { 'data':data, 'pa':pa, 'heading':heading }
 
 
-def buckeye( drug_name ):
-    heading = ['Drug Name', 'Preferred Agent', 'Formulary Restrictions']
-
-    pa = False
-    included = False
-
-    drug_name = drug_name.split()[0].lower()
-    rxcui_list, excluded = get_drug_list(drug_name)
-
-    data = []
-    for rxcui in rxcui_list:
-        records = Buckeye.find_by_rxcui(rxcui)
-        for record in records:
-
-            if front_end_excluded(record.Drug_Name, excluded):
-                continue
-
-            record = row2dict(record)
-
-            if record['DrugTier'] == "***":
-                record['Preferred_Agent'] = "No"
-            else:
-                record['Preferred_Agent'] = "Yes"
-
-            record['Formulary_Restrictions'] = record['Requirements_Limits']
-            if drug_name in record['Drug_Name'].lower():
-                included = True
-                if 'PA' in record['Requirements_Limits']:
-                    pa = True
-
-            data.append(reform_data(record, heading))
-
-    if not included:
-        pa = True
-
-    if data:
-        data = pd.DataFrame(data).drop_duplicates().to_dict('records')
-    return {'data':data, 'pa':pa, 'heading':heading}
-
-
-def get_medicaid_plan( drug_name, plan_name ):
+def get_medicaid_plan( drug_name, plan_name, state = None ):
     """Get the plan by its name
     :param plan_name: plan name from the select option
     :param drug_name: drug name the user selected
     :return: dict:
     """
-    if plan_name == 'Buckeye Health Plan':
-        return buckeye( drug_name )
-
-    elif plan_name == 'Caresource':
-        return caresource( drug_name )
-
-    elif plan_name == 'OH State Medicaid':
+    if plan_name == 'OH State Medicaid':
         return ohio_state( drug_name )
-
-    elif plan_name == 'UHC Community Health Plan':
-        return uhc_community( drug_name )
-
-    elif plan_name == 'Molina Healthcare':
-        return molina( drug_name )
-
-    elif plan_name == 'Paramount Advantage':
-        return paramount( drug_name )
-
     else:
-        return None
+        return all_plans(drug_name, plan_name, state = 'OH')
+
 
 if __name__ == "__main__":
     from settings      import DATABASE
@@ -385,9 +223,9 @@ if __name__ == "__main__":
         # Medicaid
         #result = get_medicaid_plan("flovent", "Caresource")
 
-        result = get_medicaid_plan('Symbicort', 'Caresource')
+        #result = get_medicaid_plan('Symbicort', 'CARESOURCE', 'OH')
         #print(result)
-        #result = get_medicaid_plan("Admelog", "Caresource")
+        result = get_medicaid_plan("Admelog", "Caresource (OH Medicaid)", 'OH')
         #result = get_medicaid_plan('fluticasone','Caresource')
 
 

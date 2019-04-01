@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+{% block body_block %}
+  <div class="container">
+    <style type="text/css">
+    .drug-red {
+      border-radius: 5px;
+      height: 124px;
+      border: 1px solid #dc3545;
+      background-color: #fff;
+    }
+    .green-red {
+      border-radius: 5px;
+      height: 124px;
+      border: 1px solid #28a745 !important;
+      background-color: #fff;
+    }
+    </style>
+
+    <!--Drug info div start here-->
+    <div class="row" style="margin-top: 30px;">
+      <!--
+      <div class="col-sm-1"></div>
+      -->
+      {% if pa %}
+      <div class="col-sm-5" style="margin-bottom: 10px;">
+        <!--Red Drug Div info div start here-->
+        <div class="drug-red text-center">
+          <p class="drug-red-head text-danger" style="margin-top: 10px">The drug is not covered</p>
+          <span>{{drug}} is not covered by {{plan}} and/or requires a prior authorization.</span>
+        </div>
+        <!--Red Drug Div info div end here-->
+      </div>
+      {% else %}
+      <div class="col-sm-5">
+        <!--Green Drug Div info div end here-->
+        <div class="green-red text-center">
+          <p class="green-red-head text-success" style="margin-top: 10px">The drug is covered</p>
+          <span>The {{drug}} is covered by the {{plan}}</span>
+        </div>
+        <!--Green Drug Div info div end here-->
+      </div>
+      <div class="col-sm-1"></div>
+      {% endif %}
+    </div>
+    <!--Drug info div end here-->
+
+    <div class="row justify-content-center mt-5">
+      <h1 id="table-header">{{drug.capitalize()}}</h1>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered" id="table-medicaid">
+        <thead id="medicaidhead">
+          <tr>
+              {% for h in head %}
+                <th scope="col">{{h}}</th>
+              {% endfor %}
+          </tr>
+        </thead>
+        <tbody id="medicaidbody">
+        {% for row in data %}
+          {% if row[-1] in ('True','Yes') %}
+            <tr bgcolor="pink" align="center">
+          {% else %}
+            <tr bgcolor="lightgreen" align="center">
+          {% endif %}
+          {% for cell in row %}
+            <td>{{cell}}</td>
+          {% endfor %}
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endblock %}

@@ -7,14 +7,14 @@ from flask_admin        import Admin
 
 from log                import log, rq_log
 
-from models             import Plans, NDC, FTA
-from models.base        import Database
+from models             import Plans, FTA, OpenPlans, Database
 from models.admin       import *
 
+from forms              import MedForm
 from medicaid           import get_medicaid_plan
 from medicare           import get_medicare_plan
 
-from settings       import DATABASE
+from settings           import DATABASE
 
 from user               import init_user
 
@@ -47,15 +47,40 @@ def home():
     """
     return render_template('home.html')
 
-
-@application.route('/fit')
+@application.route('/fit', methods=['POST','GET'])
 def fit():
-    """
-    Get medicaid results
+    """ Form submit of meds
     :return:
     """
-    context = {}
-    return render_template( 'fit.html', **context )
+    form = MedForm(request.form)
+    if request.method == 'POST' and form.validate():
+        zipcode = form.zipcode.data
+        # Check the zipcode
+
+        plan = form.plan.data
+        medication = form.medication.data
+
+        # Process either medicare or medicaid
+        if form.plan_type.data == 'medicare':
+            table = get_medicare_plan(medication, plan, zipcode)
+        else:
+            table = get_medicaid_plan(medication, plan)
+
+        # You have to order the data in a list or it won't show right
+        data = []
+        for item in table['data']:
+            row = [item[h] for h in table['heading']]
+            data.append(row)
+
+        context = {'data':data, 'head':table['heading'], 'drug':medication, 'pa': table['pa'], 'plan':plan }
+        html = 'table.html'
+    else:
+        # Not a POST or errors
+        context = {'form': form}
+        html = 'med.html'
+
+    content = render_template(html, **context)
+    return content
 
 
 # Ajax calls
@@ -66,28 +91,47 @@ def plans():
     :return: json list of plan names
     """
     results = []
-    if not 'zipcode' in request.args or request.args['zipcode'] == "":
-        results = ['Caresource',
-                   'Paramount Advantage',
-                   'Molina Healthcare',
-                   'UHC Community Plan',
-                   'OH State Medicaid',
-                   'Buckeye Health Plan'
-                  ]
-    else:
-        if 'qry' in request.args:
-            look_for = request.args['qry']
-            zipcode = request.args['zipcode']
+    if 'qry' in request.args:
+        look_for = request.args['qry']
+        zipcode = request.args['zipcode']
 
-            look_in = tools.get_location( zipcode )
-            if look_in:
-                county_code = look_in.GEO.COUNTY_CODE
-                ma_region   = look_in.GEO.MA_REGION_CODE
-                pdp_region  = look_in.GEO.PDP_REGION_CODE
-            
+        try:
+            plan = request.args['plan']
+        except KeyError:
+            return None
+
+        # If this is a medicaid or private plan
+        where = tools.get_location(zipcode)
+        if where:
+            if plan in ('medicaid', 'private'):
+                state = where.STATE
+                results = OpenPlans.session.query(OpenPlans.plan_name).filter(OpenPlans.state == state).distinct().all()
+                results = [r[0] for r in results]
+            elif plan == 'medicare':
+                county_code = where.GEO.COUNTY_CODE
+                ma_region = where.GEO.MA_REGION_CODE
+                pdp_region = where.GEO.PDP_REGION_CODE
                 results = Plans.find_in_county(county_code, ma_region, pdp_region, look_for)
-   
-    return jsonify(results)
+
+    return jsonify(sorted(results))
+
+
+@application.route('/open_plans')
+def open_plans():
+    """
+
+    :return:
+    """
+    results = []
+    if 'qry' in request.args:
+        look_for = request.args['qry']
+        zipcode = request.args['zipcode']
+
+        zip_info = tools.get_location(zipcode)
+        state = zip_info.STATE
+        results = OpenPlans.session.query(OpenPlans.plan_name).filter(OpenPlans.state == state).distinct().all()
+        plans = ((r[0] for r in results))
+        return sorted(plans)
 
 
 @application.route('/related_drugs')
@@ -190,5 +234,5 @@ def medicare_options():
 
 
 if __name__ == "__main__":
-    application.run(host='0.0.0.0', port=5000, debug=True)
+    application.run(host='0.0.0.0', port=5000, debug=False)
 

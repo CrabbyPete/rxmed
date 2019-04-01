@@ -16,35 +16,6 @@ class FTAModelView(ModelView):
         pass
 
 
-
-class MolinaView(ModelView):
-    can_delete = False
-    column_searchable_list = ['Brand_name','Generic_name']
-
-
-class CaresourceView(ModelView):
-    can_delete = False
-    column_searchable_list = ['Drug_Name']
-
-
-class BuckeyeView(ModelView):
-    can_delete = False
-    column_searchable_list = ['Drug_Name']
-
-class ParamountView(ModelView):
-    can_delete = False
-    column_searchable_list = ['Brand_name','Generic_name']
-
-
-class UHCView(ModelView):
-    can_delete = False
-    column_searchable_list = ['Brand','Generic']
-
-
 def build_admin( admin, session ):
     admin.add_view(FTAModelView(FTA, session))
-    admin.add_view(CaresourceView(Caresource, session))
-    admin.add_view(MolinaView(Molina, session))
-    admin.add_view(ParamountView(Paramount, session))
-    admin.add_view(BuckeyeView(Buckeye, session))
-    admin.add_view(UHCView(UHC, session))
+

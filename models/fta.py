@@ -59,89 +59,16 @@ class OpenNDC(Base):
         return result
 
 
-
-class NDC(Base):
-    __tablename__ = 'ndc'
-
-    id                      = Column(Integer, primary_key= True)
-    PRODUCTID               = Column(String)
-    PRODUCT_NDC             = Column(String)
-    PROPRIETARY_NAME        = Column(String)
-    DOSE_STRENGTH           = Column(String, nullable=True)
-    DOSE_UNIT               = Column(String, nullable=True)
-    NONPROPRIETARY_NAME     = Column(String, nullable=True)
-    STARTMARKETINGDATE      = Column(Date,   nullable=True)
-    ENDMARKETINGDATE        = Column(Date,   nullable=True)
-    MARKETINGCATEGORYNAME   = Column(String, nullable=True)
-    APPLICATIONNUMBER       = Column(String, nullable=True)
-    LABELERNAME             = Column(String, nullable=True)
-    SUBSTANCENAME           = Column(String, nullable=True)
-    PHARM_CLASSES           = Column(String, nullable=True)
-    DEASCHEDULE             = Column(String, nullable=True)
-    NDC_EXCLUDE_FLAG        = Column(String, nullable=True)
-    RXCUI                   = Column(Integer, nullable=True)
-    LISTING_RECORD_CERTIFIED_THROUGH = Column(String, nullable=True)
-
-    @classmethod
-    def find_similar(cls, ndc, cache=None):
-        """
-        Transpose an Basic Drug NDC to an NDC
-        :param ndc: basic drug format ndc
-        :return:
-        """
-        #Drop the last 2 number
-        ndc = ndc[:-2]
-        ndc = f"%{ndc[1:-4]}-{ndc[-4:]}%"
-        if not cache is None and ndc in cache:
-            return cache[ndc]
-
-        qry = cls.session.query(cls).filter(cls.PRODUCT_NDC.ilike(ndc))
-        try:
-            result = qry.one()
-        except:
-            return None
-
-        if not cache is None:
-            cache[ndc]=result
-        return result
-
-    @classmethod
-    def find_by_name(cls, proprietary, nonproprietary=None):
-        """
-
-        :param name:
-        :return:
-        """
-        if ' ' in proprietary:
-            proprietary = proprietary.split()[0]
-
-        proprietary = f"{proprietary.lower()}%"
-        if nonproprietary is None:
-            flter = or_(cls.PROPRIETARY_NAME.ilike(proprietary), cls.NONPROPRIETARY_NAME.ilike(proprietary))
-        else:
-            nonpropietary = f"%{nonproprietary.lower()}%"
-            flter = or_(cls.PROPRIETARY_NAME.ilike(proprietary),cls.NONPROPRIETARY_NAME.ilike(nonproprietary))
-
-        qry = cls.session.query(cls).filter(flter)
-        result = qry.all()
-        return result
-
-
-    def __repr__(self):
-        return "<{}>".format(self.PROPRIETARY_NAME)
-
-
 class Drugs(Base):
     __tablename__ = 'drugs'
 
-    id                   = Column(Integer, primary_key=True)
-    RXCUI                = Column(Integer)
+    RXCUI                = Column(Integer, primary_key=True)
     TTY                  = Column(String)
     NAME                 = Column(String)
-    RELASOURCE           = Column(String)
-    RELA                 = Column(String)
-    CLASS_ID             = Column(String)
-    CLASS_NAME           = Column(String)
+    CLASS_ID             = Column(ARRAY(String))
+
+    def __repr__(self):
+        return self.NAME
 
 
 class FTA(Base):
@@ -164,6 +91,8 @@ class FTA(Base):
     CLASS_ID             = Column(String)
     CLASS_NAME           = Column(String)
     SBD_RXCUI            = Column(ARRAY(Integer))
+    SCD                  = Column(ARRAY(Integer))
+    SBD                  = Column(ARRAY(Integer))
 
     @classmethod
     def find_by_name(cls, name, nonproprietary=True ):

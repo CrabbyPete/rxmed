@@ -1,7 +1,7 @@
 {% macro render_field(field) %}
   {% if field.errors %}
     <div class= 'row error'>
-    	{% for error in field.errors %} <p class='error-msg'>{{ error }}{% endfor %}
+        {% for error in field.errors %} <p class='error-msg'>{{ error }}{% endfor %}</p>
   		<dt>{{ field.label }}</dt>
   		<dd>{{ field(**kwargs)|safe }}
   		</dd>

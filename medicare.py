@@ -1,11 +1,9 @@
 import pandas as pd
 
-from functools  import lru_cache
-
 from log              import log, log_msg
 from api              import RxTerm
 from tools            import get_related, get_plan
-from models.fta       import FTA, NDC, OpenNDC
+from models.fta       import FTA, OpenNDC
 from models.medicare  import Beneficiary_Costs, Basic_Drugs
 
 def beneficiary_costs(rxcui_list, plan):
@@ -66,10 +64,9 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
 
     # Get the right fta record
     excluded = set()
+
     rxcui_list = set()
     fta_list = FTA.find_by_name(drug_parts[0], drug_parts[1] if len(drug_parts)==2 else None)
-
-
     for fta in fta_list:
 
         if fta.SBD_RXCUI:
@@ -155,23 +152,23 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
 
     if results:
         results = pd.DataFrame(results).drop_duplicates().to_dict('records')
-
-    return {'data':results, 'pa': prior_authorize}
-
+    heading = ['Brand','Generic','QL','ST','Tier','CTNP','CopayD','PA']
+    return {'data':results, 'heading':heading, 'pa': prior_authorize}
 
 if __name__ == "__main__":
     from settings      import DATABASE
     from models.base   import Database
 
     with Database(DATABASE) as db:
+        result = get_medicare_plan("SYMBICORT", 'WellCare Classic (PDP)', "07040")
+        print(result)
 
         result = get_medicare_plan("tresiba - insulin degludec injection","Aetna Medicare NJ Silver Plan (Regional PPO)","07040")
         result = get_medicare_plan( "Victoza", "Anthem MediBlue Essential (HMO)", '43202')
         print(result)
         result = get_medicare_plan('Levemir','SilverScript Plus (PDP)','07040')
         print(result)
-        result = get_medicare_plan( "SYMBICORT","Silverscript choice (PDP)","07040")
-        print(result)
+
         result = get_medicare_plan( "Novolog","WellCare Classic (PDP)",'43219')
         print(result)
         result = get_medicare_plan('pulmicort flexhaler', 'humana preferred rx','07040')

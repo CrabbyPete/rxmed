@@ -1,0 +1,49 @@
+body{
+	
+	background-color: #f5f5f5;
+}
+span{
+	font-weight: 100;
+	text-align: center;
+}
+#contact_subject{
+
+	position: relative;left: 50px;
+	top: 30px;
+}
+.input-group-prepend>span{
+	background-color: #434a5a;
+}
+.btn-primary{
+	background-color: #434a5a;
+}
+
+
+.btn-primary:hover{
+	background-color: #02adc6;
+}
+.forgot{
+	color: #434a5a;
+}
+.table{
+	background-color: white;
+	text-align: center;
+}
+#table-medicaid>tbody{
+font-weight: 500;
+}
+
+.wrong-detail{
+	color: #FFFFFF;
+    background-color: #ffebcd;
+    padding: 6px 18px;
+    font-size: 16px;
+    border: solid 1px #D25259;
+    margin: 0 15px 14px 15px;
+}
+.health-plan{
+	color: #FFFFFF;
+    background-color: #434a5a;
+    padding: 6px 18px;
+    font-size: 20px;
+}

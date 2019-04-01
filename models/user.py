@@ -19,7 +19,6 @@ class User( Base ):
     title         = Column(String)
     first_name    = Column(String)
     last_name     = Column(String)
-    phone         = Column(String)
     provider_type = Column(String)
     practice_name = Column(String)
     practice_type = Column(String)
@@ -44,7 +43,7 @@ class User( Base ):
 
     def set_password(self, raw_password):
         h = hashlib.md5()
-        h.update(raw_password)
+        h.update(raw_password.encode('utf-8'))
         self.password = h.hexdigest()
 
 
@@ -55,6 +54,9 @@ class User( Base ):
             return True
 
         return False
+
+    def get_id(self):
+        return self.id
 
     def __unicode__(self):
         return f"{self.first_name} {self.last_name}"

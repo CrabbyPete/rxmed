@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% from "_formhelpers.html" import render_field %}
+{% from "_formhelpers.html" import render_simple %}
+
+{% block js %}
+<script src="{{ url_for('static', filename = 'js/meds.js')}}" type="text/javascript"></script>
+{% endblock %}
+
+{% block body_block %}
+  <div class="container">
+    <div class="row" style="margin-top:50px;margin-bottom: 20px;">
+      <div class="col-sm-12  health-plan">
+        <span class="h-1" style="display: block;">Select a health plan</span>
+      </div>
+    </div>
+    <div class="container">
+      <div class="form-row px-3">
+
+        <!-- Zipcode -->
+        <form action="{{url_for('fit')}}" method='post' class="input-group" id="form-plan">
+          <div class="radio" style="clear: both;width: 100%;text-align: center;">
+              <!--
+            <input type="radio" name="plan"><span class="h-1" style="font-size: 19px;margin-left: 10px">Medicare</span>
+            <input type="radio" name="plan" style="margin-left: 10px"><span class="h-1" style="font-size: 19px;margin-left: 10px">Medicaid</span>
+            <input type="radio" name="plan" style="margin-left: 10px"><span class="h-1" style="font-size: 19px;margin-left: 10px">Private</span>
+            -->
+              {% for field in form.plan_type %}
+              {% if loop.index == 1 %}
+                {{field()}}<span class="h-1" style="font-size: 19px;margin-left: 10px">Medicare</span>
+              {% elif loop.index == 2 %}
+                {{field(style="margin-left: 10px")}}<span class="h-1" style="font-size: 19px;margin-left: 10px">Medicaid</span>
+              {% else %}
+                {{field(style="margin-left: 10px")}}<span class="h-1" style="font-size: 19px;margin-left: 10px">Private</span>
+              {% endif %}
+              {% endfor %}
+          </div>
+          <label for="input-zipcode" class="mr-1"><span class="input-group-text">Zipcode</span></label>
+            {{form.zipcode(class="form-control mb-3", placeholder="ex. 12345", id="input-zipcode")}}
+            <!--
+             <input class="form-control mb-3" type="text" placeholder="ex. 12345" id="input-zipcode">
+             -->
+          <div class="container text-center m-2" id="container-selected-zipcode">
+            <h5 id="selected-zipcode"></h5>
+          </div>
+
+          <!-- Plan -->
+          <label class="mr-1"><span class="input-group-text">Plan Name</span></label>
+            <!--
+            <input class="form-control" style="height: 38px;" autocomplete="off" placeholder="Type to search..." id="input-plan-medicare">
+            -->
+            {{form.plan(class="form-control", style="height: 38px;", placeholder="Type to search...", id="input-plan-medicare")}}
+          <div class="container text-center m-2">
+            <h5 id="selected-plan"></h5>
+          </div>
+
+          <!-- Medication -->
+          <label for="input-med" class="mr-1"><span class="input-group-text">Medication</span></label>
+            <!--
+            <input class="form-control" style="height: 38px;" autocomplete="off" placeholder="Type to search..." id="input-med">
+            -->
+            {{form.medication(class="form-control", style="height: 38px;", placeholder="Type to search...", id="input-med")}}
+
+          <div class="container text-center m-2">
+            <h5 id="selected-med"></h5>
+          </div>
+      </div>
+
+      <!-- Form final buttons -->
+      <div class="row justify-content-center">
+        <button type="submit" onclick="window.location='www.google.com'" class="search-btn btn btn-primary font-weight-bold m-2" id="button-generate"><i class="fas fa-search text-white"></i>
+        </button>
+        <button type="submit" class="btn btn-primary m-2" id="button-clear-med">Clear</button>
+        </form>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

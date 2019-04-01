@@ -1,20 +1,32 @@
-from wtforms                import validators, Form, StringField, PasswordField, SubmitField, SelectField, BooleanField
+from wtforms                import ( validators,
+                                     Form,
+                                     StringField,
+                                     PasswordField,
+                                     SubmitField,
+                                     SelectField,
+                                     BooleanField,
+                                     RadioField   )
+
 from wtforms.fields.html5   import TelField
+from wtforms.validators     import Email, EqualTo, InputRequired
 
 class ValidationError(Exception):
     pass
 
-class MedicaidForm(Form):
+class MedForm(Form):
     """
     Medicaid form input
     """
+    plan_type  = RadioField(choices=[('medicare','Medicare'),
+                                     ('medicaid','Medicaid'),
+                                     ('private' ,'Private')])
     zipcode    = StringField()
     plan       = StringField()
     medication = StringField()
 
 
 class SignInForm(Form):
-    username = StringField("Enter Email",
+    email = StringField("Enter Email",
                            [validators.Email(message=u'That\'s not a valid email address.'),
                             validators.Length(min=6, max=45)
                            ]
@@ -23,25 +35,29 @@ class SignInForm(Form):
 
 
 class SignUpForm(Form):
-    email = StringField("Email Address", [validators.Email(message=u'That\'s not a valid email address.'),
-                                          validators.Length(min=6, max=45)
-                                         ]
-                           )
+    email         = StringField("Email Address",[validators.Email(u'Please use a valid email address.')])
     first_name    = StringField("First Name")
     last_name     = StringField("Last Name")
-    provider_type = SelectField("Provider Type", choices=['MD','PA','DO','NP','RN','Rph or PharmD','MA'])
+    provider_type = SelectField("Provider Type", choices=[('MD','MD'),
+                                                          ('PA','PA'),
+                                                          ('DO','DO'),
+                                                          ('NP','NP'),
+                                                          ('RN','RN'),
+                                                          ('Rph or PharmD','RP')])
+
+
     practice_name = StringField("Practive Name")
     practice_type = SelectField("What type of practice site is your facility?",
-                                choices=['Primary Care Clinic',
-                                         'Physician Private Practice',
-                                         'Urgent Care',
-                                         'Speciality Clinic'
-                                         'Independent Pharmacy',
-                                         'Internal Medicine Clinic',
-                                         'Outpatient Clinic'] )
+                                choices=[('PCC','Primary Care Clinic'),
+                                         ('PPP','Physician Private Practice'),
+                                         ('UC','Urgent Care'),
+                                         ('SC','Speciality Clinic'),
+                                         ('IP','Independent Pharmacy'),
+                                         ('IMC','Internal Medicine Clinic'),
+                                         ('OC','Outpatient Clinic')] )
 
-    phone        = TelField("Phone Number")
-    password     = PasswordField("Password")
+    password     = PasswordField('New Password', [InputRequired(), EqualTo('confirm_pass', message='Passwords must match')])
+    confirm_pass = PasswordField('Confirm Password')
     checkbox     = BooleanField("I have read and understood the terms and conditions of use above.")
 
 

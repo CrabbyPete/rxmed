@@ -1,6 +1,5 @@
 import pandas as pd
 
-from functools       import lru_cache
 from log             import log, log_msg
 from models          import Zipcode, Plans, FTA, Drugs
 from api             import RxClass, RxNorm, RxTerm
@@ -31,7 +30,6 @@ def walk(seq, look_for):
     return None
 
 
-@lru_cache(4096)
 def get_location(zipcode):
     """
     Get the geo location infor from a given zipcode
@@ -47,7 +45,6 @@ def get_location(zipcode):
     return zipcode
 
 
-@lru_cache(4096)
 def get_plan( plan_name, zipcode ):
     """
     Get the formulary_id for a plan
@@ -63,83 +60,9 @@ def get_plan( plan_name, zipcode ):
         return plans[0]
 
     else:
-        return "More than one found"
+        log.error(f" No matches for plan:{plan_name} and zipcode:{zipcode}")
+        return None
 
-
-''' OLD ONE
-def get_rxcui( drug_name, tty='IN', relasource=None, rela=None):
-    """ Get the tty:IN rxcui for a drug name
-    :param drug_name:
-    :return:
-    """
-    rxnorm = RxNorm()
-    rxclass = RxClass()
-
-    def find_tty(rxcui):
-        results = []
-        records = rxnorm.getAllRelatedInfo(rxcui)
-        for record in records:
-            if not (record['tty'] == tty and 'conceptProperties' in record):
-                continue
-
-            for prop in record['conceptProperties']:
-                if not prop['tty'] == tty:
-                    continue
-
-                params = dict(RXCUI=prop['rxcui'],
-                              PROPRIETARY_NAME=drug_name,
-                              TTY=tty,
-                              RELASOURCE=relasource,
-                              RELA=rela
-                              )
-
-                drug_classes = rxclass.getClassByRxNormDrugId(prop['rxcui'], relasource, rela)
-                if drug_classes:
-                    for dc in drug_classes:
-                        if not dc['minConcept']['tty'] == tty:
-                            continue
-
-                        params['CLASS_ID'] = dc['rxclassMinConceptItem']['classId']
-                        params['CLASS_NAME'] = dc['rxclassMinConceptItem']['className']
-
-                results.append(params)
-
-        return results
-
-    rxcui = rxnorm.findRxcuiByString(drug_name)
-    if not rxcui:
-        guesses = rxnorm.getApproximateMatch(term=drug_name, maxEntries=12, option=0)
-
-        for guess in guesses.get('candidate',[]):
-            data = rxnorm.getAllProperties(guess['rxcui'], prop='NAMES')
-            if data:
-                try:
-                    name = [d['propValue'] for d in data if 'RxNorm Name' in d['propName']]
-                    rxcui = rxnorm.findRxcuiByString(name[0])[0]
-                except:
-                    pass
-            else:
-                try:
-                    rxcui = int(guess['rxcui'])
-                except:
-                    log.error(f"No rxcui found for {drug_name}")
-
-            related = rxnorm.getRelatedByType(rxcui, tty=['IN','MIN'])
-            results = find_tty(rxcui)
-            if results:
-                break
-        else:
-            log.error(f"No rxcui found for {drug_name}")
-            return None
-    else:
-        rxcui = int(rxcui[0])
-        related = rxnorm.getRelatedByType(rxcui, tty=['IN','MIN'])
-        results = find_tty( rxcui )
-
-    if len(results) > 1:
-        results = pd.DataFrame(results).drop_duplicates().to_dict('records')
-    return results
-'''
 
 def get_rxcui( drug_name, tty='IN', relasource=None, rela=None):
     """ Get the tty:IN rxcui for a drug name
@@ -214,6 +137,7 @@ def get_rxcui( drug_name, tty='IN', relasource=None, rela=None):
         results = pd.DataFrame(results).drop_duplicates().to_dict('records')
     return results
 
+
 def one_rxcui(name, relaSource=None, rela=None, force=False):
     """ Only return 1 rxcui either IN or MIN
     :param name:
@@ -231,6 +155,8 @@ def one_rxcui(name, relaSource=None, rela=None, force=False):
 
     tty = 'IN'
     results = get_rxcui(name, tty, relaSource, rela)
+
+    # If you did not find an IN try to get a MIN
     if not results or len(results) > 1:
         tty = 'MIN'
         results = get_rxcui(name, tty, relaSource, rela)

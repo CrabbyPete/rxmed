@@ -8,16 +8,7 @@ from .fta               import Drugs
 
 # Just return the results not the whole class
 row2dict = lambda r: {c.name: getattr(r, c.name) for c in r.__table__.columns}
-
-"""
-class MedicaidModel(Base):
-    id = Column(Integer, primary_key=True)
-    Formulary_Restrictions = Column(String)
-    PA_Reference           = Column(URLType)
-    RXCUI                  = Column(Integer)
-    modified               = Column(Date, nullable=False, default=date.today)
-    active                 = Column(Boolean, default=True)
-"""
+'''
 
 class Caresource(Base): # Drug_Name,Drug_Tier,Formulary_Restrictions
     __tablename__ = 'caresource'
@@ -215,7 +206,7 @@ class Buckeye(Base): # Drug_Name,Preferred_Agent,Fomulary_Restrictions
 
     def __repr__(self):
         return "<{}>".format(self.Drug_Name )
-
+'''
 
 class OhioState(Base):
     __tablename__ = 'ohiostate'
