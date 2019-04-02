@@ -47,6 +47,7 @@ def home():
     """
     return render_template('home.html')
 
+
 @application.route('/fit', methods=['POST','GET'])
 def fit():
     """ Form submit of meds
