@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block body_block %}
+<style type="text/css">
+  .input-group-prepend{
+    float: left;
+  }
+
+</style>
+<div class="signup-div">
+
+    <div class="container">
+        <div class="row">
+            <div class="col-sm-12">
+                <span style="font-weight: 100;font-size: 60px;">Create an account</span>
+                <span>Already have an account ?<a href="{{url_for('user.signin')}}" style="margin-left: 10px">Sign in</a></span>
+            </div>
+        </div>
+        {% if form.errors %}
+        <div class="row">
+            <div class="col-sm-6 wrong-detail">
+                <p class="error-msg text-danger" style="margin:0px">Not a Valid Choice</p>
+            </div>
+            <div class="col-sm-6"></div>
+        </div>
+        {% endif %}
+
+        <form action="{{url_for('user.signup')}}" method="post">
+            <div class="form-group">
+                <!--<input class="form-control" type="text" placeholder="Name" name="u-name" required>-->
+                {{ form.first_name(class="form-control",placeholder="First Name")}}
+            </div>
+            <div class="form-group">
+                <!--<input class="form-control" type="text" placeholder="Last name" name="l-name" required> -->
+                {{form.last_name(class="form-control",placeholder="Last name")}}
+            </div>
+            <div class="form-group">
+                <!--
+                <select class="form-control" type="text" name="hcare">
+                    <option selected disabled>What type of healthcare provider are you?</option>
+                    <option>MD</option>
+                    <option>PA</option>
+                    <option>DO</option>
+                    <option>NP</option>
+                    <option>RN</option>
+                    <option>Rph or PharmD</option>
+                    <option>MA</option>
+                </select>
+                -->
+                {{form.provider_type(class="form-control")}}
+            </div>
+            <div class="form-group">
+                <!--
+                <input class="form-control" type="text" placeholder="What is the name of your practice site?" name="pr-site" required>
+                -->
+                {{form.practice_name(class="form-control",placeholder="What is the name of your practice site?")}}
+            </div>
+            <div class="form-group">
+                <!--
+                <select class="form-control" type="text" name="pr-site-facility">
+                    <option selected disabled>What type of practice site is your facility?</option>
+                    <option>Primary Care Clinic</option>
+                    <option>Physician Private Practice</option>
+                    <option>Urgent Care</option>
+                    <option>Speciality Clinic</option>
+                    <option>Independent Pharmacy</option>
+                    <option>Internal Medicine Clinic</option>
+                    <option>Outpatient Clinic</option>
+                </select>
+                -->
+                {{form.practice_type(class="form-control")}}
+            </div>
+            <span class="text-muted">Your email and password will be your login information.</span>
+            <div class="form-group">
+                <div class="form-control input-group-prepend" style="margin-bottom: 20px;padding: 0px; border: 0px">
+                    <span class="input-group-text prepend-icon"> <i class="fas fa-user text-white"></i> </span>
+                    <!--
+                    <input class="form-control" type="email" placeholder="Email address" id="input-email" required> -->
+                    {{form.email(class="form-control", placeholder="Email address", id="input-email")}}
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="form-control input-group-prepend" style="margin-bottom: 20px; padding: 0px; border: 0px">
+                    <span class="input-group-text prepend-icon">
+                        <i class="fas fa-key text-white"></i>
+                    </span>
+                    <!--<input class="form-control" type="password" placeholder="Password" id="input-pass" required>-->
+                    {{form.password(class="form-control", placeholder="Password", id="input-pass")}}
+                </div>
+            </div>
+
+            <div class="form-group">
+                <div class="form-control input-group-prepend" style="margin-bottom: 20px;padding: 0px; border: 0px">
+                    <span class="input-group-text prepend-icon">
+                        <i class="fas fa-key text-white"></i>
+                    </span>
+                    <!-- <input class="form-control" type="password" placeholder="Confirm-Password" id="input-pass" required>-->
+                    {{form.confirm_pass(class="form-control", placeholder="Confirm Password", id="input-pass")}}
+                </div>
+            </div>
+
+            <span class="text-muted text-center">We'll never share your personal information with anyone outside of your company. For more information, please read the <a
+                    href="#legal">terms and conditions of use</a>.</span>
+            <div class="form-group">
+                <div class="form-check">
+                    <!--<input type="checkbox" class="form-check-input text-center" id="terms" required>-->
+                    {{form.checkbox(class="form-check-input text-center", id="terms")}}
+                    <label class="form-check-label" for="terms">I have read and understood the terms and conditions of use above.</label>
+                </div>
+            </div>
+            <div class="form-group">
+                <button class="btn btn-primary text-uppercase w-100" type="submit" id="button-signup">Sign Up</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock%}

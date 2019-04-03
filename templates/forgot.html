@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% from "_formhelpers.html" import render_field %}
+{% from "_formhelpers.html" import render_simple %}
+{% block body_block %}
+<div class="container">
+    <div class="row">
+        <div class="col-sm-12">
+            <span class="display-4">Recover Account!</span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-6 wrong-detail">
+            <p class="error-msg text-danger" style="margin:0px">Not a Valid Choice</p>
+        </div>
+        <div class="col-sm-6"></div>
+    </div>
+    <form id='forgot' action="{{url_for('user.forgot')}}" method="post">
+        <div class="form-group">
+
+            <div class="form-control input-group-prepend" style="margin-bottom: 20px;padding: 0px; border: 0px">
+                <span class="input-group-text prepend-icon"> <i class="fas fa-user text-white"></i> </span>
+                <input class="form-control" type="email" placeholder="Email address" id="input-email" required></div>
+
+            <button class="form-control btn btn-primary text-uppercase w-100" name="submit" type="submit"
+                    id="button-login">Recover
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
