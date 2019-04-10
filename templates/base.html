@@ -13,17 +13,125 @@
 	<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
 
-	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='bootstrap/dist/css/bootstrap.min.css')}}">
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.1/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
 
-	<script type="text/javascript" src="{{url_for('static', filename='bootstrap/dist/js/bootstrap.min.js')}}"></script>
-    <link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style.css')}}">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+	<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+
+	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/style.css')}}">
+
+	<!--main file-->
+  	<link rel="stylesheet" href="{{url_for('static', filename='css/medical-guide.css')}}" type="text/css">
+
+
+  	<!-- Default Color-->
+  	<link rel="stylesheet" href="{{url_for('static', filename='css/default-color.css')}}" id="color" type="text/css">
+
+  	<!--tabs-->
+  	<link rel="stylesheet" href="{{url_for('static', filename='css/tabs.css')}}" type="text/css">
+
+
+  	<!-- Mobile Menu -->
+  	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/jquery.mmenu.all.css')}}" />
+  	<link rel="stylesheet" type="text/css" href="{{url_for('static', filename='css/demo.css')}}" />
+
+
 </head>
 <body>
 {% block js %}
 {% endblock %}
+
+  <div id="wrap">
+
+    <!--Start Header-->
+    <header class="header">
+      <div class="container">
+        <div class="row">
+          <div class="col-md-5">
+            <a href="/" class="logo">
+              <img src="{{url_for('static',filename='img/logo transparent(1000x682).png')}}" alt=""></a>
+          </div>
+
+          <div class="col-md-7">
+            <nav class="menu-2" style="position:relative;top:30px;">
+              <ul class="nav wtf-menu">
+                <li class="item-select parent"><a href="/">Home</a></li>
+                <li class="parent"><a href="#">Contact Us</a></li>
+                <li class="parent"><a href="{{url_for('fit')}}">Fit</a></li>
+
+                <li class="parent"><a href="#.">Edit Profile</a></li>
+				  {% if current_user.is_active %}
+                <li class="parent"><a href="#.">Log Out</a></li>
+				  {% else %}
+				  <li class="parent"><a href="#.">Log In</a></li>
+				  {% endif %}
+
+              </ul>
+            </nav>
+          </div>
+        </div>
+        <div class="row">
+		</div>
+	  </div>
+	</header>
+    <!--End Header-->
+
+    <!-- Mobile Menu Start -->
+    <div class="container">
+      <div id="page">
+        <header class="header">
+          <a href="#menu"></a>
+        </header>
+
+        <nav id="menu">
+          <ul>
+            <li class="item-select parent"><a href="/">Home</a></li>
+            <li class="parent"><a href="#.">Contact Us</a></li>
+            <li class="parent"><a href="med.html">Fit</a>
+            <li class="parent"><a href="#.">Log In</a></li>
+            <li class="parent"><a href="#.">Edit Profile</a></li>
+            <li class="parent"><a href="#.">Log Out</a></li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+    <!-- Mobile Menu End -->
+
+  </div>
+
 {% block body_block %}
 {% endblock %}
+
+    <!-- Mobile Menu -->
+    <script type="text/javascript" src="{{url_for('static',filename='js/jquery.mmenu.min.all.js')}}"></script>
+
+    <!-- All Scripts -->
+    <script type="text/javascript">
+      <!-- Mobile Menu -->
+      $(document).ready(function() {
+        "use strict";
+        $("#menu").mmenu({
+          "classes": "mm-slide",
+          "offCanvas": {
+            "position": "right"
+          },
+          "footer": {
+            "add": true,
+            "title": "Copyrights 2015 Medical Guide. all rights reserved."
+          },
+
+          "header": {
+            "title": "Medical Guide",
+            "add": true,
+            "update": true
+          },
+
+        });
+      });
+    </script>
+
+<footer class="footer card-footer mt-5">© 2018 - 2019 RxMedAccess, LLC</footer>
 </body>
 
 </html>

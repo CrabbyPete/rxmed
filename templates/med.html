@@ -14,31 +14,32 @@
       </div>
     </div>
     <div class="container">
-      <div class="form-row px-3">
+      {% if form.errors %}
+      <div class="row">
+        <div class="col-sm-6 wrong-detail">
+           <p class="error-msg text-danger" style="margin:0px">{{form.errors}}</p>
+        </div>
+        <div class="col-sm-6"></div>
+      </div>
+      {% endif %}
 
+      <div class="form-row px-3">
         <!-- Zipcode -->
         <form action="{{url_for('fit')}}" method='post' class="input-group" id="form-plan">
           <div class="radio" style="clear: both;width: 100%;text-align: center;">
-              <!--
-            <input type="radio" name="plan"><span class="h-1" style="font-size: 19px;margin-left: 10px">Medicare</span>
-            <input type="radio" name="plan" style="margin-left: 10px"><span class="h-1" style="font-size: 19px;margin-left: 10px">Medicaid</span>
-            <input type="radio" name="plan" style="margin-left: 10px"><span class="h-1" style="font-size: 19px;margin-left: 10px">Private</span>
-            -->
               {% for field in form.plan_type %}
               {% if loop.index == 1 %}
                 {{field()}}<span class="h-1" style="font-size: 19px;margin-left: 10px">Medicare</span>
               {% elif loop.index == 2 %}
                 {{field(style="margin-left: 10px")}}<span class="h-1" style="font-size: 19px;margin-left: 10px">Medicaid</span>
               {% else %}
-                {{field(style="margin-left: 10px")}}<span class="h-1" style="font-size: 19px;margin-left: 10px">Private</span>
+                {{field(style="margin-left: 10px")}}<span class="h-1" style="font-size: 19px;margin-left: 10px">Commercial</span>
               {% endif %}
               {% endfor %}
           </div>
           <label for="input-zipcode" class="mr-1"><span class="input-group-text">Zipcode</span></label>
             {{form.zipcode(class="form-control mb-3", placeholder="ex. 12345", id="input-zipcode")}}
-            <!--
-             <input class="form-control mb-3" type="text" placeholder="ex. 12345" id="input-zipcode">
-             -->
+
           <div class="container text-center m-2" id="container-selected-zipcode">
             <h5 id="selected-zipcode"></h5>
           </div>
@@ -67,7 +68,8 @@
 
       <!-- Form final buttons -->
       <div class="row justify-content-center">
-        <button type="submit" onclick="window.location='www.google.com'" class="search-btn btn btn-primary font-weight-bold m-2" id="button-generate"><i class="fas fa-search text-white"></i>
+        <button type="submit" class="search-btn btn btn-primary font-weight-bold m-2" id="button-generate">
+          <i class="fas fa-search text-white"></i>
         </button>
         <button type="submit" class="btn btn-primary m-2" id="button-clear-med">Clear</button>
         </form>

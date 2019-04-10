@@ -18,3 +18,4 @@ SQLAlchemy
 SQLAlchemy-Utils
 WTForms
 testing.postgresql
+pyyaml

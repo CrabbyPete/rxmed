@@ -21,6 +21,8 @@ from log                    import log
 user = Blueprint( 'user', __name__  )
 
 login_manager = LoginManager()
+login_manager.login_view = "user.signin"
+
 
 def init_user( app ):
     """ Used by flask to initialize a user
@@ -28,16 +30,15 @@ def init_user( app ):
     """
     login_manager.init_app(app)
     app.register_blueprint(user)
-    pass
 
 
 @login_manager.user_loader
 def load_user(userid):
     """ Used by login to get a user "
-        @param userid: User referenced in the database pass in by flask
+    @param userid: User referenced in the database pass in by flask
     """
     try:
-        user = User.get_one( id = userid )
+        user = User.get(userid)
     except:
         return None
     return user
@@ -76,12 +77,15 @@ def signup():
     context = {'form':form}
     content = render_template( 'signup.html', **context )
     return content
-    
+
+
 @user.route('/signin', methods=['GET', 'POST'])
 def signin():
     """ Sign in an existing user
     """
     form = SignInForm(request.form)
+    next = request.args.get('next', '/')
+
     if request.method == 'POST' and form.validate():
         email = form.email.data
         password = form.password.data
@@ -94,10 +98,11 @@ def signin():
                 if not user.check_password( password.encode() ):
                     form.email.errors = ['No such user or password']
                 else:
-                    login_user(user)
-                    return redirect('/')
+                    login_user(user, remember=True)
+                    return redirect(form.next.data)
 
     # Not a POST or errors
+    form.next.data = next
     context = {'form':form }
     content = render_template( 'signin.html', **context )
     return content

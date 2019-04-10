@@ -32,20 +32,16 @@ class User( Base ):
     def is_authenticated(self):
         return True
 
-
     def is_active(self):
-        return self.active
-
+        return True
 
     def is_anonymous(self):
         return False
-
 
     def set_password(self, raw_password):
         h = hashlib.md5()
         h.update(raw_password.encode('utf-8'))
         self.password = h.hexdigest()
-
 
     def check_password(self, raw_password):
         h = hashlib.md5()

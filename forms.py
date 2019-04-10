@@ -5,7 +5,9 @@ from wtforms                import ( validators,
                                      SubmitField,
                                      SelectField,
                                      BooleanField,
-                                     RadioField   )
+                                     RadioField,
+                                     HiddenField)
+
 
 from wtforms.fields.html5   import TelField
 from wtforms.validators     import Email, EqualTo, InputRequired
@@ -26,12 +28,17 @@ class MedForm(Form):
 
 
 class SignInForm(Form):
+    """
+    Signup form,
+    """
+    next = HiddenField()    #Used if redirected from a login requirement
     email = StringField("Enter Email",
                            [validators.Email(message=u'That\'s not a valid email address.'),
                             validators.Length(min=6, max=45)
                            ]
                           )
     password = PasswordField("Enter password")
+
 
 
 class SignUpForm(Form):

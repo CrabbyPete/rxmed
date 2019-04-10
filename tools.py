@@ -5,6 +5,18 @@ from models          import Zipcode, Plans, FTA, Drugs
 from api             import RxClass, RxNorm, RxTerm
 
 
+# Share this exception
+class BadPlanName(Exception):
+    """
+    A bad plan name was entered
+    """
+
+class BadLocation(Exception):
+    """
+    A bad zipcode was entered
+    """
+
+
 def walk(seq, look_for):
     """
     Find a part of a json
@@ -40,7 +52,7 @@ def get_location(zipcode):
         zipcode = Zipcode.session.query(Zipcode).filter( Zipcode.ZIPCODE == zipcode ).one()
     except Exception as e:
         log.error( log_msg(str(e)) )
-        return None
+        raise BadLocation( f"Unknown zipcode {zipcode} location")
 
     return zipcode
 
@@ -60,9 +72,7 @@ def get_plan( plan_name, zipcode ):
         return plans[0]
 
     else:
-        log.error(f" No matches for plan:{plan_name} and zipcode:{zipcode}")
-        return None
-
+        raise BadPlanName(f"Plan {plan_name} in {zipcode} not found")
 
 def get_rxcui( drug_name, tty='IN', relasource=None, rela=None):
     """ Get the tty:IN rxcui for a drug name

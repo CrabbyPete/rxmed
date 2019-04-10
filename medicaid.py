@@ -3,7 +3,7 @@ import pandas as pd
 
 from api             import OhioStateAPI, RxNorm
 from log             import log
-from tools           import get_related_drugs
+from tools           import get_related_drugs, get_location
 
 from models          import FTA, OpenPlans
 from models.medicaid import OhioState
@@ -11,6 +11,10 @@ from models.medicaid import OhioState
 row2dict = lambda r: {c.name: str(getattr(r, c.name)) for c in r.__table__.columns}
 
 rxnorm = RxNorm()
+
+class BadPlanName(Exception):
+    pass
+
 
 def front_end_excluded( drug, excluded:list)->bool:
     """ Check if this record should be excluded
@@ -75,7 +79,7 @@ def get_sdb_scd( rxcui ):
     return sbd, scd
 
 
-def all_plans(drug_name, plan_name, state):
+def all_plans(drug_name, plan_name, zipcode):
 
     heading = ['Drug Name', 'Drug Tier','Step Therapy', 'Quantity Limit','Prior Authorization']
 
@@ -84,25 +88,28 @@ def all_plans(drug_name, plan_name, state):
 
     drug_name = drug_name.split()[0].lower()
     fta_list = FTA.find_by_name(drug_name)
+    location = get_location(zipcode)
+    state = location.STATE
 
     # Get all the SCD and SBD rxcui for this and related
-    rxcui_list = set()
+    rxcui_list = []
     excluded = set()
 
     if fta_list:
         for fta in fta_list:
             excluded.update([s.strip() for s in fta.EXCLUDED_DRUGS_FRONT.lower().split("|") if s.strip()])
             if fta.SCD:
-                rxcui_list.update(fta.SCD)
+                rxcui_list.extend(fta.SCD)
             if fta.SBD:
-                rxcui_list.update(fta.SBD)
+                rxcui_list.extend(fta.SBD)
 
             if fta.RELATED_DRUGS:
-                rxcui_list.update(fta.RELATED_DRUGS)
+                rxcui_list.extend(fta.RELATED_DRUGS)
                 for rxcui in fta.RELATED_DRUGS:
-                    sbd, scd = get_sdb_scd( rxcui )
-                    rxcui_list.update( sbd + scd )
+                    sbd, scd = get_sdb_scd(rxcui)
+                    rxcui_list.extend( sbd + scd )
     try:
+        rxcui_list = set(rxcui_list)
         records = OpenPlans.session.query(OpenPlans).filter(OpenPlans.state == state,
                                                             OpenPlans.plan_name == plan_name,
                                                             OpenPlans.rxnorm_id.in_(rxcui_list)).all()
@@ -202,7 +209,7 @@ def ohio_state( drug_name ):
     return { 'data':data, 'pa':pa, 'heading':heading }
 
 
-def get_medicaid_plan( drug_name, plan_name, state = None ):
+def get_medicaid_plan( drug_name, plan_name, zipcode ):
     """Get the plan by its name
     :param plan_name: plan name from the select option
     :param drug_name: drug name the user selected
@@ -211,7 +218,8 @@ def get_medicaid_plan( drug_name, plan_name, state = None ):
     if plan_name == 'OH State Medicaid':
         return ohio_state( drug_name )
     else:
-        return all_plans(drug_name, plan_name, state = 'OH')
+
+        return all_plans(drug_name, plan_name, zipcode)
 
 
 if __name__ == "__main__":

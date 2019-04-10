@@ -56,6 +56,7 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
     :param plan_name: string: plan name
     :return: dict: results
     """
+    # Get the plan
     plan = get_plan(plan_name, zipcode)
 
     # Get all related drugs

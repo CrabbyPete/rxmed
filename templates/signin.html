@@ -13,21 +13,21 @@
       {% if form.errors %}
       <div class="row">
         <div class="col-sm-6 wrong-detail">
-           <p class="error-msg text-danger" style="margin:0px">form.error</p>
+           {% for k,v in form.errors.items() %}
+           <p class="error-msg text-danger" style="margin:0px">{{v[0]}}</p>
+            {% endfor %}
         </div>
         <div class="col-sm-6"></div>
       </div>
       {% endif %}
-
       <!--Form Start here--->
       <form action="{{url_for('user.signin')}}" method="post">
+          {{ form.csrf_token }}
+          {{ form.next }}
          <div class="form-control input-group-prepend" style="margin-bottom: 20px;padding: 0px; border: 0px">
              <span class="input-group-text prepend-icon">
                  <i class="fas fa-user text-white"></i>
              </span>
-             <!--
-             <input class="form-control" type="email" placeholder="Email address" id="input-email" required>
-             -->
              {{form.email(class="form-control", type="email", placeholder="Email address", id="input-email") }}
          </div>
 
@@ -36,9 +36,6 @@
                 <span class="input-group-text prepend-icon">
                     <i class="fas fa-key text-white"></i>
                 </span>
-                <!--
-                <input class="form-control" type="password" placeholder="Password" id="input-pass" required>
-                -->
                 {{form.password(class="form-control",type="password",placeholder="Password",id="input-pass")}}
             </div>
         </div>

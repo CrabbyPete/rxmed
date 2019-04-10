@@ -99,7 +99,12 @@ class FTA(Base):
         """ Return an atoms by property
         """
         if not '%' in name:
-            name = f"{name.lower().split()[0]}%"
+            try:
+                name = f"{name.lower().split()[0]}%"
+            except IndexError:
+                if len(name)>4:
+                    name = f"{name}%"
+
 
         if nonproprietary:
             flter = or_(cls.PROPRIETARY_NAME.ilike(name), cls.NONPROPRIETARY_NAME.ilike(name) )
