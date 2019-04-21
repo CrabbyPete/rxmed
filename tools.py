@@ -1,8 +1,8 @@
 import pandas as pd
 
-from log             import log, log_msg
+from log import log, log_msg
 from models          import Zipcode, Plans, FTA, Drugs
-from api             import RxClass, RxNorm, RxTerm
+from api import RxClass, RxNorm
 
 
 # Share this exception
@@ -182,8 +182,8 @@ def one_rxcui(name, relaSource=None, rela=None, force=False):
     save = result.copy()
 
     save['NAME'] = save.pop('PROPRIETARY_NAME')
-    drug = Drugs.get_or_create(**save)
-    drug.save()
+    #drug = Drugs.get_or_create(**save)
+    #drug.save()
 
     return result
 

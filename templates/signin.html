@@ -1,53 +1,41 @@
 {% extends 'base.html' %}
-{% from "_formhelpers.html" import render_field %}
-{% from "_formhelpers.html" import render_simple %}
+{% set active_page = 'signin' %}
+
 {% block body_block %}
-<div class="login-div">
-
-  <div class="container">
-    <div class="row">
-      <div class="col-sm-12"  >
-        <span style="font-weight: 100;font-size: 60px;">Welcome back</span>
-      </div>
-    </div>
-      {% if form.errors %}
-      <div class="row">
-        <div class="col-sm-6 wrong-detail">
-           {% for k,v in form.errors.items() %}
-           <p class="error-msg text-danger" style="margin:0px">{{v[0]}}</p>
-            {% endfor %}
-        </div>
-        <div class="col-sm-6"></div>
-      </div>
-      {% endif %}
-      <!--Form Start here--->
-      <form action="{{url_for('user.signin')}}" method="post">
-          {{ form.csrf_token }}
-          {{ form.next }}
-         <div class="form-control input-group-prepend" style="margin-bottom: 20px;padding: 0px; border: 0px">
-             <span class="input-group-text prepend-icon">
-                 <i class="fas fa-user text-white"></i>
-             </span>
-             {{form.email(class="form-control", type="email", placeholder="Email address", id="input-email") }}
-         </div>
-
-        <div class="form-group" >
-            <div class="form-control input-group-prepend" style="margin-bottom: 20px; padding: 0px; border: 0px">
-                <span class="input-group-text prepend-icon">
-                    <i class="fas fa-key text-white"></i>
-                </span>
-                {{form.password(class="form-control",type="password",placeholder="Password",id="input-pass")}}
-            </div>
-        </div>
-        <button  class="btn btn-primary text-uppercase w-100" type="submit" id="button-login">Sign in</button>
-      </form>
-
-      <div class="row">
-        <div class="col-sm-12">
-           <span style="font-size: 19px"><a href="{{url_for('user.signup')}}">Sign up</a></span>
-         <span><a class="float-right" href="{{url_for('user.forgot')}}">Forgot your password?</a></span>
-        </div>
-      </div>
+<main class="container m-5">
+  <div class="my-2"> <span class="display-4">Welcome back</span> </div>
+    {% if form.errors %}
+  <div class="col-sm-6 error" id="login-error" hidden>
+      {% for k,v in form.errors.items() %}
+    <p class="error-msg text-danger m-1">{{v[0]}}</p>
+      {% endfor %}
   </div>
-</div>
+    {% endif %}
+
+  <!--Form--->
+  <form class="form-group my-2" action="{{url_for('user.signin')}}" method="post">
+      {{ form.csrf_token }}
+      {{ form.next }}
+    <div class="input-group mt-3">
+      <div class="input-group-prepend">
+          <span class="input-group-text prepend-icon bg-blue border-blue">
+            <i class="fas fa-user text-white"></i>
+          </span>
+      </div>
+        {{form.email(class="form-control border-left-0", type="email", placeholder="Email address", id="input-email") }}
+    </div>
+    <div class="input-group mt-3">
+      <div class="input-group-prepend">
+          <span class="input-group-text bg-blue border-blue">
+              <i class="fas fa-key text-white"></i>
+          </span>
+      </div>
+        {{form.password(class="form-control",type="password",placeholder="Password",id="input-pass")}}
+    </div>
+    <button class="btn btn-blue text-white text-uppercase bg-blue w-100 mt-4" type="submit" id="button-login">Sign in</button>
+  </form>
+  <a class="text-blue" href="{{url_for('user.signup')}}">Don't have an account? Sign up.</a>
+    <a class="float-right text-blue" href="{{url_for('user.forgot')}}">Forgot your password?</a> </main>
+<!-- Main container END -->
+
 {% endblock %}

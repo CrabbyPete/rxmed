@@ -21,7 +21,9 @@ class MedForm(Form):
     """
     plan_type  = RadioField(choices=[('medicare','Medicare'),
                                      ('medicaid','Medicaid'),
-                                     ('private' ,'Private')])
+                                     ('private' ,'Private')],
+                            default='medicare')
+
     zipcode    = StringField()
     plan       = StringField()
     medication = StringField()

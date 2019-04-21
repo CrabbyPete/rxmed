@@ -1,9 +1,9 @@
 import pandas as pd
 
-from log              import log, log_msg
-from api              import RxTerm
-from tools            import get_related, get_plan
-from models.fta       import FTA, OpenNDC
+from log import log, log_msg
+from api import RxTerm
+from tools import get_related, get_plan
+from models.fta       import FTA
 from models.medicare  import Beneficiary_Costs, Basic_Drugs
 
 def beneficiary_costs(rxcui_list, plan):
@@ -70,8 +70,11 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
     fta_list = FTA.find_by_name(drug_parts[0], drug_parts[1] if len(drug_parts)==2 else None)
     for fta in fta_list:
 
-        if fta.SBD_RXCUI:
-            rxcui_list.update(fta.SBD_RXCUI)
+        if fta.SBD:
+            rxcui_list.update(fta.SBD)
+
+        if fta.SCD:
+            rxcui_list.update(fta.SCD)
 
         # Get the excluded list
         if fta.EXCLUDED_DRUGS_FRONT:
@@ -86,8 +89,11 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
         # Get all the FTA's for those related rxcui's
         for rxcui in related:
             for related_fta in FTA.find_rxcui(rxcui):
-                if related_fta.SBD_RXCUI:
-                    rxcui_list.update(related_fta.SBD_RXCUI)
+                if related_fta.SBD:
+                    rxcui_list.update(related_fta.SBD)
+
+                if related_fta.SCD:
+                    rxcui_list.update(related_fta.SCD)
 
     # Match up the beneficiary file with the plan and the rxcui from the ndc
     prior_authorize = True
@@ -106,10 +112,10 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
             term = rxterm.getAllRxTermInfo(bd.RXCUI)
             full_name = term.get('fullName','')
             generic_name = term.get('fullGenericName','')
-
+            '''
             if front_end_excluded(full_name, excluded):
                 continue
-
+            '''
             if bd.PRIOR_AUTHORIZATION_YN:
                 pa = 'Yes'
             else:

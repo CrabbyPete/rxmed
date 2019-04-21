@@ -1,6 +1,5 @@
 import re
 import json
-import yaml
 import requests
 
 from bs4 import BeautifulSoup
@@ -320,25 +319,58 @@ FIELDS = ('product_id',
           'openfda')
 
 
-class FDA(RxBase):
+class FDA():
     base_url = OPENFDA_URL
 
-    def open_fda(self, kwargs:dict):
+    def api(self, url, kwargs):
+        try:
+            r = requests.get(url, params=kwargs)
+        except Exception as e:
+            log.exception(f"Exception in api:{str(e)}")
+            return None
+
+        if r.ok:
+            data = json.loads(r.text)
+        else:
+            log.error(f"Bad request for {url}:{r.status_code}")
+            return r.status_code
+
+        return data
+
+    def open_fda(self, **kwargs:dict):
         """ Use Open FDA to find a drug
         :param brand_name:
         :param generic_name:
         :return:
         """
         search = None
-        for k,v in kwargs.items():
-            if k in FIELDS:
-                if not search:
-                    search = f'{k}:"{v}"'
-                else:
-                    search +=f'+AND+{k}:"{v}"'
+        context = {}
+        if 'limit' in kwargs.keys():
+            context['limit'] = kwargs.pop('limit')
 
-        url = OPENFDA_URL.format(search)
-        data = self.api( url, {})
+        if 'skip' in kwargs.keys():
+            context['skip'] = kwargs.pop('skip')
+
+
+        for k,v in kwargs.items():
+            if not k in FIELDS:
+                continue
+
+            # Dates are in lists
+            if isinstance(v, list):
+                v = f"[{v[0]}+TO+{v[1]}]"
+
+            elif isinstance(v,set):
+                v =f"({'+'.join(v)})"
+
+            if not search:
+                search = f'{k}:"{v}"'
+            else:
+                search +=f'+AND+{k}:"{v}"'
+
+        url = OPENFDA_URL.format(search).replace('"','')
+
+        data = self.api(url, context)
 
         if 'look_for' in kwargs.keys():
             return walk(data, kwargs['look_for'])

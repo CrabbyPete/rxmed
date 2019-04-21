@@ -2,9 +2,9 @@
 import hashlib
 
 
-from datetime       import datetime,date
+from datetime       import datetime, date
 from sqlalchemy.orm import validates
-from sqlalchemy     import (Column, Boolean, Integer, String, Date,ForeignKey, ARRAY )
+from sqlalchemy     import (Column, Boolean, Integer, String, DateTime, Date,ForeignKey, ARRAY )
 
 from .base              import Base
 from sqlalchemy_utils   import EmailType
@@ -35,6 +35,7 @@ class User( Base ):
     def is_active(self):
         return True
 
+    @property
     def is_anonymous(self):
         return False
 
@@ -56,6 +57,17 @@ class User( Base ):
 
     def __unicode__(self):
         return f"{self.first_name} {self.last_name}"
+
+
+class Requests(Base):
+    __tablename__ = 'requests'
+    id      = Column(Integer, primary_key=True)
+    user    = Column(ForeignKey('users.id'))
+    ip      = Column(String)
+    zipcode = Column(String)
+    plan    = Column(String)
+    drug    = Column(String)
+    time    = Column(DateTime, default=datetime.now)
 
 
 class Subscription(Base):

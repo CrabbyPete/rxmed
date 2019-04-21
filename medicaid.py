@@ -1,9 +1,8 @@
-import json
 import pandas as pd
 
-from api             import OhioStateAPI, RxNorm
-from log             import log
-from tools           import get_related_drugs, get_location
+from api import OhioStateAPI, RxNorm
+from log import log
+from tools import get_related_drugs, get_location
 
 from models          import FTA, OpenPlans
 from models.medicaid import OhioState
@@ -117,13 +116,17 @@ def all_plans(drug_name, plan_name, zipcode):
         log.error(f"OpenPlans query exception {str(e)}")
         records = []
 
+    remaining = [r.rxnorm_id for r in records]
     data = []
     pa = False
     included = False
     for record in records:
         name = record.drug.NAME
+        """
         if front_end_excluded(name, excluded):
+            print(f"excluding:{record.rxnorm_id}")
             continue
+        """
         new_record = row2dict(record)
         new_record['Drug Name'] = name
         if drug_name in name.lower():

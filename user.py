@@ -1,9 +1,8 @@
 import random
-import json
 
 from mailer                 import Mailer, Message
 
-from flask                  import Blueprint, render_template, request, redirect, session
+from flask                  import Blueprint, render_template, request, redirect
 
 from flask_login            import ( LoginManager,
                                      login_required,
@@ -14,8 +13,8 @@ from flask_login            import ( LoginManager,
 
 from models.user            import User
 
-from forms                  import SignInForm, SignUpForm, ForgotForm
-from log                    import log
+from forms import SignInForm, SignUpForm, ForgotForm
+from log import log
 
 
 user = Blueprint( 'user', __name__  )
@@ -48,31 +47,34 @@ def load_user(userid):
 def signup():
     """ Signup a new user 
     """
-    form = SignUpForm(request.form)
+    if request.method == 'GET':
+        form = SignUpForm(obj=current_user)
 
-    if request.method == 'POST' and form.validate():
-        email      = form.email.data
-        password   = form.password.data
+    else:
+        form = SignUpForm(request.form)
+        if request.method == 'POST' and form.validate():
+            email      = form.email.data
+            password   = form.password.data
 
-        # Check if they they exist already
-        user = User.get_one( email = email )
-        if not user:
-            email = form.email.data
-            first_name = form.first_name.data
-            last_name = form.last_name.data
-            user = User(**{'email':email, 'first_name':first_name, 'last_name':last_name})
-            user.set_password(password)
-            user.provider_type = form.provider_type.data
-            user.practice_name = form.practice_name.data
-            user.practice_type = form.practice_type.data
-            try:
-                user.save()
-            except Exception as e:
-                log.exception(f"Exception trying to save user {email}")
+            # Check if they they exist already
+            user = User.get_one(email = email)
+            if not user:
+                email = form.email.data
+                first_name = form.first_name.data
+                last_name = form.last_name.data
+                user = User(**{'email':email, 'first_name':first_name, 'last_name':last_name})
+                user.set_password(password)
+                user.provider_type = form.provider_type.data
+                user.practice_name = form.practice_name.data
+                user.practice_type = form.practice_type.data
+                try:
+                    user.save()
+                except Exception as e:
+                    log.exception(f"Exception trying to save user {email}")
+                else:
+                    return redirect('/')
             else:
-                return redirect('/')
-        else:
-            form.errors = "User already exists"
+                form.errors = "User already exists"
         
     context = {'form':form}
     content = render_template( 'signup.html', **context )
@@ -151,9 +153,8 @@ def forgot():
 
     if request.method == 'POST' and form.validate():
         email = form.email.data
-        try:
-            user = User.objects.get( email = email )
-        except User.DoesNotExist:
+        user = User.get( email = email )
+        if not user:
             form.email.errors = ['No such user']
             context = {'form':form}
             return render_template('forgot.html', **context )

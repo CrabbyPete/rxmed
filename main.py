@@ -1,24 +1,23 @@
 import os
-import json
 import tools
 
-from flask              import Flask, request, render_template, jsonify, abort, redirect
+from flask              import Flask, request, render_template, jsonify, abort
 from flask_admin        import Admin
-from flask_login        import login_required
+from flask_login        import login_required, current_user
 
-from log                import log, rq_log
+from log import rq_log
 
-from models             import Plans, FTA, OpenPlans, Database
+from models             import Plans, OpenPlans, Database, Requests
 from models.admin       import *
 
-from forms              import MedForm
+from forms import MedForm
 
-from medicaid           import get_medicaid_plan
-from medicare           import get_medicare_plan
+from medicaid import get_medicaid_plan
+from medicare import get_medicare_plan
 
 from settings           import DATABASE
 
-from user               import init_user
+from user import init_user
 
 application = Flask(__name__, static_url_path='/static')
 application.config['SECRET_KEY'] = os.urandom(12)
@@ -34,12 +33,12 @@ build_admin( admin, db.session )
 # Initialize all users
 init_user( application )
 
-"""
+
 @application.errorhandler(500)
 def internal_error(error):
-    msg = log( str(error) )
+    msg = str(error)
     return "500 error:{}".format(msg)
-"""
+
 
 @application.route('/')
 def home():
@@ -56,9 +55,9 @@ def fit():
     """ Form submit of meds
     :return:
     """
+
     form = MedForm(request.form)
     if request.method == 'POST' and form.validate():
-        rq = request.environ.get('HTTP_X_REAL_IP', request.remote_addr)
 
         zipcode = form.zipcode.data
         # Check the zipcode
@@ -66,16 +65,23 @@ def fit():
         plan = form.plan.data
         medication = form.medication.data
 
+
+        ip = str(request.environ.get('HTTP_X_REAL_IP', request.remote_addr))
+        rq = Requests(**dict(user=current_user.id, ip = ip, zipcode = zipcode, plan = plan, drug = medication))
+        rq.save()
+
         # Process either medicare or medicaid
         try:
             if form.plan_type.data == 'medicare':
                 table = get_medicare_plan(medication, plan, zipcode)
             else:
                 table = get_medicaid_plan(medication, plan, zipcode)
+
         except tools.BadPlanName as e:
             form.errors['plan_name'] = str(e)
             context = {'form': form}
             html = 'fit.html'
+
         except tools.BadLocation as e:
             form.errors['zipcode'] = str(e)
             context = {'form': form}
@@ -87,11 +93,26 @@ def fit():
                 row = [item[h] for h in table['heading']]
                 data.append(row)
 
-            context = {'data':data, 'head':table['heading'], 'drug':medication, 'pa': table['pa'], 'plan':plan }
+            context = {'data':data,
+                       'head':table['heading'],
+                       'drug':medication,
+                       'pa': table['pa'],
+                       'zipcode':zipcode,
+                       'plan':plan,
+                       'plan_type':form.plan_type.data,
+                      }
             html = 'table.html'
+
+    # If its a GET see if parameters were passed
     else:
-        # Not a POST or errors
-        if form.errors:
+        if request.method == 'GET':
+            form.zipcode.data = request.args.get('zipcode', "")
+            form.plan.data = request.args.get('plan', "")
+            form.medication.data = request.args.get('drug', "")
+            form.plan_type.data = request.args.get('plan_type', "medicare")
+
+        # a POST with errors
+        elif form.errors:
             if 'plan_type' in form.errors:
                 form.errors['plan_type'] = "Please pick a Medicare, Medicaid, or Private plan"
 

@@ -1,13 +1,10 @@
-import time
 import arrow
-import schedule
 
-from api        import FDA, RxNorm
-from models     import OpenNDC, FTA, Database, Basic_Drugs
-from tools      import related_drugs, one_rxcui, get_related
+
+from api import FDA, RxNorm
+from models     import FTA, Database, Basic_Drugs, OpenNDC
+from tools import one_rxcui
 from settings   import DATABASE
-
-
 
 
 def match_fta_ndc(fta):
@@ -40,12 +37,13 @@ def second_pass(date):
     :return:
     """
     for fta in FTA.session.query(FTA).filter(FTA.MODIFIED == date).order_by(FTA.id):
+        """
         related = related_drugs(fta.PROPRIETARY_NAME)
         if related:
             related = [int(r) for r in related if FTA.find_rxcui(r)]
             fta.RELATED_DRUGS = related
-
-        fta.SBD_RXCUI = match_fta_ndc(fta)
+        """
+        data = match_fta_ndc(fta)
         fta.save()
 
 
@@ -53,7 +51,7 @@ def job():
     fda = FDA()
     today = arrow.now()
     tday = today.format('YYYY-MM-DD')
-    day=['2018-11-18',tday]
+    day=['2018-01-19',tday]
 
     # Search parameters for open fda
     product_type = "HUMAN PRESCRIPTION DRUG"
@@ -116,10 +114,9 @@ def job():
 
 
 
-
 if __name__ == "__main__":
     with Database( DATABASE ) as db:
-        #job()
+        job()
         day = arrow.get('2019-03-14')
         second_pass(day.date())
 """

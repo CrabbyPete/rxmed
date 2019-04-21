@@ -54,7 +54,7 @@ class Zipcode(Base):
         return zc
 
     def __repr__(self):
-        return "<{}>".format(self.ZIPCODE)
+        return "{}".format(self.ZIPCODE)
 
 # Medicare plans
 class Plans(Base):
@@ -142,30 +142,7 @@ class OpenPlans(Base):
     prior_authorization = Column(Boolean)
     medicaid            = Column(Boolean)
     plan                = Column(String)
+    pa_reference        = Column(String)
 
     drug = relationship(Drugs, primaryjoin = rxnorm_id == Drugs.RXCUI)
 
-"""
-class OpenPlans(Base):
-    __tablename__ = 'open_plans'
-    id                  = Column(Integer, primary_key=True)
-    state               = Column(String)
-    plan_name           = Column(String)
-    quantity_limit      = Column(Boolean)
-    drug_tier           = Column(String)
-    step_therapy        = Column(Boolean)
-    prior_authorization = Column(Boolean)
-    rxnorm_id           = Column(Integer)
-    drug_name           = Column(String)
-"""
-
-class PlanInfo(Base):
-    __tablename__ = 'plan_ids'
-
-    id                  = Column(Integer, primary_key=True)
-    plan_id             = Column(String )
-    rxnorm_id           = Column(Integer)
-    quantity_limit      = Column(Boolean)
-    drug_tier           = Column(String)
-    step_therapy        = Column(Boolean)
-    prior_authorization = Column(Boolean)

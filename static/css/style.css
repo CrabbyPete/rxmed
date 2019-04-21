@@ -1,49 +1,91 @@
-body{
-	
+body {
 	background-color: #f5f5f5;
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
 }
-span{
-	font-weight: 100;
-	text-align: center;
+/******************** General custom classes ********************/
+.subheader {
+	font-size: 2.5rem;
 }
-#contact_subject{
-
-	position: relative;left: 50px;
-	top: 30px;
+.text-blue {
+	color: #0069a3;
 }
-.input-group-prepend>span{
-	background-color: #434a5a;
+.bg-blue {
+	background-color: #0069a3;
 }
-.btn-primary{
-	background-color: #434a5a;
+.btn-blue {
+	background-color: #0069a3;
 }
-
-
-.btn-primary:hover{
-	background-color: #02adc6;
+.btn:hover {
+	background-color: #8cc63e;
 }
-.forgot{
-	color: #434a5a;
+.btn-deco {
+	height: 5rem;
+	width: 5rem;
 }
-.table{
+.border-blue {
+	border-color: #0069a3;
+}
+.error{
+    background-color: #ffebcd;
+    padding: 0.25rem 0.5rem;
+    font-size: 1rem;
+    border: solid 1px #D25259;
+}
+.success{
+    background-color: #DDF7D6;
+    padding: 0.25rem 0.5rem;
+    font-size: 1rem;
+    border: solid 1px #06B141;
+}
+/******************** Navbar and footer ********************/
+.nav-item {
+	text-align: right;
+}
+footer {
+	margin: auto auto 0 auto;
+}
+/******************** Home ********************/
+#home-banner {
+	background-image: url("bg.jpg");
+	background-size: cover;
+}
+/******************** FIT ********************/
+.table {
 	background-color: white;
 	text-align: center;
 }
 #table-medicaid>tbody{
 font-weight: 500;
 }
+.float-button {
+	position:fixed;
+	z-index: 1;
+	width:7.5rem;
+	height:2.5rem;
+	bottom:2.5rem;
+	right:-5rem;
+	background-color:#0069a3;
+	color:#FFF;
+	border-radius:10px;
+	transition: all 0.2s ease-in 0s;
+	box-shadow: 2px 2px 2px #999;
+	text-decoration-color: #0069a3;
+}
+.float-button:hover {
+	right: -2.5rem;
+	background-color: #8cc63e;
+	text-decoration-color: #8cc63e;
+    color: #FFF;
+}
+.float-button:hover i {
+	display: none;
+}
+.float-button:hover span:after {
+	content: "Back";
+}
+.float-button-txt {
+	padding:0.5rem
+}
 
-.wrong-detail{
-	color: #FFFFFF;
-    background-color: #ffebcd;
-    padding: 6px 18px;
-    font-size: 16px;
-    border: solid 1px #D25259;
-    margin: 0 15px 14px 15px;
-}
-.health-plan{
-	color: #FFFFFF;
-    background-color: #434a5a;
-    padding: 6px 18px;
-    font-size: 20px;
-}
