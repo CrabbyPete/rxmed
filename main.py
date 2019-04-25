@@ -15,7 +15,7 @@ from forms import MedForm
 from medicaid import get_medicaid_plan
 from medicare import get_medicare_plan
 
-from settings           import DATABASE
+from settings import DATABASE
 
 from user import init_user
 

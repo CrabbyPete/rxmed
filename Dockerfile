@@ -30,7 +30,7 @@ RUN pip3 install -r requirements.txt
 RUN pip3 install uwsgi
 
 ADD . /app
-ENV DBHOST 10.36.240.3
+#ENV DBHOST 10.36.240.3
 
 # the default command to run when running this container. This should
 # be the command to run the service as it will be what runs when the

@@ -18,6 +18,10 @@
         $('input[name=plan]').val('');
       })
 
+      $("#button-clear-med").click(function(){
+        $('input[name=medication]').val('');
+      })
+
 	  /***** Autocomplete functionality *****/
       $("#input-plan-medicare").autocomplete({
 		  source: function( request, response )
