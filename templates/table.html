@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+
+{% block body_block %}
+<div class="container m-5">
+
+  <a class="float-button p-1" href="{{url_for('fit',zipcode=zipcode, plan=plan,drug=drug,plan_type=plan_type)}}"
+     id="float-arrow"> <span class="h4 float-button-txt"><i class="fas fa-arrow-left h4"></i></span> </a>
+
+  <!-- Text box for medicaid -->
+  {% if pa %}
+  <div class="container text-center" id="medicaid-text">
+    <div class="row justify-content-center p-2" id="infobox-pa-true">
+      <div class="card bg-light m-1">
+        <div class="card-body">
+          <h5 class="card-title">The drug you selected is not preferred by your prescription drug plan's formulary.</h5>
+          <p class="card-text">Please view from the list of therapeutic alternatives below.</p>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="row justify-content-center p-2" id="infobox-pa-false">
+      <div class="card bg-light m-1">
+        <div class="card-body">
+          <h5 class="card-title">The medication you selected is covered by your patient's plan.</h5>
+          <p class="card-text">For your reference, you may also view the table below for therapeutic alternatives.</p>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="row justify-content-center p-2" id="color-codes">
+      {% if pa %}
+      <div class="card border-danger col-md-5 m-1" id="color-code-red">
+        <div class="card-body">
+          <h5 class="card-title text-danger">Color code: Red</h5>
+          <p class="card-text">The drug is not covered by the drug plan and/or requires a prior authorization.</p>
+        </div>
+      </div>
+      {% else %}
+      <div class="card border-success col-md-5 m-1" id="color-code-green">
+        <div class="card-body">
+          <h5 class="card-title text-success">Color code: Green</h5>
+          <p class="card-text">The drug is covered by the drug plan.</p>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  <hr>
+
+  <!-- Table -->
+  <div class="PDFcontent">
+    <div class="row justify-content-center mt-5">
+      <h1 id="table-header">{{drug}}</h1>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-bordered" id="table-medicare">
+        <thead>
+          <tr>
+            {% for h in head %}
+            <th scope="col">{{h}}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody id="medicarebody">
+        {% for row in data %}
+          {% if row[-1] in ('True','Yes') %}
+            <tr bgcolor="pink" align="center">
+          {% else %}
+            <tr bgcolor="lightgreen" align="center">
+          {% endif %}
+          {% for cell in row %}
+            <td>{{cell}}</td>
+          {% endfor %}
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
