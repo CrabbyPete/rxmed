@@ -20,7 +20,7 @@ from settings import DATABASE
 from user import init_user
 
 application = Flask(__name__, static_url_path='/static')
-app.secret_key = "TheRainInSPainFalls"
+application.secret_key = "jaldsfji93dnd3"
 
 #application.config['SECRET_KEY'] = os.urandom(12)
 application.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
