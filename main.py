@@ -145,7 +145,9 @@ def plans():
     """
     results = []
     if 'qry' in request.args:
-        look_for = f"{request.args['qry'].lower()}%"
+        look_for = request.args['qry']
+        if look_for[0] == '*':
+            look_for = ''
         zipcode = request.args['zipcode']
 
         try:
@@ -158,7 +160,7 @@ def plans():
         if where:
             if plan in ('medicaid', 'private'):
                 state = where.STATE
-                results = PlanNames.by_state(state, look_for)
+                results = PlanNames.by_state(state, look_for,  plan=='medicaid')
                 results = [r.plan_name for r in results]
             elif plan == 'medicare':
                 county_code = where.GEO.COUNTY_CODE

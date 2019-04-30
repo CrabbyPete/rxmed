@@ -144,13 +144,10 @@ class PlanNames(Base):
     medicaid  = Column(Boolean)
 
     @classmethod
-    def by_state(cls, state, plan_type=None):
-        if not plan_type:
-            result = cls.session.query(cls).filter(OpenPlans.state == state).distinct()
-        else:
-            pt = plan_type == 'medicaid'
-            result = cls.session.query(cls).filter(cls.state == state,cls.medicaid == pt)
-
+    def by_state(cls, state, plan_name, medicaid):
+        plan_name = f"{plan_name}%"
+        fltr = and_(cls.state.ilike(state), cls.plan_name.ilike(plan_name), cls.medicaid==medicaid)
+        result = cls.session.query(cls).filter(fltr)
         return result.all()
 
     @classmethod
