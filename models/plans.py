@@ -154,10 +154,11 @@ class PlanNames(Base):
         return result.all()
 
     @classmethod
-    def ids_by_name(cls, state, plan_name, medicaid=True):
-        fltr = and_(cls.state == state, cls.plan_name.ilike(plan_name), cls.medicaid == medicaid )
-        result = cls.session.query(cls).filter(fltr).distinct()
-        return [r.id for r in result.all()]
+    def ids_by_name(cls, state, plan_name, medicaid):
+        fltr = and_(cls.state.ilike(state), cls.plan_name.ilike(plan_name) )
+        result = cls.session.query(cls).filter(fltr)
+        result = [r.id for r in result.all()]
+        return result
 
     def __repr__(self):
         return f"{self.state}:{self.plan_name}"

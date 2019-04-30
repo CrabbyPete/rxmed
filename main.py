@@ -1,7 +1,7 @@
 import os
 import tools
 
-from flask              import Flask, request, render_template, jsonify, abort
+from flask              import Flask, request, render_template, jsonify, abort, redirect
 from flask_admin        import Admin
 from flask_login        import login_required, current_user
 
@@ -130,7 +130,7 @@ def contact():
         name = form.data.name
         email = form.data.email
         message = form.data.message
-        return 
+        return redirect('/')
 
     context = {'form':form}
     content = render_template('contact.html', **context)
