@@ -22,7 +22,7 @@
   <div class="col-sm-6 error" id="login-error" hidden>
     <p class="error-msg text-danger m-1">One or more fields is missing and/or invalid.</p>
   </div>
-  <form class="form-group">
+  <form class="form-group" method="post" action="{{url_for('user.signup')}}">
     {{ form.csrf_token }}
     <div class="input-group mt-3">
         {{ form.first_name(class="form-control", id="input-fname",placeholder="First Name")}}
@@ -39,7 +39,7 @@
     </div>
     <div class="input-group my-3">
       <div class="input-group-prepend"> <span class="input-group-text prepend-icon bg-blue border-blue"> <i class="fas fa-key text-white"></i> </span> </div>
-        {{form.email(class="form-control border-left-0", placeholder="Email address", id="input-pass")}}
+        {{form.password(class="form-control border-left-0", placeholder="Password", id="input-pass")}}
         {{form.confirm_pass(class="form-control", placeholder="Confirm Password", id="input-passconfirm")}}
     </div>
     <span class="text-muted text-center">We'll never share your personal information with anyone outside of your company. We require that you read the <a href="#" data-toggle="modal" data-target="#terms">terms and conditions of use</a> carefully.</span>

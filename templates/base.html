@@ -37,7 +37,7 @@
       {% if not active_page == 'home' %}
       <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
       {% endif %}
-      <li class="nav-item"><a class="nav-link" href="mailto:oyefesobi.paul@gmail.com">Contact Us</a> </li>
+      <li class="nav-item"><a class="nav-link" href="{{url_for('contact')}}">Contact Us</a> </li>
       <li class="nav-item"><a class="nav-link" href="{{url_for('fit')}}">FIT Tool</a> </li>
       {% if current_user.is_anonymous %}
       {% if not active_page == 'signin' %}

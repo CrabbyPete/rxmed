@@ -12,6 +12,7 @@ from sqlalchemy import ( or_,
                        )
 
 from sqlalchemy.orm     import relationship
+from sqlalchemy.schema  import UniqueConstraint
 from .base              import Base
 from .fta               import Drugs
 
@@ -56,8 +57,11 @@ class Zipcode(Base):
     def __repr__(self):
         return "{}".format(self.ZIPCODE)
 
-# Medicare plans
+
 class Plans(Base):
+    """
+    This is the Medicare plans that are paid for don't change
+    """
     __tablename__ = 'plans'
 
     id                  = Column(Integer, primary_key= True)
@@ -129,20 +133,52 @@ class Plans(Base):
         return "<{}>".format(self.PLAN_NAME)
 
 
+class PlanNames(Base):
+    __tablename__ = 'plan_names'
+    __table_args__ = (UniqueConstraint('state', 'plan_name','plan_id'),)
+
+    id        = Column(Integer, primary_key=True)
+    state     = Column(String)
+    plan_name = Column(String)
+    plan_id   = Column(String)
+    medicaid  = Column(Boolean)
+
+    @classmethod
+    def by_state(cls, state, plan_type=None):
+        if not plan_type:
+            result = cls.session.query(cls).filter(OpenPlans.state == state).distinct()
+        else:
+            pt = plan_type == 'medicaid'
+            result = cls.session.query(cls).filter(cls.state == state,cls.medicaid == pt)
+
+        return result.all()
+
+    @classmethod
+    def ids_by_name(cls, state, plan_name, medicaid=True):
+        fltr = and_(cls.state == state, cls.plan_name.ilike(plan_name), cls.medicaid == medicaid )
+        result = cls.session.query(cls).filter(fltr).distinct()
+        return [r.id for r in result.all()]
+
+    def __repr__(self):
+        return f"{self.state}:{self.plan_name}"
+
+
 # All plans based on public info
 class OpenPlans(Base):
     __tablename__ = 'open_plans'
+    __table_args__ = (UniqueConstraint('rxnorm_id', 'plan_id'),)
+
     id                  = Column(Integer, primary_key=True)
-    state               = Column(String)
-    plan_name           = Column(String)
     rxnorm_id           = Column(Integer,ForeignKey('drugs.RXCUI'))
+    plan_id             = Column(Integer,ForeignKey('plan_names.id'))
     quantity_limit      = Column(Boolean)
     drug_tier           = Column(String)
     step_therapy        = Column(Boolean)
     prior_authorization = Column(Boolean)
-    medicaid            = Column(Boolean)
-    plan                = Column(String)
     pa_reference        = Column(String)
 
     drug = relationship(Drugs, primaryjoin = rxnorm_id == Drugs.RXCUI)
+    plan = relationship(PlanNames, primaryjoin = plan_id == PlanNames.id)
 
+    def __repr__(self):
+        return f"{self.rxnorm_id}:{self.plan_id}"

@@ -7,10 +7,10 @@ from flask_login        import login_required, current_user
 
 from log import rq_log
 
-from models             import Plans, OpenPlans, Database, Requests
+from models             import Plans, OpenPlans, Database, Requests, PlanNames
 from models.admin       import *
 
-from forms import MedForm
+from forms import MedForm, ContactForm
 
 from medicaid import get_medicaid_plan
 from medicare import get_medicare_plan
@@ -57,7 +57,6 @@ def fit():
     """ Form submit of meds
     :return:
     """
-
     form = MedForm(request.form)
     if request.method == 'POST' and form.validate():
 
@@ -67,17 +66,17 @@ def fit():
         plan = form.plan.data
         medication = form.medication.data
 
-
         ip = str(request.environ.get('HTTP_X_REAL_IP', request.remote_addr))
         rq = Requests(**dict(user=current_user.id, ip = ip, zipcode = zipcode, plan = plan, drug = medication))
         rq.save()
 
         # Process either medicare or medicaid
+        plan_type = form.plan_type.data
         try:
-            if form.plan_type.data == 'medicare':
+            if plan_type == 'medicare':
                 table = get_medicare_plan(medication, plan, zipcode)
             else:
-                table = get_medicaid_plan(medication, plan, zipcode)
+                table = get_medicaid_plan(medication, plan, zipcode, plan_type)
 
         except tools.BadPlanName as e:
             form.errors['plan_name'] = str(e)
@@ -124,6 +123,18 @@ def fit():
     content = render_template(html, **context)
     return content
 
+@application.route('/contact', methods=['GET','POST'])
+def contact():
+    form = ContactForm(request.form)
+    if request.method == 'POST' and form.validate():
+        name = form.data.name
+        email = form.data.email
+        message = form.data.message
+        return 
+
+    context = {'form':form}
+    content = render_template('contact.html', **context)
+    return content
 
 # Ajax calls
 @application.route('/plans', methods=['GET'])
@@ -134,7 +145,7 @@ def plans():
     """
     results = []
     if 'qry' in request.args:
-        look_for = request.args['qry']
+        look_for = f"{request.args['qry'].lower()}%"
         zipcode = request.args['zipcode']
 
         try:
@@ -147,8 +158,8 @@ def plans():
         if where:
             if plan in ('medicaid', 'private'):
                 state = where.STATE
-                results = OpenPlans.session.query(OpenPlans.plan_name).filter(OpenPlans.state == state).distinct().all()
-                results = [r[0] for r in results]
+                results = PlanNames.by_state(state, look_for)
+                results = [r.plan_name for r in results]
             elif plan == 'medicare':
                 county_code = where.GEO.COUNTY_CODE
                 ma_region = where.GEO.MA_REGION_CODE

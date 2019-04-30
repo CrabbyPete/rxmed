@@ -31,10 +31,12 @@ class BaseMixin(object):
         try:
             self.session.add(self)
             self.session.flush()
+            return True
 
         except Exception as e:
             log.error("Database Exception {} adding ".format(str(e), self))
             self.session.rollback()
+            return False
 
     def delete(self):
         self.session.delete(self)

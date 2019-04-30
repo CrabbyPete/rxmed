@@ -101,21 +101,12 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
     rxterm = RxTerm()
     for bd,bc in bdbc_list:
         if not bd:
-            """
-            pa = 'Yes'
-            ql = ''
-            st = ''
-            tier = ''
-            """
             continue
         else:
             term = rxterm.getAllRxTermInfo(bd.RXCUI)
             full_name = term.get('fullName','')
             generic_name = term.get('fullGenericName','')
-            '''
-            if front_end_excluded(full_name, excluded):
-                continue
-            '''
+
             if bd.PRIOR_AUTHORIZATION_YN:
                 pa = 'Yes'
             else:

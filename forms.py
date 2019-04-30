@@ -6,7 +6,8 @@ from wtforms                import ( validators,
                                      SelectField,
                                      BooleanField,
                                      RadioField,
-                                     HiddenField)
+                                     HiddenField,
+                                     TextAreaField)
 
 
 from wtforms.fields.html5   import TelField
@@ -74,3 +75,8 @@ class SignUpForm(Form):
 class ForgotForm(Form):
     email  = StringField(u"Email")
     submit = SubmitField("")
+
+class ContactForm(Form):
+    name = StringField('Name')
+    email = StringField(u"Email")
+    message = TextAreaField("* Type your message here...",)
