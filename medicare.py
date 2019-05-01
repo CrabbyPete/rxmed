@@ -36,19 +36,6 @@ def beneficiary_costs(rxcui_list, plan):
     return bdbc_list
 
 
-def front_end_excluded( drug, excluded:list)->bool:
-    """
-    Check if this record should be excluded
-    :param ndc:
-    :param excluded: list: names to exclude
-    :return:
-    """
-    for ex in excluded:
-        if len(ex) and ex in drug.lower():
-            return True
-    return False
-
-
 def get_medicare_plan(drug_name, plan_name, zipcode=None):
     """
     Get alternative drugs for medicare for a plane and drug
@@ -63,9 +50,6 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
     results = []
     drug_parts = [dp.strip() for dp in drug_name.split('-')]
 
-    # Get the right fta record
-    excluded = set()
-
     rxcui_list = set()
     fta_list = FTA.find_by_name(drug_parts[0], drug_parts[1] if len(drug_parts)==2 else None)
     for fta in fta_list:
@@ -75,10 +59,6 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
 
         if fta.SCD:
             rxcui_list.update(fta.SCD)
-
-        # Get the excluded list
-        if fta.EXCLUDED_DRUGS_FRONT:
-            excluded.update([s.strip() for s in fta.EXCLUDED_DRUGS_FRONT.lower().split("|") if s.strip()])
 
         # Get all the related RXCUI's
         if fta.RELATED_DRUGS:

@@ -262,7 +262,6 @@ def get_related_drugs(name, force = False ):
     name = name.split()[0].lower()
     fta_list = FTA.find_by_name(name)
 
-    excluded_front = set()
     drug_list = set()
 
     # Look at each fta entry
@@ -271,16 +270,13 @@ def get_related_drugs(name, force = False ):
         if fta.RXCUI:
             drug_list.update([fta.RXCUI])
 
-        if fta.EXCLUDED_DRUGS_FRONT:
-            excluded_front.update([s.strip() for s in fta.EXCLUDED_DRUGS_FRONT.lower().split("|") if s.strip()])
-
         # Skip the whole back end if it was already done
         if fta.RELATED_DRUGS is None or force == True:
             drug_list.update(get_related(fta))
         else:
             drug_list.update([f for f in fta.RELATED_DRUGS] )
 
-    return drug_list, excluded_front
+    return drug_list
 
 
 if __name__ == "__main__":

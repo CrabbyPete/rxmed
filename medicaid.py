@@ -40,10 +40,10 @@ def get_drug_list(drug_name):
     """
     Get all the alternative drugs
     :param drug_name:
-    :return: set of drugs and excluded front end
+    :return: set of drugs
     """
-    rxcui_list, excluded = get_related_drugs(drug_name, False)
-    return rxcui_list, excluded
+    rxcui_list = get_related_drugs(drug_name, False)
+    return rxcui_list
 
 
 def get_sdb_scd( rxcui ):
@@ -145,7 +145,7 @@ def ohio_state( drug_name ):
     included = False
 
     drug_name = drug_name.split()[0].lower()
-    rxcui_list, excluded = get_drug_list(drug_name)
+    rxcui_list = get_drug_list(drug_name)
 
     data = []
     for rxcui in rxcui_list:
