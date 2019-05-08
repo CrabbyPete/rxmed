@@ -70,6 +70,23 @@ class Drugs(Base):
     def __repr__(self):
         return self.NAME
 
+class FDA(Base):
+    __tablename__ = 'fda'
+    __table_args__ = (UniqueConstraint('PROPRIETARY_NAME','NONPROPRIETARY_NAME'),)
+    id                   = Column(Integer, primary_key= True)
+    PROPRIETARY_NAME     = Column(String)
+    NONPROPRIETARY_NAME  = Column(String)
+    RELATED_DRUGS        = Column(ARRAY(Integer, ForeignKey('fda.id')))
+    ACTIVE               = Column(Boolean, default=True)
+    MODIFIED             = Column(Date, default=date.today, onupdate=date.today)
+    RXCUI                = Column(Integer)
+    TTY                  = Column(String)
+    CLASS_ID             = Column(String)
+    CLASS_NAME           = Column(String)
+    SCD                  = Column(ARRAY(Integer))
+    SBD                  = Column(ARRAY(Integer))
+
+
 
 class FTA(Base):
     __tablename__ = 'fta'

@@ -205,15 +205,13 @@ def get_related(fta):
 
     rxcuis = None
     if fta.CLASS_ID:
-        members = rxclass.classMembers(fta.CLASS_ID,
-                                       relaSource=fta.DRUG_RELASOURCE,
-                                       rela=fta.DRUG_RELA,
-                                       ttys=[fta.TTY])
-
+        members = rxclass.classMembers(fta.CLASS_ID,relaSource='ATC',ttys=[fta.TTY])
         try:
             rxcuis = [m['minConcept']['rxcui'] for m in members if m['minConcept']['tty'] in ['MIN', 'IN']]
         except TypeError:
             pass
+        else:
+            print(f"member:{members}")
 
     if not rxcuis:
         rxcuis = []
@@ -237,9 +235,10 @@ def get_related(fta):
 
         # If its not active skip it
         for fta_member in fta_members:
+            '''
             if not fta_member.ACTIVE:
                 continue
-
+            '''
             # If its in the excluded back skip it
             for xb in excluded_back:
                 if xb in fta_member.PROPRIETARY_NAME or xb in fta_member.NONPROPRIETARY_NAME:

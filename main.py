@@ -1,4 +1,5 @@
 import os
+import time
 import tools
 
 from flask              import Flask, request, render_template, jsonify, abort, redirect
@@ -127,9 +128,10 @@ def fit():
 def contact():
     form = ContactForm(request.form)
     if request.method == 'POST' and form.validate():
-        name = form.data.name
-        email = form.data.email
-        message = form.data.message
+        name = form.data['name']
+        email = form.data['email']
+        message = form.data['message']
+        time.sleep(5)
         return redirect('/')
 
     context = {'form':form}

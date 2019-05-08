@@ -43,7 +43,6 @@ class SignInForm(Form):
     password = PasswordField("Enter password")
 
 
-
 class SignUpForm(Form):
     email         = StringField("Email Address",[validators.Email(u'Please use a valid email address.')])
     first_name    = StringField("First Name")
@@ -53,8 +52,8 @@ class SignUpForm(Form):
                                                           ('DO','DO'),
                                                           ('NP','NP'),
                                                           ('RN','RN'),
-                                                          ('Rph or PharmD','RP')])
-
+                                                          ('Rph or PharmD','RP'),
+                                                          ('Other.. (Type below')])
 
     practice_name = StringField("Practive Name")
     practice_type = SelectField("What type of practice site is your facility?",
@@ -71,10 +70,10 @@ class SignUpForm(Form):
     checkbox     = BooleanField("I have read and understood the terms and conditions of use above.")
 
 
-
 class ForgotForm(Form):
     email  = StringField(u"Email")
     submit = SubmitField("")
+
 
 class ContactForm(Form):
     name = StringField('Name')

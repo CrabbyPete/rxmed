@@ -1,4 +1,4 @@
-from .fta       import FTA, Drugs, OpenNDC
+from .fta       import FTA, Drugs, OpenNDC, FDA
 from .plans     import Zipcode, Geolocate, Plans, OpenPlans, PlanNames
 from .base      import Database
 from .user      import User, Requests

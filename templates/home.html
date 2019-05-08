@@ -11,18 +11,13 @@
 </div>
 <!--Banner END-->
 
-
-
-
-
-
 <!-- Main container START -->
 <main class="container-fluid">
 
   <!--Content START-->
   <!--Services START-->
-  <div class="container">
-    <div class="row">
+  <div class="container-fluid">
+    <div class="row m-1">
       <div class="col-md-6">
         <div class="d-flex flex-row">
           <button class="btn btn-blue btn-deco shadow mt-2" disabled><i class="fas fa-prescription-bottle-alt text-white h1"></i></button>
@@ -45,10 +40,39 @@
 
   <hr>
 
-  <!--Welcome START-->
-  <div class="container m-5">
-    <span class="display-4">How Our Formulary Insight Tool Can Help</span>
-    <div class="col-xs-6 card shadow p-2 m-5">
+	  <!-- Testimonials START -->
+  <div class="container-fluid">
+    <div id="testimonials" class="carousel slide p-5" data-ride="carousel">
+      <ol class="carousel-indicators">
+        <li data-target="#testimonials" data-slide-to="0" class="active"></li>
+        <li data-target="#testimonials" data-slide-to="1"></li>
+        <li data-target="#testimonials" data-slide-to="2"></li>
+      </ol>
+      <div class="carousel-inner text-center px-5">
+        <div class="carousel-item active">
+          <blockquote> <i class="fa fa-quote-left"></i>
+            <p class="display-4 carousel-text">Just wanted to let you know I find myself finding RxMedAccess <b class="text-orange">more helpful</b> than the others quite often, including today. Keep doing the amazing things you are doing.</p>
+            <small>Speciality Practice Pharmacist at Department of Family Medicine, OSU CarePoint East</small></blockquote>
+        </div>
+        <div class="carousel-item">
+          <blockquote> <i class="fa fa-quote-left"></i>
+            <p class="display-4 carousel-text">Very <b class="text-orange">easy to use</b> interface.</p>
+            <small>Pharmacist at Independent Pharmacy</small></blockquote>
+        </div>
+        <div class="carousel-item">
+          <blockquote> <i class="fa fa-quote-left"></i>
+            <p class="display-4 carousel-text">It is <b class="text-orange">way more accurate</b> than the current formulary predictor built within Epic.</p>
+            <small>Pharmacist at Internal Medicine Practice</small></blockquote>
+        </div>
+      </div>
+      <a class="carousel-control-prev" href="#testimonials" role="button" data-slide="prev"> <i class="fas fa-chevron-left text-blue" aria-hidden="true"></i> <span class="sr-only">Previous</span> </a> <a class="carousel-control-next" href="#testimonials" role="button" data-slide="next"> <i class="fas fa-chevron-right text-blue" aria-hidden="true"></i> <span class="sr-only">Next</span> </a> </div>
+  </div>
+  <!-- Testimonials END -->
+
+  <!-- Welcome START -->
+  <div class="container-fluid px-5">
+    <div class="my-4"><span class="display-4 text-blue">See the Formulary Insight Tool in action:</span> </div>
+    <div class="card shadow p-2 mb-5">
       <div class="embed-responsive embed-responsive-16by9">
         <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/WqM5pwOMZa8?rel=0&modestbranding=1&autohide=1&showinfo=0" allowfullscreen></iframe>
       </div>
@@ -59,5 +83,7 @@
   <!-- Content END -->
 
 </main>
+<!-- Main container END -->
+
 <!-- Main container END -->
 {% endblock %}
