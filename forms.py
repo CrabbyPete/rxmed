@@ -53,7 +53,7 @@ class SignUpForm(Form):
                                                           ('NP','NP'),
                                                           ('RN','RN'),
                                                           ('Rph or PharmD','RP'),
-                                                          ('Other.. (Type below')])
+                                                          ('Other.. (Type below','OT')])
 
     practice_name = StringField("Practive Name")
     practice_type = SelectField("What type of practice site is your facility?",

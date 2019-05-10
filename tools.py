@@ -1,8 +1,8 @@
 import pandas as pd
 
-from log import log, log_msg
-from models          import Zipcode, Plans, FTA, Drugs
-from api import RxClass, RxNorm
+from log    import log, log_msg
+from models import Zipcode, Plans, FTA, Drugs
+from api    import RxClass, RxNorm
 
 
 # Share this exception
@@ -74,7 +74,7 @@ def get_plan( plan_name, zipcode ):
     else:
         raise BadPlanName(f"Plan {plan_name} in {zipcode} not found")
 
-def get_rxcui( drug_name, tty='IN', relasource=None, rela=None):
+def get_rxcui( drug_name, tty='IN'):
     """ Get the tty:IN rxcui for a drug name
     :param drug_name:
     :return:
@@ -127,12 +127,10 @@ def get_rxcui( drug_name, tty='IN', relasource=None, rela=None):
         for property in related[0]:
             params = dict(RXCUI=property['rxcui'],
                           PROPRIETARY_NAME=drug_name,
-                          TTY=tty,
-                          RELASOURCE=relasource,
-                          RELA=rela
+                          TTY=tty
                         )
 
-            drug_classes = rxclass.getClassByRxNormDrugId(property['rxcui'], relasource, rela)
+            drug_classes = rxclass.getClassByRxNormDrugId(property['rxcui'])
             if drug_classes:
                 for dc in drug_classes:
                     if not dc['minConcept']['tty'] == tty:
@@ -164,12 +162,12 @@ def one_rxcui(name, relaSource=None, rela=None, force=False):
             return dict( RXCUI=drug.RXCUI, TTY=drug.TTY, CLASS_ID=drug.CLASS_ID, CLASS_NAME=drug.NAME )
 
     tty = 'IN'
-    results = get_rxcui(name, tty, relaSource, rela)
+    results = get_rxcui(name, tty)
 
     # If you did not find an IN try to get a MIN
     if not results or len(results) > 1:
         tty = 'MIN'
-        results = get_rxcui(name, tty, relaSource, rela)
+        results = get_rxcui(name, tty)
         if not results or len(results) > 1:
             return None
 
@@ -205,7 +203,7 @@ def get_related(fta):
 
     rxcuis = None
     if fta.CLASS_ID:
-        members = rxclass.classMembers(fta.CLASS_ID,relaSource='ATC',ttys=[fta.TTY])
+        members = rxclass.classMembers(fta.CLASS_ID,relaSource=['ATC','DAILYMED'],ttys=[fta.TTY])
         try:
             rxcuis = [m['minConcept']['rxcui'] for m in members if m['minConcept']['tty'] in ['MIN', 'IN']]
         except TypeError:
@@ -231,6 +229,7 @@ def get_related(fta):
         fta_members = fta.find_rxcui(int(rxcui))
         if not fta_members:
             log.info(f"{rxcui} not found in FTA")
+
             continue
 
         # If its not active skip it
