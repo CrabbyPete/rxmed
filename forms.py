@@ -48,12 +48,13 @@ class SignUpForm(Form):
     first_name    = StringField("First Name")
     last_name     = StringField("Last Name")
     provider_type = SelectField("Provider Type", choices=[('MD','MD'),
+                                                          ('MA','MA'),
                                                           ('PA','PA'),
                                                           ('DO','DO'),
                                                           ('NP','NP'),
                                                           ('RN','RN'),
-                                                          ('Rph or PharmD','RP'),
-                                                          ('Other.. (Type below','OT')])
+                                                          ('RP','Rph or PharmD'),
+                                                          ('OT','Other.. (Type below')])
 
     practice_name = StringField("Practive Name")
     practice_type = SelectField("What type of practice site is your facility?",
