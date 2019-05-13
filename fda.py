@@ -12,6 +12,31 @@ DATABASE = 'postgresql+psycopg2://pete:d0cterd00m@rxmed.cespfzxrbadm.us-east-2.r
 
 rx = RxNav()
 
+def get_related(fta):
+    """ Get the related drugs for an FTA entry
+    :param fta: FTA record
+    :return: list: fta ids that are related drugs
+    """
+
+    class_list = rx.getClassByRxNormDrugId(fta.RXCUI, relaSource='ATC')
+    if not class_list:
+        return []
+
+    rxcui_list = []
+    for ci in class_list:
+        class_id = ci['rxclassMinConceptItem']['classId']
+        members = rx.classMembers(class_id, relaSource='ATC') #, term_type = fta.TTY)
+        if not members:
+            continue
+        for member in members:
+            look_for = FTA.find_rxcui(int(member['minConcept']['rxcui']))
+            if not look_for:
+                logging.info(f"{member} not in FTA")
+            rxcui_list.append(int(member['minConcept']['rxcui']))
+
+    return set(rxcui_list)
+
+
 def get_scdsbd(rxcui):
     """ Add the SCD or SCD rxcui to the drugs DB
 
@@ -127,6 +152,7 @@ def job():
                     fta.CLASS_ID = rxcui_data.get('CLASS_ID', None)
                     fta.CLASS_NAME = rxcui_data.get('CLASS_NAME', None)
                     fta.ACTIVE = False
+                    fta.RELATED_DRUGS = get_related(fta)
                     fta.save()
 
 

@@ -54,11 +54,12 @@ class SignUpForm(Form):
                                                           ('NP','NP'),
                                                           ('RN','RN'),
                                                           ('RP','Rph or PharmD'),
-                                                          ('OT','Other.. (Type below')])
+                                                          ('OT','Other')
+                                                         ])
 
     practice_name = StringField("Practive Name")
-    practice_type = SelectField("What type of practice site is your facility?",
-                                choices=[('PCC','Primary Care Clinic'),
+    practice_type = SelectField(choices=[('',"What type of practice site is your facility?"),
+                                         ('PCC','Primary Care Clinic'),
                                          ('PPP','Physician Private Practice'),
                                          ('UC','Urgent Care'),
                                          ('SC','Speciality Clinic'),

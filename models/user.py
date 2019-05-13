@@ -69,6 +69,15 @@ class Requests(Base):
     drug    = Column(String)
     time    = Column(DateTime, default=datetime.now)
 
+class Contacts(Base):
+    __tablename__ = 'contacts'
+    id      = Column(Integer, primary_key=True)
+    name    = Column(String)
+    email   = Column(String)
+    comment = Column(String(6144))
+    time    = Column(DateTime, default=datetime.now)
+    answer  = Column(Boolean, default = False)
+
 
 class Subscription(Base):
     __tablename__ = 'subscriptions'

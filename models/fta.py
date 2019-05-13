@@ -9,6 +9,7 @@ from sqlalchemy         import ( Column,
                                  ARRAY,
                                  JSON,
                                  or_,
+                                 func
                                )
 
 from sqlalchemy.orm     import relationship
@@ -66,6 +67,15 @@ class Drugs(Base):
     TTY                  = Column(String)
     NAME                 = Column(String)
     CLASS_ID             = Column(ARRAY(String))
+
+    @classmethod
+    def similar(cls, name):
+        qry = cls.session.query(cls).order_by(func.similarity(cls.name, name))
+        result = qry.all()
+        return result
+
+
+
 
     def __repr__(self):
         return self.NAME

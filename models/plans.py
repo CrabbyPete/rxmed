@@ -137,11 +137,12 @@ class PlanNames(Base):
     __tablename__ = 'plan_names'
     __table_args__ = (UniqueConstraint('state', 'plan_name','plan_id'),)
 
-    id        = Column(Integer, primary_key=True)
-    state     = Column(String)
-    plan_name = Column(String)
-    plan_id   = Column(String)
-    medicaid  = Column(Boolean)
+    id         = Column(Integer, primary_key=True)
+    state      = Column(String)
+    plan_name  = Column(String)
+    plan_id    = Column(String)
+    medicaid   = Column(Boolean)
+    commercial = Column(Boolean)
 
     @classmethod
     def by_state(cls, state, plan_name, medicaid):

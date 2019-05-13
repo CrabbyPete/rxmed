@@ -12,11 +12,8 @@ class FTAModelView(ModelView):
     def on_model_change(self, form, model, is_created):
 
         model.RELATED_DRUGS = [int(d) for d in model.RELATED_DRUGS]
-        model.SBD_RXCUI = [int(d) for d in model.SBD_RXCUI]
         model.SCD = [int(d) for d in model.SCD]
         model.SBD = [int(d) for d in model.SBD]
-        pass
-
 
 def build_admin( admin, session ):
     admin.add_view(FTAModelView(FTA, session))
