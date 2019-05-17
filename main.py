@@ -8,7 +8,7 @@ from flask_login        import login_required, current_user
 
 from log import rq_log
 
-from models             import Plans, OpenPlans, Database, Requests, PlanNames
+from models             import Plans, OpenPlans, Database, Requests, PlanNames, Contacts
 from models.admin       import *
 
 from forms import MedForm, ContactForm
@@ -17,6 +17,7 @@ from medicaid import get_medicaid_plan
 from medicare import get_medicare_plan
 
 from settings import DATABASE
+from mail import send_email
 
 from user import init_user
 
@@ -124,6 +125,7 @@ def fit():
     content = render_template(html, **context)
     return content
 
+
 @application.route('/contact', methods=['GET','POST'])
 def contact():
     form = ContactForm(request.form)
@@ -131,6 +133,11 @@ def contact():
         name = form.data['name']
         email = form.data['email']
         message = form.data['message']
+        contact = Contacts( name = name,
+                            email = email,
+                            comment=message)
+        contact.save()
+        send_email(name, email,message)
         time.sleep(5)
         return redirect('/')
 

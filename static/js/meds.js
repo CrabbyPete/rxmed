@@ -22,6 +22,13 @@
         $('input[name=medication]').val('');
       })
 
+      $("#button-clear-all").click(function(){
+        $('input[name=medication]').val('');
+        $('input[name=plan]').val('')
+        $('input[name=zipcode]').val('')
+      })
+
+
 	  /***** Autocomplete functionality *****/
       $("#input-plan-medicare").autocomplete({
 		  source: function( request, response )

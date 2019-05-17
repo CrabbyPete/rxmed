@@ -147,7 +147,10 @@ class PlanNames(Base):
     @classmethod
     def by_state(cls, state, plan_name, medicaid):
         plan_name = f"{plan_name}%"
-        fltr = and_(cls.state.ilike(state), cls.plan_name.ilike(plan_name), cls.medicaid==medicaid)
+        fltr = and_(or_(cls.state.ilike(state), cls.state.ilike('US')),
+                    cls.plan_name.ilike(plan_name),
+                    cls.medicaid==medicaid
+                   )
         result = cls.session.query(cls).filter(fltr)
         return result.all()
 

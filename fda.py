@@ -7,8 +7,9 @@ from models     import FTA, Database, Basic_Drugs, OpenNDC, Drugs
 from tools import one_rxcui, get_related
 #from settings   import DATABASE
 
+
+# Pauls Amazon
 DATABASE = 'postgresql+psycopg2://pete:d0cterd00m@rxmed.cespfzxrbadm.us-east-2.rds.amazonaws.com:5432/rxmed'
-#DATABASE ='postgresql+psycopg2://petedouma:drd00m@127.0.0.1:5432/rxmed'
 
 rx = RxNav()
 
@@ -25,13 +26,15 @@ def get_related(fta):
     rxcui_list = []
     for ci in class_list:
         class_id = ci['rxclassMinConceptItem']['classId']
-        members = rx.classMembers(class_id, relaSource='ATC') #, term_type = fta.TTY)
+        members = rx.classMembers(class_id, relaSource='ATC',ttys=['IN','MIN'])
         if not members:
             continue
         for member in members:
-            look_for = FTA.find_rxcui(int(member['minConcept']['rxcui']))
+            rxcui = int(member['minConcept']['rxcui'])
+            look_for = FTA.find_rxcui(rxcui)
             if not look_for:
                 logging.info(f"{member} not in FTA")
+                continue
             rxcui_list.append(int(member['minConcept']['rxcui']))
 
     return set(rxcui_list)

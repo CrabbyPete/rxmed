@@ -15,6 +15,7 @@ from models.user            import User
 
 from forms import SignInForm, SignUpForm, ForgotForm
 from log import log
+from settings import EMAIL
 
 
 user = Blueprint( 'user', __name__  )
@@ -130,7 +131,7 @@ def send_email( user, password ):
                     pwd     = EMAIL['password']
                   )
                    
-    message = Message( From    = 'help@matchmapper.com',
+    message = Message( From    = 'help@rxmedaccess.com',
                        To      = [user.email],
                        Subject = "Password Reset"
                      )
@@ -144,7 +145,7 @@ def send_email( user, password ):
     try:
         mail.send(message)
     except Exception as e:
-        log( 'Send mail error: {}'.format( str(e) ) )
+        log.error( 'Send mail error: {}'.format( str(e) ) )
 
 
 @user.route( '/forgot', methods=['GET','POST'] )
@@ -153,7 +154,7 @@ def forgot():
 
     if request.method == 'POST' and form.validate():
         email = form.email.data
-        user = User.get( email = email )
+        user = User.get_one(email = email)
         if not user:
             form.email.errors = ['No such user']
             context = {'form':form}
@@ -164,7 +165,7 @@ def forgot():
         user.set_password( password )
         user.save()
         
-        #send_email( user, password )
+        send_email( user, password )
         return redirect('/signin')
     else:
         context = {'form':form}

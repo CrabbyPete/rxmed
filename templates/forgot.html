@@ -18,12 +18,18 @@
         {% endif %}
     </div>
     <form id='forgot' action="{{url_for('user.forgot')}}" method="post">
+        {{ form.csrf_token }}
         <div class="form-group">
 
             <div class="form-control input-group-prepend" style="margin-bottom: 20px;padding: 0px; border: 0px">
-                <span class="input-group-text prepend-icon"> <i class="fas fa-user text-white"></i> </span>
-                <input class="form-control" type="email" placeholder="Email address" id="input-email" required></div>
-
+                <span class="input-group-text prepend-icon">
+                    <i class="fas fa-user text-white"></i>
+                </span>
+                <!--
+                <input class="form-control" type="email" placeholder="Email address" id="input-email" required><
+                -->
+                {{form.email(class="form-control",placeholder="Email address",id="input-email",type="email")}}
+            </div>
             <button class="form-control btn btn-primary text-uppercase w-100" name="submit" type="submit"
                     id="button-login">Recover
             </button>
