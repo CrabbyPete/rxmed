@@ -18,7 +18,7 @@ def send_email(name, email, mess):
                       Subject="message from {}".format(email)
                       )
 
-    message.Body = """{} sent you the following message:
+    message.Body = """{} sent with email address {} sent you the following message:
                       {}
                    """.format(name, email, mess)
     try:

@@ -34,6 +34,7 @@ db.open()
 admin = Admin(application, name='RxMedAccess', template_mode='bootstrap3')
 build_admin( admin, db.session )
 
+
 # Initialize all users
 init_user( application )
 
@@ -137,7 +138,7 @@ def contact():
                             email = email,
                             comment=message)
         contact.save()
-        send_email(name, email,message)
+        send_email(name, email, message)
         time.sleep(5)
         return redirect('/')
 
