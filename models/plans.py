@@ -143,6 +143,7 @@ class PlanNames(Base):
     plan_id    = Column(String)
     medicaid   = Column(Boolean)
     commercial = Column(Boolean)
+    source     = Column(String)
 
     @classmethod
     def by_state(cls, state, plan_name, medicaid):

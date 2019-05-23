@@ -65,7 +65,10 @@ class SignUpForm(Form):
                                          ('SC','Speciality Clinic'),
                                          ('IP','Independent Pharmacy'),
                                          ('IMC','Internal Medicine Clinic'),
-                                         ('OC','Outpatient Clinic')] )
+                                         ('OC','Outpatient Clinic'),
+                                         ('CP','Community Pharmacy'),
+                                         ('AC','Ambulatory Care Pharmacy'),
+                                        ] )
 
     password     = PasswordField('New Password', [InputRequired(), EqualTo('confirm_pass', message='Passwords must match')])
     confirm_pass = PasswordField('Confirm Password')
