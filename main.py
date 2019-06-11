@@ -30,14 +30,12 @@ application.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
 db = Database( DATABASE, schema='rxmed')
 db.open()
 
-# Build the admin pages
-admin = Admin(application, name='RxMedAccess', template_mode='bootstrap3')
-build_admin( admin, db.session )
-
-
 # Initialize all users
 init_user( application )
 
+# Build the admin pages
+admin = Admin(application, name='RxMedAccess', template_mode='bootstrap3')
+build_admin( admin, db.session )
 
 @application.errorhandler(500)
 def internal_error(error):
@@ -172,6 +170,8 @@ def plans():
                 state = where.STATE
                 results = PlanNames.by_state(state, look_for,  plan=='medicaid')
                 results = [r.plan_name for r in results]
+                if state == 'OH':
+                    results.append('OH State Medicaid')
             elif plan == 'medicare':
                 county_code = where.GEO.COUNTY_CODE
                 ma_region = where.GEO.MA_REGION_CODE

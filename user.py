@@ -11,7 +11,7 @@ from flask_login            import ( LoginManager,
                                      current_user
                                    )
 
-from models.user            import User
+from models.user            import Users
 
 from forms import SignInForm, SignUpForm, ForgotForm
 from log import log
@@ -38,7 +38,7 @@ def load_user(userid):
     @param userid: User referenced in the database pass in by flask
     """
     try:
-        user = User.get(userid)
+        user = Users.get(userid)
     except:
         return None
     return user
@@ -58,7 +58,7 @@ def signup():
             password   = form.password.data
 
             # Check if they they exist already
-            user = User.get_one(email = email)
+            user = Users.get_one(email = email)
             if not user:
                 email = form.email.data
                 first_name = form.first_name.data
@@ -94,7 +94,7 @@ def signin():
         password = form.password.data
 
         if email:
-            user = User.get_one( email = email )
+            user = Users.get_one( email = email )
             if not user:
                 form.email.errors = ['No such user or password']
             else:
@@ -154,7 +154,7 @@ def forgot():
 
     if request.method == 'POST' and form.validate():
         email = form.email.data
-        user = User.get_one(email = email)
+        user = Users.get_one(email = email)
         if not user:
             form.email.errors = ['No such user']
             context = {'form':form}

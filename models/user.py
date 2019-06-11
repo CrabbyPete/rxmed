@@ -10,7 +10,7 @@ from .base              import Base
 from sqlalchemy_utils   import EmailType
 
 # User Profile, also used for those not signed in
-class User( Base ):
+class Users( Base ):
     __tablename__ = 'users'
 
     id            = Column(Integer, primary_key=True)

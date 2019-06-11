@@ -156,7 +156,7 @@ class PlanNames(Base):
         return result.all()
 
     @classmethod
-    def ids_by_name(cls, state, plan_name, medicaid):
+    def ids_by_name(cls, state, plan_name):
         fltr = and_(cls.state.ilike(state), cls.plan_name.ilike(plan_name) )
         result = cls.session.query(cls).filter(fltr)
         result = [r.id for r in result.all()]

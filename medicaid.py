@@ -134,11 +134,11 @@ def ohio_state( drug_name ):
     :return: dict
     """
     heading = ['Product Description',
-               'Formulary Restrictions',
                'Copay',
                'Package',
                'Route Of Administration',
                'Covered For Dual Eligible',
+               'Formulary Restrictions',
               ]
 
     pa = False
@@ -178,6 +178,7 @@ def ohio_state( drug_name ):
             if drug_name in record['Product_Description'].lower():
                 included = True
                 if 'PA' in record['Formulary_Restrictions']:
+                    record['Formulary_Restrictions'] = 'Yes'
                     pa = True
 
             data.append(reform_data(record, heading))
@@ -200,7 +201,6 @@ def get_medicaid_plan( drug_name, plan_name, zipcode, plan_type ):
     if plan_name == 'OH State Medicaid':
         return ohio_state( drug_name )
     else:
-
         return all_plans(drug_name, plan_name, zipcode, plan_type)
 
 
