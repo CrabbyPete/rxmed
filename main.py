@@ -1,42 +1,46 @@
 import os
-import json
+import time
 import tools
 
-from flask              import Flask, request, render_template, jsonify, abort
+from flask              import Flask, request, render_template, jsonify, abort, redirect
 from flask_admin        import Admin
+from flask_login        import login_required, current_user
 
-from log                import log, rq_log
+from log import rq_log
 
-from models             import Plans, NDC, FTA
-from models.base        import Database
+from models             import Plans, OpenPlans, Database, Requests, PlanNames, Contacts
 from models.admin       import *
 
-from medicaid           import get_medicaid_plan
-from medicare           import get_medicare_plan
+from forms import MedForm, ContactForm
 
-from settings           import DATABASE
+from medicaid import get_medicaid_plan
+from medicare import get_medicare_plan
 
-from user               import init_user
+from settings import DATABASE
+from mail import send_email
+
+from user import init_user
 
 application = Flask(__name__, static_url_path='/static')
-application.config['SECRET_KEY'] = os.urandom(12)
+application.secret_key = "jaldsfji93dnd3"
+
+#application.config['SECRET_KEY'] = os.urandom(12)
 application.config['FLASK_ADMIN_SWATCH'] = 'cerulean'
 
-db = Database( DATABASE )
+db = Database( DATABASE, schema='rxmed')
 db.open()
+
+# Initialize all users
+init_user( application )
 
 # Build the admin pages
 admin = Admin(application, name='RxMedAccess', template_mode='bootstrap3')
 build_admin( admin, db.session )
 
-# Initialize all users
-init_user( application )
-
-
 @application.errorhandler(500)
 def internal_error(error):
-    log.error(f"Exception caught:{str(error)}")
-    return jsonify([])
+    msg = str(error)
+    return "500 error:{}".format(msg)
 
 
 @application.route('/')
@@ -48,15 +52,97 @@ def home():
     return render_template('home.html')
 
 
-@application.route('/fit')
+@application.route('/fit', methods=['POST','GET'])
+@login_required
 def fit():
-    """
-    Get medicaid results
+    """ Form submit of meds
     :return:
     """
-    context = {}
-    return render_template( 'fit.html', **context )
+    form = MedForm(request.form)
+    if request.method == 'POST' and form.validate():
 
+        zipcode = form.zipcode.data
+        # Check the zipcode
+
+        plan = form.plan.data
+        medication = form.medication.data
+
+        ip = str(request.environ.get('HTTP_X_REAL_IP', request.remote_addr))
+        rq = Requests(**dict(user=current_user.id, ip = ip, zipcode = zipcode, plan = plan, drug = medication))
+        rq.save()
+
+        # Process either medicare or medicaid
+        plan_type = form.plan_type.data
+        try:
+            if plan_type == 'medicare':
+                table = get_medicare_plan(medication, plan, zipcode)
+            else:
+                table = get_medicaid_plan(medication, plan, zipcode, plan_type)
+
+        except tools.BadPlanName as e:
+            form.errors['plan_name'] = str(e)
+            context = {'form': form}
+            html = 'fit.html'
+
+        except tools.BadLocation as e:
+            form.errors['zipcode'] = str(e)
+            context = {'form': form}
+            html = 'fit.html'
+        else:
+            # You have to order the data in a list or it won't show right
+            data = []
+            for item in table['data']:
+                row = [item[h] for h in table['heading']]
+                data.append(row)
+
+            context = {'data':data,
+                       'head':table['heading'],
+                       'drug':medication,
+                       'pa': table['pa'],
+                       'zipcode':zipcode,
+                       'plan':plan,
+                       'plan_type':form.plan_type.data,
+                      }
+            html = 'table.html'
+
+    # If its a GET see if parameters were passed
+    else:
+        if request.method == 'GET':
+            form.zipcode.data = request.args.get('zipcode', "")
+            form.plan.data = request.args.get('plan', "")
+            form.medication.data = request.args.get('drug', "")
+            form.plan_type.data = request.args.get('plan_type', "medicare")
+
+        # a POST with errors
+        elif form.errors:
+            if 'plan_type' in form.errors:
+                form.errors['plan_type'] = "Please pick a Medicare, Medicaid, or Private plan"
+
+        context = {'form': form}
+        html = 'fit.html'
+
+    content = render_template(html, **context)
+    return content
+
+
+@application.route('/contact', methods=['GET','POST'])
+def contact():
+    form = ContactForm(request.form)
+    if request.method == 'POST' and form.validate():
+        name = form.data['name']
+        email = form.data['email']
+        message = form.data['message']
+        contact = Contacts( name = name,
+                            email = email,
+                            comment=message)
+        contact.save()
+        send_email(name, email, message)
+        time.sleep(5)
+        return redirect('/')
+
+    context = {'form':form}
+    content = render_template('contact.html', **context)
+    return content
 
 # Ajax calls
 @application.route('/plans', methods=['GET'])
@@ -66,82 +152,33 @@ def plans():
     :return: json list of plan names
     """
     results = []
-    if not 'zipcode' in request.args or request.args['zipcode'] == "":
-        results = ['Caresource',
-                   'Paramount Advantage',
-                   'Molina Healthcare',
-                   'UHC Community Plan',
-                   'OH State Medicaid',
-                   'Buckeye Health Plan'
-                  ]
-    else:
-        if 'qry' in request.args:
-            look_for = request.args['qry']
-            zipcode = request.args['zipcode']
-
-            look_in = tools.get_location( zipcode )
-            if look_in:
-                county_code = look_in.GEO.COUNTY_CODE
-                ma_region   = look_in.GEO.MA_REGION_CODE
-                pdp_region  = look_in.GEO.PDP_REGION_CODE
-            
-                results = Plans.find_in_county(county_code, ma_region, pdp_region, look_for)
-   
-    return jsonify(results)
-
-
-@application.route('/related_drugs')
-def related_drugs():
-    """ Related drug API
-    http://localhost:5000/related_drugs?drug_name=Admelog
-    Get related drugs by name
-    :return: json
-    """
-    results = []
-
-    if 'drug_name' in request.args:
-        drugs, _ = tools.get_related_drugs(request.args['drug_name'], force=True)
-
-    for drug in drugs:
-        r = FTA.get(drug)
-        results.append(f"{r.PROPRIETARY_NAME}-{r.NONPROPRIETARY_NAME}")
-
-    return jsonify(results)
-
-
-@application.route('/formulary_id')
-def formulary_id():
-    """ API to get formulary id
-    localhost:5000/formulary_id?zipcode=43081&plan_name=CareSource Advantage (HMO)
-    Get the formulary_id for a plan in a zipcode
-    :return:
-    """
-    results = []
-    if 'plan_name' in request.args and 'zipcode' in request.args:
-        results = tools.get_formulary_id(request.args['plan_name'],
-                                         request.args['zipcode' ]
-                                        )
-
-    return jsonify( results )
-
-
-@application.route('/ndc_drugs', methods=['GET'])
-def ndc_drugs():
-    """ NDC lookup API
-    Type ahead for ncd drugs
-    :return json: a list of drugs from ncd
-    """
-    results = set()
     if 'qry' in request.args:
         look_for = request.args['qry']
-        drug_list = NDC.session.query(NDC).filter(NDC.PROPRIETARY_NAME.ilike(f'{look_for.lower()}%'))
-        for d in drug_list:
-            s = d.PROPRIETARY_NAME
-            if d.DOSE_STRENGTH and d.DOSE_UNIT:
-                s += f" {d.DOSE_STRENGTH} {d.DOSE_UNIT}"
-            results.update([s])
-    
-    return jsonify(list(results))
+        if look_for[0] == '*':
+            look_for = ''
+        zipcode = request.args['zipcode']
+
+        try:
+            plan = request.args['plan']
+        except KeyError:
+            return None
+
+        # If this is a medicaid or private plan
+        where = tools.get_location(zipcode)
+        if where:
+            if plan in ('medicaid', 'private'):
+                state = where.STATE
+                results = PlanNames.by_state(state, look_for,  plan=='medicaid')
+                results = [r.plan_name for r in results]
+                if state == 'OH':
+                    results.append('OH State Medicaid')
+            elif plan == 'medicare':
+                county_code = where.GEO.COUNTY_CODE
+                ma_region = where.GEO.MA_REGION_CODE
+                pdp_region = where.GEO.PDP_REGION_CODE
+                results = Plans.find_in_county(county_code, ma_region, pdp_region, look_for)
+
+    return jsonify(sorted(results))
 
 
 @application.route('/drug_names', methods=['GET'])
@@ -200,15 +237,11 @@ def medicare_options():
 
         rq_log.info(f"{rq},{drug_name},{plan_name},'medicare")
         results = get_medicare_plan(drug_name, plan_name, zipcode )
-        """
-        dbug = json.dumps( results['data'],indent=2, sort_keys=True )
-        print(dbug)
-        """
         return jsonify(results)
 
     abort(404)
 
 
 if __name__ == "__main__":
-    application.run(host='0.0.0.0', port=5000, debug=False)
+    application.run(host='localhost', port=5000, debug=False)
 

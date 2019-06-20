@@ -1,9 +1,20 @@
-import re
+import pandas as pd
 
-from functools       import lru_cache
-from log             import log, log_msg
-from models          import Zipcode, Plans, FTA
-from api             import RxClass
+from log    import log, log_msg
+from models import Zipcode, Plans, FTA, Drugs
+from api    import RxClass, RxNorm
+
+
+# Share this exception
+class BadPlanName(Exception):
+    """
+    A bad plan name was entered
+    """
+
+class BadLocation(Exception):
+    """
+    A bad zipcode was entered
+    """
 
 
 def walk(seq, look_for):
@@ -31,8 +42,7 @@ def walk(seq, look_for):
     return None
 
 
-@lru_cache(4096)
-def get_location( zipcode ):
+def get_location(zipcode):
     """
     Get the geo location infor from a given zipcode
     :param zipcode: string: zipcode to look in
@@ -42,11 +52,11 @@ def get_location( zipcode ):
         zipcode = Zipcode.session.query(Zipcode).filter( Zipcode.ZIPCODE == zipcode ).one()
     except Exception as e:
         log.error( log_msg(str(e)) )
-        return None
+        raise BadLocation( f"Unknown zipcode {zipcode} location")
 
     return zipcode
 
-@lru_cache(4096)
+
 def get_plan( plan_name, zipcode ):
     """
     Get the formulary_id for a plan
@@ -62,16 +72,187 @@ def get_plan( plan_name, zipcode ):
         return plans[0]
 
     else:
-        return "More than one found"
+        raise BadPlanName(f"Plan {plan_name} in {zipcode} not found")
 
-#REGEX = '[\\[\\(](.*?)[\\]\\)]' Brackets and parenthesis
-REGEX = "\\[(.*?)\\]"
+def get_rxcui( drug_name, tty='IN'):
+    """ Get the tty:IN rxcui for a drug name
+    :param drug_name:
+    :return:
+    """
+    rxnorm = RxNorm()
+    rxclass = RxClass()
+
+    rxcui = rxnorm.findRxcuiByString(drug_name)
+    if not rxcui:
+
+        # Try and guess the best answer
+        guesses = rxnorm.getApproximateMatch(term=drug_name, maxEntries=12, option=0)
+        for guess in guesses.get('candidate',[]):
+            data = rxnorm.getAllProperties(guess['rxcui'], prop='NAMES')
+            if data:
+                try:
+                    name = [d['propValue'] for d in data if 'RxNorm Name' in d['propName']]
+                    rxcui = rxnorm.findRxcuiByString(name[0])[0]
+                except:
+                    pass
+            else:
+                try:
+                    rxcui = int(guess['rxcui'])
+                except:
+                    log.error(f"No rxcui found for {drug_name}")
+
+            related = rxnorm.getRelatedByType(rxcui, tty=['IN','MIN'])
+            if related:
+                break
+        else:
+            log.error(f"No rxcui found for {drug_name}")
+            return None
+    else:
+        rxcui = int(rxcui[0])
+        related = rxnorm.getRelatedByType(rxcui, tty=['IN','MIN'])
+
+    try:
+        related = [ group['conceptProperties'] for group in related['conceptGroup']\
+                    if group.get('conceptProperties',None) and group['tty'] == tty]
+    except TypeError:
+        log( log_msg(f"TypeError for {drug_name}"))
+        related = None
+
+    results = []
+    if related:
+        if len( related ) > 1:
+            log(log_msg(f"More than one related for {drug_name}"))
+
+        # There should only ever be 1 related
+        for property in related[0]:
+            params = dict(RXCUI=property['rxcui'],
+                          PROPRIETARY_NAME=drug_name,
+                          TTY=tty
+                        )
+
+            drug_classes = rxclass.getClassByRxNormDrugId(property['rxcui'])
+            if drug_classes:
+                for dc in drug_classes:
+                    if not dc['minConcept']['tty'] == tty:
+                        continue
+
+                    params['CLASS_ID'] = dc['rxclassMinConceptItem']['classId']
+                    params['CLASS_NAME'] = dc['rxclassMinConceptItem']['className']
+
+            results.append(params)
+
+    if len(results) > 1:
+        results = pd.DataFrame(results).drop_duplicates().to_dict('records')
+    return results
+
+
+def one_rxcui(name, relaSource=None, rela=None, force=False):
+    """ Only return 1 rxcui either IN or MIN
+    :param name:
+    :param tty:
+    :param relasource:
+    :param rela:
+    :return:
+    """
+    rxclass = RxClass()
+
+    if not force:
+        drug = Drugs.get_one( **dict(NAME = name, RELASOURCE =relaSource, RELA = rela) )
+        if drug:
+            return dict( RXCUI=drug.RXCUI, TTY=drug.TTY, CLASS_ID=drug.CLASS_ID, CLASS_NAME=drug.NAME )
+
+    tty = 'IN'
+    results = get_rxcui(name, tty)
+
+    # If you did not find an IN try to get a MIN
+    if not results or len(results) > 1:
+        tty = 'MIN'
+        results = get_rxcui(name, tty)
+        if not results or len(results) > 1:
+            return None
+
+    result = results[0]
+    try:
+        result['RXCUI'] = int(result['RXCUI'])
+    except Exception as e:
+        result['RXCUI'] = None
+
+    save = result.copy()
+
+    save['NAME'] = save.pop('PROPRIETARY_NAME')
+    #drug = Drugs.get_or_create(**save)
+    #drug.save()
+
+    return result
+
+
+def get_related(fta):
+    """ Get the related drugs for an FTA entry
+    :param fta: FTA record
+    :return: list: fta ids that are related drugs
+    """
+    rxnorm = RxNorm()
+    rxclass = RxClass()
+
+    rxcui_list = set()
+
+    if fta.EXCLUDED_DRUGS_BACK:
+        excluded_back = [s.strip() for s in fta.EXCLUDED_DRUGS_BACK.lower().split("|") if s.strip()]
+    else:
+        excluded_back = []
+
+    rxcuis = None
+    if fta.CLASS_ID:
+        members = rxclass.classMembers(fta.CLASS_ID,relaSource=['ATC','DAILYMED'],ttys=[fta.TTY])
+        try:
+            rxcuis = [m['minConcept']['rxcui'] for m in members if m['minConcept']['tty'] in ['MIN', 'IN']]
+        except TypeError:
+            pass
+        else:
+            print(f"member:{members}")
+
+    if not rxcuis:
+        rxcuis = []
+        class_list = rxclass.getClassByRxNormDrugId(fta.RXCUI)
+        if class_list:
+            class_min_ids = [c['minConcept']['rxcui'] for c in class_list if c['minConcept']['tty'] == 'MIN']
+            class_in_ids = [c['minConcept']['rxcui'] for c in class_list if c['minConcept']['tty'] == 'IN']
+            if class_min_ids:
+                rxcuis = set(class_min_ids)
+            else:
+                rxcuis = set(class_in_ids)
+
+
+    # Find all the members back in the FTA table
+    for rxcui in set(rxcuis):
+
+        fta_members = fta.find_rxcui(int(rxcui))
+        if not fta_members:
+            log.info(f"{rxcui} not found in FTA")
+
+            continue
+
+        # If its not active skip it
+        for fta_member in fta_members:
+            '''
+            if not fta_member.ACTIVE:
+                continue
+            '''
+            # If its in the excluded back skip it
+            for xb in excluded_back:
+                if xb in fta_member.PROPRIETARY_NAME or xb in fta_member.NONPROPRIETARY_NAME:
+                    break
+            else:
+                rxcui_list.update([fta_member.RXCUI])
+
+    return rxcui_list
+
 
 def get_related_drugs(name, force = False ):
     """
     Step one is search from the FTA DB and get from the xxx APIs for name
     :param proprietaryName: the proprietary name to look for
-    :return: drugs that are the same class
+    :return: rxcui_list of drugs that are the same class
     """
     rx = RxClass()
 
@@ -79,114 +260,21 @@ def get_related_drugs(name, force = False ):
     name = name.split()[0].lower()
     fta_list = FTA.find_by_name(name)
 
-    excluded_front = set()
     drug_list = set()
 
+    # Look at each fta entry
     for fta in fta_list:
 
+        if fta.RXCUI:
+            drug_list.update([fta.RXCUI])
+
         # Skip the whole back end if it was already done
-        if not fta.RELATED_DRUGS is None and force == False:
-            drug_list.update([f for f in fta.RELATED_DRUGS] )
-            if fta.EXCLUDED_DRUGS_FRONT:
-                excluded_front.update([s.strip() for s in fta.EXCLUDED_DRUGS_FRONT.lower().split("|") if s.strip()])
-
-        # Find the drug and related drugs using the API
+        if fta.RELATED_DRUGS is None or force == True:
+            drug_list.update(get_related(fta))
         else:
-            if fta.EXCLUDED_DRUGS_FRONT:
-                excluded_front.update([s.strip() for s in fta.EXCLUDED_DRUGS_FRONT.lower().split("|") if s.strip()])
+            drug_list.update([f for f in fta.RELATED_DRUGS] )
 
-            if fta.EXCLUDED_DRUGS_BACK:
-                excluded_back = [s.strip() for s in fta.EXCLUDED_DRUGS_BACK.lower().split("|") if s.strip()]
-            else:
-                excluded_back = []
-
-            if fta.CLASS_ID:
-                class_id = fta.CLASS_ID
-            else:
-                # Look by the proprietary name
-                data = rx.byDrugName(drugName=fta.PROPRIETARY_NAME,
-                                     relaSource=fta.DRUG_RELASOURCE,
-                                     relas=fta.DRUG_RELA
-                                    )
-
-                # If nothing found look by non-proprietary name
-                if not data:
-                    data = rx.byDrugName(drugName=fta.NONPROPRIETARY_NAME,
-                                         relaSource=fta.DRUG_RELASOURCE,
-                                         relas=fta.DRUG_RELA
-                                        )
-                # Still nothing skip it
-                if not data:
-                    log.error( "No data found for {} or {}".format( fta.PROPRIETARY_NAME, fta.NONPROPRIETARY_NAME) )
-                    continue
-
-                class_id = walk(data,'classId')
-                if class_id:
-                    fta.CLASS_ID = class_id
-                    fta.save()
-                else:
-                    log.info("No CLASS_ID for {}".format( fta.PROPRIETARY_NAME, fta.NONPROPRIETARY_NAME))
-                    continue
-    
-            # Check the relaSource and relas
-            if fta.DRUG_RELASOURCE == 'VA' and fta.DRUG_RELA in ['has_VAClass_extended', 'has_VAClass']:
-                va = True
-                ttys = ['SCD','SBD','BPCK','GPCK'] #'SCD+SBD+BPCK+GPCK'
-            else:
-                va = False
-                ttys = ['IN','MIN','PIN','BN'] #'IN+MIN+PIN+BN'
-
-            # Get the class members
-            members = rx.classMembers(classId=class_id,
-                                      relaSource=fta.DRUG_RELASOURCE,
-                                      rela=fta.DRUG_RELA,
-                                      ttys=ttys
-                                     )
-            if not members:
-                return None
-
-            drug_names = []
-            for dm in members:
-                look_for = dm['minConcept']['name']
-                if va:
-                    try:
-                        look_for =  re.findall(REGEX, look_for)[0]
-                    except IndexError:
-                        look_for = dm['nodeAttr'][1]['attrValue']
-                        for node in dm['nodeAttr']:
-                            if node['attrName'] == 'SourceName':
-                                if node['attrValue']:
-                                    look_for = node['attrValue'].split()[0]
-                                    break
-                        else:
-                            continue
-
-                        #log.info(f"No brackets in {fta.PROPRIETARY_NAME}:{look_for}")
-                        #continue
-
-                drug_names.append(look_for)
-
-            for drug_name in set(drug_names):
-                drug = drug_name.lower()
-
-                fta_members = fta.find_by_name(drug)
-                if not fta_members:
-                    log.info("{} not found in FTA".format(look_for))
-                    #inactive = FTA.get_or_create(**{'PROPRIETARY_NAME':look_for,"ACTIVE":False})
-                    #inactive.save()
-                    continue
-
-                for fta_member in fta_members:
-                    if not fta_member.ACTIVE:
-                        continue
-
-                    for xb in excluded_back:
-                        if xb in fta_member.PROPRIETARY_NAME or xb in fta_member.NONPROPRIETARY_NAME:
-                            break
-                    else:
-                        drug_list.update([fta_member.id])
-
-    return drug_list, excluded_front
+    return drug_list
 
 
 if __name__ == "__main__":
@@ -194,7 +282,7 @@ if __name__ == "__main__":
     from models.base   import Database
 
     with Database(DATABASE) as db:
-        results = get_related_drugs('flovent', force=True)
+        results = one_rxcui('lidothol','VA','has_VAclass_Extended', force=True)
         """
         for fta in FTA.get_all():
             results = get_related_drugs(fta.PROPRIETARY_NAME, force=True)

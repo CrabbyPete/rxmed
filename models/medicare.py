@@ -3,16 +3,12 @@ import logging
 
 log = logging.getLogger(__name__)
 from sqlalchemy         import ( Column,
-                                ARRAY,
-                                Integer,
-                                DECIMAL,
-                                String,
-                                Text,
-                                Date,
-                                Boolean,
-                                ForeignKey,
-                                or_,
-                                and_
+                                 Integer,
+                                 DECIMAL,
+                                 String,
+                                 Date,
+                                 Boolean,
+                                 ForeignKey,
                               )
 
 from sqlalchemy.orm     import relationship
@@ -62,54 +58,22 @@ class Basic_Drugs(Base):
 
 
     @classmethod
+    def get_by_rxcui(cls, rxcui):
+        if not rxcui:
+            return None
+        qry = cls.session.query(cls).filter(cls.RXCUI == rxcui)
+        return qry.all()
+
+
+    @classmethod
     def get_by_ndc(cls, ndc_id, formulary_id):
         qry = cls.session.query(cls).filter(cls.NDC_id == ndc_id, cls.FORMULARY_ID == formulary_id)
         return qry.all()
 
 
     def __repr__(self):
-        return "<{}>".format(self.FORMULARY_ID)
+        return "<{}:{}>".format(self.FORMULARY_ID,self.RXCUI)
 
-
-class NDC_BD(Base):
-    __tablename__ = 'ndcbd'
-    __table_args__ = (UniqueConstraint('basicdrug', 'ndc'),)
-
-    id = Column(Integer, primary_key=True)
-
-    basicdrug    = Column(Integer, ForeignKey('basicdrugs.id'))
-    ndc          = Column(Integer, ForeignKey('ndc.id'))
-    formulary_id = Column(Integer)
-
-    drug = relationship(Basic_Drugs, backref='basicdrugs')
-
-    @classmethod
-    def get_basic_drug(cls, ndc, formulary_id):
-        try:
-            bd = cls.session.query(cls).filter(cls.ndc==ndc, cls.formulary_id == formulary_id).all()
-        except NoResultFound:
-            return None
-
-        if len( bd ) > 1:
-            log.error(f"More than one found BD_NDC NDC:{ndc} Formulary{formulary_id}")
-
-        try:
-            bd = bd[0]
-        except Exception as e:
-            return None
-
-        return bd.drug
-
-    @classmethod
-    def get_by_basicdrug(cls, ndc, basicdrug ):
-        try:
-            bd = cls.session.query(cls).filter(cls.ndc==ndc, cls.basicdrug == basicdrug).one()
-        except NoResultFound:
-            return None
-        return bd
-
-    def __repr__(self):
-        return(f'<{self.ndc}>:<{self.basicdrug}>')
 
 class Beneficiary_Costs( Base ):
     __tablename__ = 'beneficiarycosts'

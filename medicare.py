@@ -1,52 +1,39 @@
 import pandas as pd
 
-from functools  import lru_cache
+from log import log, log_msg
+from api import RxTerm
+from tools import get_related, get_plan
+from models.fta       import FTA
+from models.medicare  import Beneficiary_Costs, Basic_Drugs
 
-from log              import log, log_msg
-from tools            import get_related_drugs, get_plan
-from models.fta       import FTA, NDC
-from models.medicare  import Beneficiary_Costs, NDC_BD
-
-def beneficiary_costs(drug, plan):
+def beneficiary_costs(rxcui_list, plan):
     """
     Get the beneficary costs for a drug in plan
-    :param drug: drug ndc id number
+    :param ndc: drug ndc id number
     :param plan: dict: plan record
     :return:“COST_AMT_PREF” ONLY if “DAYS_SUPPLY” = 1 and “COST_TYPE_PREF” = 1, for each “COVERAGE_LEVEL” 0 AND 1
     """
-    bd = NDC_BD.get_basic_drug( drug, plan.FORMULARY_ID)
-    if not bd:
-        log.info(f"No Basic Drug for NDC:{drug} FormularyID:{plan.FORMULARY_ID}")
-        return None, None
+    bd_list = Basic_Drugs.session.query(Basic_Drugs).filter(Basic_Drugs.FORMULARY_ID == plan.FORMULARY_ID,
+                                                            Basic_Drugs.RXCUI.in_(rxcui_list)).all()
 
-    try:
-        benefit_costs = Beneficiary_Costs.get_all(**dict(CONTRACT_ID=plan.CONTRACT_ID,
-                                                         PLAN_ID=int(plan.PLAN_ID),
-                                                         SEGMENT_ID=int(plan.SEGMENT_ID),
-                                                         TIER=int(bd.TIER_LEVEL_VALUE),
-                                                         DAYS_SUPPLY=1,
-                                                         COST_TYPE_PREF=1
-                                                         )
-                                                  )
-    except TypeError as e:
-        log.info(log_msg( f"Type error{str(e)} looking for beneficiarycosts" ))
+    bdbc_list = []
+    for bd in bd_list:
+        try:
+            benefit_costs = Beneficiary_Costs.get_all(**dict(CONTRACT_ID=plan.CONTRACT_ID,
+                                                             PLAN_ID=int(plan.PLAN_ID),
+                                                             SEGMENT_ID=int(plan.SEGMENT_ID),
+                                                             TIER=int(bd.TIER_LEVEL_VALUE),
+                                                             DAYS_SUPPLY=1,
+                                                             COST_TYPE_PREF=1
+                                                            )
+                                                     )
+        except TypeError as e:
+            log.info(log_msg( f"Type error{str(e)} looking for beneficiarycosts" ))
 
-    bc = [c for c in benefit_costs if c.COVERAGE_LEVEL in (1, 0)]
-    return bd, bc
+        bc = [c for c in benefit_costs if c.COVERAGE_LEVEL in (1, 0)]
+        bdbc_list.append((bd, bc))
 
-
-def front_end_excluded( ndc, excluded:list)->bool:
-    """
-    Check if this record should be excluded
-    :param ndc:
-    :param excluded: list: names to exclude
-    :return:
-    """
-    drug = ndc.PROPRIETARY_NAME + ' '+ ndc.NONPROPRIETARY_NAME
-    for ex in excluded:
-        if len(ex) and ex in drug.lower():
-            return True
-    return False
+    return bdbc_list
 
 
 def get_medicare_plan(drug_name, plan_name, zipcode=None):
@@ -56,41 +43,56 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
     :param plan_name: string: plan name
     :return: dict: results
     """
+    # Get the plan
     plan = get_plan(plan_name, zipcode)
 
     # Get all related drugs
     results = []
-    drugs, excluded = get_related_drugs(drug_name)
+    drug_parts = [dp.strip() for dp in drug_name.split('-')]
 
-    # Get all the NDC numbers for each FTA
-    ndc_list = set()
-    for fta_id in drugs:
-        fta = FTA.get(fta_id)
-        if fta.NDC_IDS:
-            ndc_list.update(fta.NDC_IDS)
+    rxcui_list = set()
+    fta_list = FTA.find_by_name(drug_parts[0], drug_parts[1] if len(drug_parts)==2 else None)
+    for fta in fta_list:
 
+        if fta.SBD:
+            rxcui_list.update(fta.SBD)
+
+        if fta.SCD:
+            rxcui_list.update(fta.SCD)
+
+        # Get all the related RXCUI's
+        if fta.RELATED_DRUGS:
+            related = fta.RELATED_DRUGS
+        else:
+            related = get_related(fta)
+
+        # Get all the FTA's for those related rxcui's
+        for rxcui in related:
+            for related_fta in FTA.find_rxcui(rxcui):
+                if related_fta.SBD:
+                    rxcui_list.update(related_fta.SBD)
+
+                if related_fta.SCD:
+                    rxcui_list.update(related_fta.SCD)
+
+    # Match up the beneficiary file with the plan and the rxcui from the ndc
     prior_authorize = True
-    for ndc_id in ndc_list:
-        ndc = NDC.get(ndc_id)
-        if front_end_excluded( ndc, excluded):
-            continue
-
-        bd, bc = beneficiary_costs(ndc_id, plan)
+    bdbc_list = beneficiary_costs(rxcui_list, plan)
+    rxterm = RxTerm()
+    for bd,bc in bdbc_list:
         if not bd:
-            """
-            pa = 'Yes'
-            ql = ''
-            st = ''
-            tier = ''
-            """
             continue
         else:
+            term = rxterm.getAllRxTermInfo(bd.RXCUI)
+            full_name = term.get('fullName','')
+            generic_name = term.get('fullGenericName','')
+
             if bd.PRIOR_AUTHORIZATION_YN:
                 pa = 'Yes'
             else:
                 pa = 'No'
-                if drug_name.lower() in ndc.PROPRIETARY_NAME.lower() or \
-                   drug_name.lower() in ndc.NONPROPRIETARY_NAME.lower():
+                if drug_parts[0] in full_name.lower() or \
+                   drug_parts[0] in generic_name.lower():
                     prior_authorize = False
 
             if bd.STEP_THERAPY_YN:
@@ -115,8 +117,8 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
                     copay_d = "${:.2f}".format(c.COST_AMT_PREF)
                     cover   = "${:.2f}".format(c.COST_AMT_NONPREF)
 
-        result = {'Brand': f"{ndc.PROPRIETARY_NAME} {ndc.DOSE_STRENGTH} {ndc.DOSE_UNIT}",
-                  'Generic': ndc.NONPROPRIETARY_NAME,
+        result = {'Brand': full_name,
+                  'Generic': generic_name,
                   'Tier': tier,
                   'ST': st,
                   'QL': ql,
@@ -128,33 +130,31 @@ def get_medicare_plan(drug_name, plan_name, zipcode=None):
 
     if results:
         results = pd.DataFrame(results).drop_duplicates().to_dict('records')
-
-    return {'data':results, 'pa': prior_authorize}
-
+    heading = ['Brand','Generic','QL','ST','Tier','CTNP','CopayD','PA']
+    return {'data':results, 'heading':heading, 'pa': prior_authorize}
 
 if __name__ == "__main__":
     from settings      import DATABASE
     from models.base   import Database
 
     with Database(DATABASE) as db:
-        """
+        result = get_medicare_plan("SYMBICORT", 'WellCare Classic (PDP)', "07040")
+        print(result)
+
+        result = get_medicare_plan("tresiba - insulin degludec injection","Aetna Medicare NJ Silver Plan (Regional PPO)","07040")
         result = get_medicare_plan( "Victoza", "Anthem MediBlue Essential (HMO)", '43202')
         print(result)
         result = get_medicare_plan('Levemir','SilverScript Plus (PDP)','07040')
         print(result)
-        result = get_medicare_plan( "SYMBICORT","Silverscript choice (PDP)","07040")
-        print(result)
+
         result = get_medicare_plan( "Novolog","WellCare Classic (PDP)",'43219')
         print(result)
-        """
         result = get_medicare_plan('pulmicort flexhaler', 'humana preferred rx','07040')
         print( result )
-
         result = get_medicare_plan("Pulmicort", 'SilverScript Plus (PDP)', '07481')
         print(result)
-
         result = get_medicare_plan("Biktary", 'SilverScript Plus (PDP)', '07481')
         print(result)
-        print( beneficiary_costs.cache_info() )
+
 
 

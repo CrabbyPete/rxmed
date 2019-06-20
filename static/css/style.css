@@ -1,0 +1,143 @@
+body {
+	background-color: #f5f5f5;
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+}
+html { font-size: 1rem; }
+@media (min-width: 576px) {
+    html { font-size: 0.8rem; }
+}
+@media (min-width: 768px) {
+    html { font-size: 0.9rem; }
+}
+@media (min-width: 992px) {
+    html { font-size: 1rem; }
+}
+@media (min-width: 1200px) {
+    html { font-size: 1.1rem; }
+}
+/******************** General custom classes ********************/
+.subheader {
+	font-size: 2.5em;
+}
+.subheader-banner {
+	font-size: 1.5em;
+}
+.text-blue {
+	color: #0069a3;
+}
+.text-orange {
+	color: #f88428;
+}
+.bg-blue {
+	background-color: #0069a3;
+}
+.btn-blue {
+	background-color: #0069a3;
+}
+.btn-green {
+	background-color: #8cc63e;
+}
+.btn-blue:hover {
+	background-color: #8cc63e;
+}
+.btn-green:hover {
+	background-color: #0069a3;
+}
+.btn-deco {
+	height: 5em;
+	width: 5em;
+}
+.btn-quote {
+	border-radius: 0px 0px 5px 5px;
+}
+.border-blue {
+	border-color: #0069a3;
+}
+.error {
+    background-color: #ffebcd;
+    padding: 0.25em 0.5em;
+    font-size: 1em;
+    border: solid 1px #D25259;
+}
+.success {
+    background-color: #DDF7D6;
+    padding: 0.25em 0.5em;
+    font-size: 1em;
+    border: solid 1px #06B141;
+}
+.fade-in-quick {
+	animation: fadein 1.5s;
+}
+.fade-in-slow {
+	animation: fadein 3s;
+}
+@keyframes fadein {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+/******************** Navbar and footer ********************/
+.nav-item {
+	text-align: right;
+}
+footer {
+	margin: auto auto 0 auto;
+}
+/******************** Testimonial carousel ********************/
+#testimonials {
+	min-height: 20em;
+}
+.carousel-text {
+	font-size: 2em;
+}
+.carousel-indicators li {
+  background-color: #999;
+}
+.carousel-indicators .active {
+  background-color: #f88428;
+}
+.carousel-control-prev-icon {
+}
+/******************** FIT ********************/
+#home-banner {
+	background-size: cover;
+}
+/******************** FIT ********************/
+.table {
+	background-color: white;
+	text-align: center;
+}
+#table-medicaid>tbody{
+font-weight: 500;
+}
+.float-button {
+	position:fixed;
+	z-index: 1;
+	width:7.5em;
+	height:2.5em;
+	bottom:2.5em;
+	right:-5em;
+	background-color:#0069a3;
+	color:#FFF;
+	border-radius:10px;
+	transition: all 0.2s ease-in 0s;
+	box-shadow: 2px 2px 2px #999;
+	text-decoration-color: #0069a3;
+}
+.float-button:hover {
+	right: -2.5em;
+	background-color: #8cc63e;
+	text-decoration-color: #8cc63e;
+    color: #FFF;
+}
+.float-button:hover i {
+	display: none;
+}
+.float-button:hover span:after {
+	content: "Back";
+}
+.float-button-txt {
+	padding:0.5em
+}
+

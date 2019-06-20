@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: rxmed
+  labels:
+    purpose: "RxMedAccess"
+spec:
+  containers:
+  - name: rxmed-container
+    image: gcr.io/coastal-1233/rxmed:latest
+    env:
+    - name: DBHOST
+      value: "10.36.240.3"

@@ -1,0 +1,65 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+<title>RxMedAccess</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<meta name="description" content="">
+<link rel="shortcut icon" type="image/ico" href="{{url_for('static',filename='img/favicon (32x32).ico')}}"/>
+
+  <!-- Styles -->
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs4/dt-1.10.18/fh-3.1.4/sc-1.5.0/datatables.min.css"/>
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+<link rel="stylesheet" type="text/css" href="{{url_for('static',filename='css/style.css')}}">
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js" integrity="sha256-VazP97ZCwtekAsvgPBSUwPFKdrwD3unUfSGVYrahUqU=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/v/bs4/dt-1.10.18/fh-3.1.4/sc-1.5.0/datatables.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/1.5.3/jspdf.debug.js" integrity="sha384-NaWTHo/8YCBYJ59830LTz/P4aQZK1sS0SneOgAvhsIl3zBu8r9RevNg5lHCHAuQ/" crossorigin="anonymous"></script>
+
+</head>
+
+<body>
+{% block js %}
+{% endblock %}
+
+<!--Navigation START-->
+<nav class="navbar navbar-expand-md navbar-light"> <a class="navbar-brand" href="/"><img src="{{url_for('static',filename='img/logo_transparent.png')}}" width="100rem" alt="RxMedAccess, LLC"></a>
+  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#nav"> <span class="navbar-toggler-icon"></span> </button>
+  <div class="navbar-collapse collapse justify-content-end" id="nav">
+    <ul class="navbar-nav">
+      {% if not active_page == 'home' %}
+      <li class="nav-item"><a class="nav-link" href="/">Home</a></li>
+      {% endif %}
+      <li class="nav-item"><a class="nav-link" href="{{url_for('contact')}}">Contact Us</a> </li>
+      <li class="nav-item"><a class="nav-link" href="{{url_for('fit')}}">FIT Tool</a> </li>
+      {% if current_user.is_anonymous %}
+      {% if not active_page == 'signin' %}
+      <li class="nav-item"><a class="nav-link" href="{{url_for('user.signin')}}">Log In</a></li>
+      {% endif %}
+      {% else %}
+      <li class="nav-item"><a class="nav-link" href="{{url_for('user.signup')}}">Account</a></li>
+      <li class="nav-item"><a class="nav-link" href="{{url_for('user.signout')}}">Log Out</a></li>
+      {% endif %}
+    </ul>
+  </div>
+</nav>
+<!--Navigation END-->
+
+{% block body_block %}
+{% endblock %}
+
+<!-- Footer START -->
+<footer class="text-white bg-blue w-100 py-4">
+  <div class="text-center small">Copyright © 2019 RxMedAccess, LLC. All rights reserved.</div>
+</footer>
+<!-- Footer END -->
+
+</body>
+</html>

@@ -1,83 +1,91 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-<meta name="description" content="">
-<title>RXMedAccess, LLC</title>
-<link rel="shortcut icon" type="image/png" href="{{url_for('static',filename='img/favicon (32x32).ico')}}"/>
+{% extends 'base.html' %}
+{% set active_page = 'home' %}
 
-<!-- Bootstrap core CSS -->
-<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
-<!-- CSS -->
-<!--<link href="stylesheet.css" rel="stylesheet">-->
-<link href="{{ url_for('static',filename='css/stylesheet.css') }}" rel="stylesheet">
-</head>
-<body>
-	
-<!-- Navigation bar -->
-<nav class="navbar navbar-expand-md navbar-light bg-light"> <a class="navbar-brand" href="/"><img src="{{url_for('static',filename='img/logo transparent(1000x682).png') }}" width="90vw" alt="RXMedAccess, LLC"></a>
-  <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> <span class="navbar-toggler-icon"></span> </button>
-  <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
-    <ul class="navbar-nav">
-      <li class="nav-item"> <a class="nav-link" href="/fit">Patients</a> </li>
-      <li class="nav-item"> <a class="nav-link" href="/fit">Providers</a> </li>
-      <li class="nav-item"> <a class="nav-link" href="/about">About Us</a> </li>
-    </ul>
-  </div>
-</nav>
-	
-<!-- Header -->
-<div class="jumbotron-fluid" id="home-header">
-    <div class="col-md-8 p-5" id="home-header-text">
-      <h1 class="display-4" id="home-header-main">Spend <font color="#f88428">less</font> time filling paperwork, and <font color="#f88428">more</font> time seeing patients.</h1>
-      <h2 id="home-header-sub">Physicians spend hours weekly just filling prior authorization requests.</h2>
-      <a href="https://youtu.be/WlitmHHpXhw" class="btn btn-info my-3" role="button"><span id="button-text">Learn More</span></a>
-      <h2 id="home-header-tagline">We can help ease the burden.</h2>
+{% block body_block %}
+<!--Banner START-->
+<div class="jumbotron jumbotron-fluid fade-in-slow" style="background-image:url(static/img/bg.jpg)" id="home-banner">
+  <div class="col-md-7 bg-white shadow p-3">
+    <div class="display-4 px-5 py-3">Spend <b class="text-orange">less</b> time filling paperwork, and <b class="text-orange">more</b> time seeing patients.</div>
+    <div class="h4 px-5 py-3">Physicians spend hours weekly just filling prior authorization requests. With our Formulary Insight Tool, we can help ease the burden.
+      <a class="text-blue" href={{url_for('fit')}}>Try it today.</a>
     </div>
-    <div class="col-md-4"></div>
+  </div>
 </div>
-	
-<!-- Main body -->
-<main class="container-fluid" role="main">
-  <div class="row p-5">
-    <div class="col-md-8" id="home-main-text">
-      <h2 id="home-text-1">Why choose RxMedAccess?</h2>
-      <hr class="my-3">
-      <div class="lead" id="home-text-2">
-        <p>RxMedAccess is a <b>user-friendly</b> healthcare application where providers can gain easy access to their patient populations preferred drug lists at the point of prescribing and provide
-          formulary insight solutions to optimize patient access.</p>
-        <p>View our video demo below for a sneak peek into our <b>Formulary Insight Tool</b>!</p>
+<!--Banner END-->
+
+<!-- Main container START -->
+<main class="container-fluid">
+
+  <!--Content START-->
+  <!--Services START-->
+  <div class="container-fluid">
+    <div class="row m-1">
+      <div class="col-md-6">
+        <div class="d-flex flex-row">
+          <button class="btn btn-blue btn-deco shadow mt-2" disabled><i class="fas fa-prescription-bottle-alt text-white h1"></i></button>
+          <span class="display-4 subheader ml-4">Intelligent formulary insight</span></div>
+        <div class="my-4">
+          <p>Our Formulary Insight Tool healthcare application allows providers to gain easy access to their patient populations preferred drug lists and provide formulary insight, optimizing patient access.</p>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="d-flex flex-row">
+          <button class="btn btn-blue btn-deco shadow mt-2" disabled><i class="fas fa-user-md text-white h1"></i></button>
+          <span class="display-4 subheader ml-4">Tailored for healthcare providers</span></div>
+        <div class="my-4">
+          <p>Healthcare providers can register now to access our system. If you’ve already registered, log in for full access.</p>
+        </div>
       </div>
     </div>
-    <div class="col-md-4 container d-none d-md-block" id="home-main-logo"><img src="{{url_for('static',filename='img/logo transparent(1000x682).png')}}" class="img img-fluid" alt="Logo"></div>
   </div>
-  <center class="jumbotron">
-    <div class="embed-responsive embed-responsive-16by9" id="video">
-      <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/WqM5pwOMZa8?rel=0&modestbranding=1&autohide=1&showinfo=0" allowfullscreen></iframe>
-    </div>
-  </center>
-  <div class="position-relative" id="divider"> <img src="{{url_for('static',filename='img/divider (1346x10).png')}}" class="img" alt="Divider">
-    <div>
-      <h3 class="position-absolute mb-5" align="center" id="divider-text">Find the right tools for you.</h3>
+  <!--Services END-->
+
+  <hr>
+
+	  <!-- Testimonials START -->
+  <div class="container-fluid">
+    <div id="testimonials" class="carousel slide p-5" data-ride="carousel">
+      <ol class="carousel-indicators">
+        <li data-target="#testimonials" data-slide-to="0" class="active"></li>
+        <li data-target="#testimonials" data-slide-to="1"></li>
+        <li data-target="#testimonials" data-slide-to="2"></li>
+      </ol>
+      <div class="carousel-inner text-center px-5">
+        <div class="carousel-item active">
+          <blockquote> <i class="fa fa-quote-left"></i>
+            <p class="display-4 carousel-text">Just wanted to let you know I find myself finding RxMedAccess <b class="text-orange">more helpful</b> than the others quite often, including today. Keep doing the amazing things you are doing.</p>
+            <small>Speciality Practice Pharmacist at Department of Family Medicine, OSU CarePoint East</small></blockquote>
+        </div>
+        <div class="carousel-item">
+          <blockquote> <i class="fa fa-quote-left"></i>
+            <p class="display-4 carousel-text">Very <b class="text-orange">easy to use</b> interface.</p>
+            <small>Pharmacist at Independent Pharmacy</small></blockquote>
+        </div>
+        <div class="carousel-item">
+          <blockquote> <i class="fa fa-quote-left"></i>
+            <p class="display-4 carousel-text">It is <b class="text-orange">way more accurate</b> than the current formulary predictor built within Epic.</p>
+            <small>Pharmacist at Internal Medicine Practice</small></blockquote>
+        </div>
+      </div>
+      <a class="carousel-control-prev" href="#testimonials" role="button" data-slide="prev"> <i class="fas fa-chevron-left text-blue" aria-hidden="true"></i> <span class="sr-only">Previous</span> </a> <a class="carousel-control-next" href="#testimonials" role="button" data-slide="next"> <i class="fas fa-chevron-right text-blue" aria-hidden="true"></i> <span class="sr-only">Next</span> </a> </div>
+  </div>
+  <!-- Testimonials END -->
+
+  <!-- Welcome START -->
+  <div class="container-fluid px-5">
+    <div class="my-4"><span class="display-4 text-blue">See the Formulary Insight Tool in action:</span> </div>
+    <div class="card shadow p-2 mb-5">
+      <div class="embed-responsive embed-responsive-16by9">
+        <iframe class="embed-responsive-item" src="https://www.youtube.com/embed/WqM5pwOMZa8?rel=0&modestbranding=1&autohide=1&showinfo=0" allowfullscreen></iframe>
+      </div>
     </div>
   </div>
-  <div class="row px-5 justify-content-center">
-    <div class="container col-6" id="patient-container">
-      <div class="row justify-content-center"><img src="{{url_for('static',filename='img/patient (150x150).png')}}" alt="Patients" class="img" id="patient" href="{{url_for('fit')}}">&nbsp;</div>
-      <div class="row justify-content-center"> <a href="{{url_for('fit')}}" id="patients-img-link">Patients</a> </div>
-    </div>
-    <div class="container col-6" id="provider-container">
-      <div class="row justify-content-center"><img src="{{url_for('static',filename='img/physician (150x150).png')}}" alt="Providers" class="img" id="provider" href="{{url_for('fit')}}">&nbsp;</div>
-      <div class="row justify-content-center"> <a href="{{url_for('fit')}}"id="providers-img-link">Providers</a> </div> 
-    </div>
-  </div>
+  <!-- Welcome END -->
+
+  <!-- Content END -->
+
 </main>
-<!-- Footer -->
-<footer class="footer card-footer mt-5">© 2017 - 2019 RxMedAccess, LLC</footer>
-<!-- /.container --> 
-<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script> 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script> 
-<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
-</body>
-</html>
+<!-- Main container END -->
+
+<!-- Main container END -->
+{% endblock %}

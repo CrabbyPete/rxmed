@@ -317,8 +317,17 @@
 
 	  $('#button-clear-med').click(function ()
       {
-		  $('#input-med').val('')
-		  drug = '',
+		  $('#input-med').val('');
+		  drug = '';
+		  $('#display_results').hide();
+	  })
+
+	  $('"button-clear-all"').click(function ()
+      {
+		  $('#input-med').val('');
+		  $('#input-zipcode').val('');
+		  $('input-plan-medicare').val('');
+		  drug = '';
 		  $('#display_results').hide();
 	  })
   });

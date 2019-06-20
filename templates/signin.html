@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% set active_page = 'signin' %}
+
+{% block body_block %}
+<main class="container m-5">
+  <div class="my-2"> <span class="display-4">Welcome back</span> </div>
+    {% if form.errors %}
+  <div class="col-sm-6 error" id="login-error" hidden>
+      {% for k,v in form.errors.items() %}
+    <p class="error-msg text-danger m-1">{{v[0]}}</p>
+      {% endfor %}
+  </div>
+    {% endif %}
+
+  <!--Form--->
+  <form class="form-group my-2" action="{{url_for('user.signin')}}" method="post">
+      {{ form.csrf_token }}
+      {{ form.next }}
+    <div class="input-group mt-3">
+      <div class="input-group-prepend">
+          <span class="input-group-text prepend-icon bg-blue border-blue">
+            <i class="fas fa-user text-white"></i>
+          </span>
+      </div>
+        {{form.email(class="form-control border-left-0", type="email", placeholder="Email address", id="input-email") }}
+    </div>
+    <div class="input-group mt-3">
+      <div class="input-group-prepend">
+          <span class="input-group-text bg-blue border-blue">
+              <i class="fas fa-key text-white"></i>
+          </span>
+      </div>
+        {{form.password(class="form-control",type="password",placeholder="Password",id="input-pass")}}
+    </div>
+    <button class="btn btn-blue text-white text-uppercase bg-blue w-100 mt-4" type="submit" id="button-login">Sign in</button>
+  </form>
+  <a class="text-blue" href="{{url_for('user.signup')}}">Don't have an account? Sign up.</a>
+    <a class="float-right text-blue" href="{{url_for('user.forgot')}}">Forgot your password?</a> </main>
+<!-- Main container END -->
+
+{% endblock %}

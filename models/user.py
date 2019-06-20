@@ -2,52 +2,47 @@
 import hashlib
 
 
-from datetime       import datetime
+from datetime       import datetime, date
 from sqlalchemy.orm import validates
-from sqlalchemy     import (Column, Boolean, Integer, String, Date )
+from sqlalchemy     import (Column, Boolean, Integer, String, DateTime, Date,ForeignKey, ARRAY )
 
-from .base          import Base
+from .base              import Base
+from sqlalchemy_utils   import EmailType
 
 # User Profile, also used for those not signed in
-class User( Base ):
+class Users( Base ):
     __tablename__ = 'users'
 
-    id          = Column( Integer, primary_key=True)
-    email       = Column( String )
-    password    = Column( String )
-    title       = Column( String )
-    first_name  = Column( String )
-    last_name   = Column( String )
-    joined      = Column( Date )
+    id            = Column(Integer, primary_key=True)
+    email         = Column(EmailType)
+    password      = Column(String)
+    title         = Column(String)
+    first_name    = Column(String)
+    last_name     = Column(String)
+    provider_type = Column(String)
+    practice_name = Column(String)
+    practice_type = Column(String)
+    expires       = Column(Date)
+    joined        = Column(Date, default=date.today)
 
     # Login booleans
     active        = Column( Boolean, default = False )
     authenticated = Column( Boolean, default = False )
 
-    @validates('email')
-    def validate_email(self, key, address):
-        if re.match("^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)", address):
-            return address
-        return False
-
-
     def is_authenticated(self):
         return True
 
-
     def is_active(self):
-        return self.active
+        return True
 
-
+    @property
     def is_anonymous(self):
         return False
 
-
     def set_password(self, raw_password):
         h = hashlib.md5()
-        h.update(raw_password)
+        h.update(raw_password.encode('utf-8'))
         self.password = h.hexdigest()
-
 
     def check_password(self, raw_password):
         h = hashlib.md5()
@@ -57,14 +52,39 @@ class User( Base ):
 
         return False
 
+    def get_id(self):
+        return self.id
 
     def __unicode__(self):
-        return self.email
+        return f"{self.first_name} {self.last_name}"
 
-"""
-class Subscription( Document ):
-    user     = ReferenceField( 'User', reverse_delete_rule = CASCADE )
-    expires  = DateTimeField( default = datetime.now() )
-    active   = BooleanField(default = False)
 
-"""
+class Requests(Base):
+    __tablename__ = 'requests'
+    id      = Column(Integer, primary_key=True)
+    user    = Column(ForeignKey('users.id'))
+    ip      = Column(String)
+    zipcode = Column(String)
+    plan    = Column(String)
+    drug    = Column(String)
+    time    = Column(DateTime, default=datetime.now)
+
+class Contacts(Base):
+    __tablename__ = 'contacts'
+    id      = Column(Integer, primary_key=True)
+    name    = Column(String)
+    email   = Column(String)
+    comment = Column(String(6144))
+    time    = Column(DateTime, default=datetime.now)
+    answer  = Column(Boolean, default = False)
+
+
+class Subscription(Base):
+    __tablename__ = 'subscriptions'
+    id       = Column(Integer, primary_key=True)
+    user     = Column(ForeignKey('users.id'))
+    started  = Column(Date)
+    expires  = Column(Date)
+    active   = Column(Boolean, default=True)
+    group    = Column(ARRAY(Integer, ForeignKey('users.id')))
+

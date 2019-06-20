@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block body_block %}
+<!-- Terms & conditions modal START -->
+<div class="modal fade" id="terms" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Terms and Conditions of Use</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"> <span aria-hidden="true">&times;</span> </button>
+      </div>
+      <div class="modal-body" id="terms-text"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Terms & conditions modal END -->
+<!-- Main container START -->
+<main class="container m-5">
+  <div class="my-2"> <span class="display-4">Create an account.</span> </div>
+  <div class="col-sm-6 error" id="login-error" hidden>
+    <p class="error-msg text-danger m-1">One or more fields is missing and/or invalid.</p>
+  </div>
+  <form class="form-group" method="post" action="{{url_for('user.signup')}}">
+    {{ form.csrf_token }}
+    <div class="input-group mt-3">
+        {{ form.first_name(class="form-control", id="input-fname",placeholder="First Name")}}
+        {{form.last_name(class="form-control", id="input-lname", placeholder="Last name")}}
+    </div>
+      {{form.provider_type(class="form-control mt-3",id="input-hcare")}}
+      {{form.practice_name(class="form-control mt-3",placeholder="What is the name of your practice site?")}}
+      {{form.practice_type(class="form-control mt-3")}}
+
+    <span class="text-muted">Your email and password will be your login information.</span>
+    <div class="input-group mt-3">
+      <div class="input-group-prepend"> <span class="input-group-text prepend-icon bg-blue border-blue"> <i class="fas fa-user text-white"></i> </span> </div>
+      {{form.email(class="form-control border-left-0", placeholder="Email address", id="input-email")}}
+    </div>
+    <div class="input-group my-3">
+      <div class="input-group-prepend"> <span class="input-group-text prepend-icon bg-blue border-blue"> <i class="fas fa-key text-white"></i> </span> </div>
+        {{form.password(class="form-control border-left-0", placeholder="Password", id="input-pass")}}
+        {{form.confirm_pass(class="form-control", placeholder="Confirm Password", id="input-passconfirm")}}
+    </div>
+    <span class="text-muted text-center">We'll never share your personal information with anyone outside of your company. We require that you read the <a href="#" data-toggle="modal" data-target="#terms">terms and conditions of use</a> carefully.</span>
+    <div class="form-check">
+        {{form.checkbox(class="form-check-input text-center", id="input-terms")}}
+      <label class="form-check-label" for="terms">I have read and understood the terms and conditions of use above.</label>
+    </div>
+    <button class="btn btn-blue text-white text-uppercase w-100 mt-3" type="submit" id="button-signup">Sign Up</button>
+  </form>
+</main>
+<!-- Main container END -->
+{% endblock %}
