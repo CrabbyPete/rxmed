@@ -25,6 +25,7 @@ class OhioState(Base):
     TTY                             = Column(String)
     modified                        = Column(Date, default=date.today)
     active                          = Column(Boolean, default=True)
+    data                            = Column(Date, default=date.today)
 
     @classmethod
     def find_product(cls, name):
