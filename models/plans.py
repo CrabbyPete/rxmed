@@ -157,7 +157,7 @@ class PlanNames(Base):
 
     @classmethod
     def ids_by_name(cls, state, plan_name):
-        fltr = and_(cls.state.ilike(state), cls.plan_name.ilike(plan_name) )
+        fltr = and_(or_(cls.state.ilike(state), cls.state.ilike('US')), cls.plan_name.ilike(plan_name) )
         result = cls.session.query(cls).filter(fltr)
         result = [r.id for r in result.all()]
         return result

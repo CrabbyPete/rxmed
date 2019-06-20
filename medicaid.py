@@ -78,7 +78,7 @@ def all_plans(drug_name, plan_name, zipcode, plan_type):
     fta_list = FTA.find_by_name(drug_name)
     location = get_location(zipcode)
     state = location.STATE
-    plan_ids = PlanNames.ids_by_name(state, plan_name, plan_type=='medicaid')
+    plan_ids = PlanNames.ids_by_name(state, plan_name)
 
     # Get all the SCD and SBD rxcui for this and related
     rxcui_list = []
