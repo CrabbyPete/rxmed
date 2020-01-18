@@ -1,9 +1,9 @@
 
 import urllib,json,requests
 from geopy.distance import vincenty
+from settings import geo_code_api
 
-root_url = "http://maps.googleapis.com/maps/api/geocode/json?key=AIzaSyDigzzNsp4MSDGrkWz3I-rijxkbnw1Ok7I"
-#root_url = "https://www.googleapis.com/geolocation/v1/geolocate?key=AIzaSyDigzzNsp4MSDGrkWz3I-rijxkbnw1Ok7I/
+root_url = f"http://maps.googleapis.com/maps/api/geocode/json?key={geo_code_api}"
 
 distance_url = "https://maps.googleapis.com/maps/api/distancematrix/json?" #origins=Vancouver+BC|Seattle&destinations=San+Francisco|Victoria+BC&key=YOUR_API_KEY
 
